@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "ARM",
+            "includePath": [
+                "${workspaceFolder}/examples/AgentTerror/include",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/examples/AgentTerror/Common/include",
+                "${workspaceFolder}/examples/AgentTerror/WeightedQuantizer/include",
+                "${workspaceFolder}/examples/AgentTerror/DirectionalSequencer/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/arm-none-eabi-c++",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}

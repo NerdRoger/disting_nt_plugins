@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "cmath": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp",
+        "functional": "cpp",
+        "cstdlib": "cpp",
+        "cstddef": "cpp",
+        "cstdint": "cpp",
+        "random": "cpp",
+        "limits": "cpp"
+    }
+}
