@@ -78,31 +78,8 @@ private:
 	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 
-	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press
-
-	uint32_t Encoder2DownTime = 0;
-	bool Encoder2LongPressFired = false;
 	int16_t PreviousBankScanParameterValue = 0;
 	uint32_t DelayedTriggers[MaxChannels];
-
-	void Encoder1Turn(int8_t x);
-	void Encoder2Turn(int8_t x);
-
-	void Pot1Turn(float val);
-	void Pot3Turn(float val);
-
-	void Pot3Push();
-
-	void Encoder2Push();
-	void Encoder2Release();
-
-	void Encoder2ShortPress();
-	void Encoder2LongPress();
-
-	void Button3Push();
-	void Button3Release();
-
-	void ProcessLongPresses();
 
 public:
 	static const _NT_factory Factory;

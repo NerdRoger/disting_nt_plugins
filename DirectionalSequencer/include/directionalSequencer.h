@@ -1,6 +1,7 @@
 #pragma once
 #include <new>
 #include <distingnt/api.h>
+#include <distingnt/serialisation.h>
 #include "baseAlgorithm.h"
 #include "helpTextHelper.h"
 #include "cellDefinition.h"
@@ -59,35 +60,6 @@ private:
 	static bool DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse);
 	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
-
-	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press
-
-	uint32_t Pot3DownTime = 0;
-	uint32_t BlockPot3ChangesUntil = 0;
-	uint32_t Encoder2DownTime = 0;
-	bool Encoder2LongPressFired = false;
-	bool Pot3LongPressFired = false;
-	
-	void Encoder1Turn(int8_t x);
-	void Encoder2Turn(int8_t x);
-
-	void Pot1Turn(float val);
-	void Pot2Turn(float val);
-	void Pot3Turn(float val);
-
-	void Encoder2Push();
-	void Encoder2Release();
-
-	void Encoder2ShortPress();
-	void Encoder2LongPress();
-
-	void Pot3Push();
-	void Pot3Release();
-
-	void Pot3ShortPress();
-	void Pot3LongPress();
-
-	void ProcessLongPresses();
 
 public:
 	static const _NT_factory Factory;
