@@ -282,7 +282,7 @@ void QuantizerView::Pot3Turn(float val) {
 }
 
 
-void QuantizerView::Pot3Push() {
+void QuantizerView::Pot3ShortPress() {
 	if (!BankPeeking) {
 		AlgorithmInstance->ScanningLocked = !AlgorithmInstance->ScanningLocked;
 		if (!AlgorithmInstance->ScanningLocked) {

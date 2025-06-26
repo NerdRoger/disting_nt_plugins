@@ -3,11 +3,10 @@
         {
             "name": "ARM",
             "includePath": [
-                "${workspaceFolder}/examples/AgentTerror/include",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/examples/AgentTerror/Common/include",
-                "${workspaceFolder}/examples/AgentTerror/WeightedQuantizer/include",
-                "${workspaceFolder}/examples/AgentTerror/DirectionalSequencer/include"
+                "${workspaceFolder}/distingNT_API/include",
+                "${workspaceFolder}/Common/include",
+                "${workspaceFolder}/WeightedQuantizer/include",
+                "${workspaceFolder}/DirectionalSequencer/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-c++",

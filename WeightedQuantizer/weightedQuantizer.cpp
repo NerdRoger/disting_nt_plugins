@@ -238,7 +238,7 @@ void WeightedQuantizer::Step(_NT_algorithm* self, float* busFrames, int numFrame
 bool WeightedQuantizer::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<WeightedQuantizer*>(self);
 	// do this in draw, because we don't need it as frequently as step
-	alg.ProcessLongPresses();
+	alg.QuantView.ProcessLongPresses(alg);
 	alg.QuantView.Draw();
 
 
@@ -276,51 +276,7 @@ void WeightedQuantizer::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 
 void WeightedQuantizer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 	auto& alg = *static_cast<WeightedQuantizer*>(self);
-
-	if (data.encoders[0]) {
-		alg.Encoder1Turn(data.encoders[0]);
-	}
-
-	if (data.encoders[1]) {
-		alg.Encoder2Turn(data.encoders[1]);
-	}
-
-	if (data.controls & kNT_potL) {
-		alg.Pot1Turn(data.pots[0]);
-	}
-
-	// if (data.potChange & kNT_potC) {
-	// 	alg.Pot2Turn(data.pots[1]);
-	// }
-
-	if (data.controls & kNT_potR) {
-		alg.Pot3Turn(data.pots[2]);
-	}
-
-	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
-		alg.Encoder2Push();
-	}
-
-	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
-		alg.Encoder2Release();
-	}
-
-	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
-		alg.Pot3Push();
-	}
-
-	if ((data.controls & kNT_button3) && !(data.lastButtons & kNT_button3)) {
-		alg.Button3Push();
-	}
-
-	if (!(data.controls & kNT_button3) && (data.lastButtons & kNT_button3)) {
-		alg.Button3Release();
-	}
-
-	// if (!(data.buttons & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
-	// 	alg.Pot3Release();
-	// }
-
+	alg.QuantView.ProcessControlInput(alg, data);
 	RecordPreviousPotValues(self, data);
 }
 
@@ -376,88 +332,6 @@ bool WeightedQuantizer::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 	}
 
 	return true;
-}
-
-
-void WeightedQuantizer::Encoder1Turn(int8_t x) {
-	QuantView.Encoder1Turn(x);
-}
-
-
-void WeightedQuantizer::Encoder2Turn(int8_t x) {
-	QuantView.Encoder2Turn(x);
-}
-
-
-void WeightedQuantizer::Pot1Turn(float val) {
-	QuantView.Pot1Turn(val);
-}
-
-
-void WeightedQuantizer::Pot3Turn(float val) {
-	QuantView.Pot3Turn(val);
-}
-
-
-void WeightedQuantizer::Pot3Push() {
-	QuantView.Pot3Push();
-}
-
-
-void WeightedQuantizer::Encoder2Push() {
-	Encoder2DownTime = TotalMs;
-}
-
-
-void WeightedQuantizer::Encoder2Release() {
-	// this should not happen, but let's guard against it anyway
-	if (Encoder2DownTime <= 0) {
-		return;
-	}
-
-	// calculate how long we held the encoder down (in ms)
-	auto totalDownTime = TotalMs - Encoder2DownTime;
-	if (totalDownTime < ShortPressThreshold) {
-		Encoder2ShortPress();
-	} else {
-		// reset to prepare for another long press
-		Encoder2LongPressFired = false;
-	}
-	Encoder2DownTime = 0;
-}
-
-
-void WeightedQuantizer::Encoder2ShortPress() {
-	QuantView.Encoder2ShortPress();
-}
-
-
-void WeightedQuantizer::Encoder2LongPress() {
-	QuantView.Encoder2LongPress();
-}
-
-
-void WeightedQuantizer::Button3Push() {
-	QuantView.Button3Push();
-}
-
-
-void WeightedQuantizer::Button3Release() {
-	QuantView.Button3Release();
-}
-
-
-void WeightedQuantizer::ProcessLongPresses() {
-	if (Encoder2DownTime > 0) {
-		if (!Encoder2LongPressFired) {
-			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = TotalMs - Encoder2DownTime;
-			if (totalDownTime >= ShortPressThreshold) {
-				Encoder2LongPress();
-				Encoder2LongPressFired = true;
-			}
-		}
-	}
 }
 
 

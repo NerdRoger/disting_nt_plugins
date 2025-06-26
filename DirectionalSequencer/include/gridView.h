@@ -2,11 +2,16 @@
 
 #include "common.h"
 #include "gridInfo.h"
-#include "modeBase.h"
+#include "ownedBase.h"
+#include "viewBase.h"
 #include "cellDefinition.h"
 #include "cellData.h"
 
-struct GridMode : ModeBase {
+
+struct DirectionalSequencer;
+
+
+struct GridView : ViewBase, OwnedBase<DirectionalSequencer> {
 private:
 	static constexpr int CellSize = 12;
 	static constexpr int CellBorderColor = 5;
@@ -17,10 +22,11 @@ private:
 	static constexpr int SelectedParameterColor = 15;
 	static constexpr int UnselectedParameterColor = 5;
 
-	Point GridPosition { ModeAreaX, 2 };
+	Point GridPosition { 50, 2 };
 	CellDataType SelectedParameterIndex = CellDataType::Direction;
 	float ParamEditRaw = 0;
 	float SelectedParameterIndexRaw = 0;
+	bool Editable = true;
 
 	Bounds CellCoordsToBounds(const CellCoords& coords) const;
 
@@ -46,8 +52,7 @@ public:
 
 	CellCoords SelectedCell;
 
-	GridMode();
-	void DrawIcon(int x, int y, int color) const override;
+	GridView();
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

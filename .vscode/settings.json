@@ -9,5 +9,10 @@
         "cstdint": "cpp",
         "random": "cpp",
         "limits": "cpp"
+    },
+    "search.exclude": {
+        "distingNT_API/airwindows/*": true,
+        "distingNT_API/faust/*": true,
+        "distingNT_API/examples/*": true
     }
 }

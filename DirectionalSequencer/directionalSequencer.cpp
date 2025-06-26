@@ -72,7 +72,6 @@ const _NT_parameterPages DirectionalSequencer::ParameterPagesDef = {
 };
 
 
-
 void DirectionalSequencer::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = ARRAY_SIZE(ParametersDef);
 	req.sram = sizeof(DirectionalSequencer);
@@ -90,9 +89,8 @@ _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& pt
 	// "seed" the random sequence
 	alg.Random.Seed(NT_getCpuCycleCount());
 
-	alg.Selector.Initialize(alg);
+	alg.Grid.Initialize(alg);
 	alg.Seq.Initialize(alg);
-	alg.Selector.SelectModeByIndex(0);
 	return &alg;
 }
 
@@ -100,10 +98,7 @@ _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& pt
 void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
 	// notify every mode of the parameter change
-	for (size_t i = 0; i < ARRAY_SIZE(alg.Selector.Modes); i++) {
-		auto& mode = *alg.Selector.Modes[i];
-		mode.ParameterChanged(p);
-	}
+	alg.Grid.ParameterChanged(p);
 }
 
 
@@ -182,9 +177,7 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 bool DirectionalSequencer::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
 	// do this in draw, because we don't need it as frequently as step
-	alg.ProcessLongPresses();
-	alg.Selector.Draw();
-
+	alg.Grid.ProcessLongPresses(alg);
 
 
 // TODO:  remove this at the end of development
@@ -202,7 +195,7 @@ bool DirectionalSequencer::Draw(_NT_algorithm* self) {
 	// NT_drawText(100, 50, buf, 15);
 
 
-	alg.Selector.GetSelectedMode().Draw();
+	alg.Grid.Draw();
 	return true;
 }
 
@@ -214,49 +207,13 @@ uint32_t DirectionalSequencer::HasCustomUI(_NT_algorithm* self) {
 
 void DirectionalSequencer::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
-	alg.Selector.FixupPotValues(pots);
+	alg.Grid.FixupPotValues(pots);
 }
 
 
 void DirectionalSequencer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
-
-	if (data.encoders[0]) {
-		alg.Encoder1Turn(data.encoders[0]);
-	}
-
-	if (data.encoders[1]) {
-		alg.Encoder2Turn(data.encoders[1]);
-	}
-
-	if (data.controls & kNT_potL) {
-		alg.Pot1Turn(data.pots[0]);
-	}
-
-	if (data.controls & kNT_potC) {
-		alg.Pot2Turn(data.pots[1]);
-	}
-
-	if (data.controls & kNT_potR) {
-		alg.Pot3Turn(data.pots[2]);
-	}
-
-	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
-		alg.Encoder2Push();
-	}
-
-	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
-		alg.Encoder2Release();
-	}
-
-	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
-		alg.Pot3Push();
-	}
-
-	if (!(data.controls & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
-		alg.Pot3Release();
-	}
-
+	alg.Grid.ProcessControlInput(alg, data);
 	RecordPreviousPotValues(self, data);
 }
 
@@ -416,126 +373,6 @@ bool DirectionalSequencer::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse
 	}
 
 	return true;
-}
-
-
-void DirectionalSequencer::Encoder1Turn(int8_t x) {
-	Selector.GetSelectedMode().Encoder1Turn(x);
-}
-
-
-void DirectionalSequencer::Encoder2Turn(int8_t x) {
-	Selector.GetSelectedMode().Encoder2Turn(x);
-}
-
-
-void DirectionalSequencer::Pot1Turn(float val) {
-	int v = val * ARRAY_SIZE(Selector.Modes);
-	Selector.SelectModeByIndex(v);	
-}
-
-
-void DirectionalSequencer::Pot2Turn(float val) {
-	Selector.GetSelectedMode().Pot2Turn(val);
-}
-
-
-void DirectionalSequencer::Pot3Turn(float val) {
-	if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= TotalMs) {
-		Selector.GetSelectedMode().Pot3Turn(val);
-	}
-}
-
-
-void DirectionalSequencer::Encoder2Push() {
-	Encoder2DownTime = TotalMs;
-}
-
-
-void DirectionalSequencer::Encoder2Release() {
-	// this should not happen, but let's guard against it anyway
-	if (Encoder2DownTime <= 0) {
-		return;
-	}
-
-	// calculate how long we held the encoder down (in ms)
-	auto totalDownTime = TotalMs - Encoder2DownTime;
-	if (totalDownTime < ShortPressThreshold) {
-		Encoder2ShortPress();
-	} else {
-		// reset to prepare for another long press
-		Encoder2LongPressFired = false;
-	}
-	Encoder2DownTime = 0;
-}
-
-
-void DirectionalSequencer::Encoder2ShortPress() {
-	Selector.GetSelectedMode().Encoder2ShortPress();
-}
-
-
-void DirectionalSequencer::Encoder2LongPress() {
-	Selector.GetSelectedMode().Encoder2LongPress();
-}
-
-
-void DirectionalSequencer::Pot3Push() {
-	Pot3DownTime = TotalMs;
-}
-
-
-void DirectionalSequencer::Pot3Release() {
-	// this should not happen, but let's guard against it anyway
-	if (Pot3DownTime <= 0) {
-		return;
-	}
-
-	// calculate how long we held the encoder down (in ms)
-	auto totalDownTime = TotalMs - Pot3DownTime;
-	if (totalDownTime < ShortPressThreshold) {
-		Pot3ShortPress();
-	} else {
-		// reset to prepare for another long press
-		Pot3LongPressFired = false;
-	}
-	Pot3DownTime = 0;
-	// block any changes from taking place for a brief period afterward, because lifting finger from the pot can cause minute changes otherwise
-	BlockPot3ChangesUntil = TotalMs + 100;
-}
-
-
-void DirectionalSequencer::Pot3ShortPress() {
-	Selector.GetSelectedMode().Pot3ShortPress();
-}
-
-
-void DirectionalSequencer::Pot3LongPress() {
-	Selector.GetSelectedMode().Pot3LongPress();
-}
-
-
-void DirectionalSequencer::ProcessLongPresses() {
-	if (Pot3DownTime > 0) {
-		if (!Pot3LongPressFired) {
-			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = TotalMs - Pot3DownTime;
-			if (totalDownTime >= ShortPressThreshold) {
-				Pot3LongPress();
-				Pot3LongPressFired = true;
-			}
-		}
-	}
-	if (Encoder2DownTime > 0) {
-		if (!Encoder2LongPressFired) {
-			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = TotalMs - Encoder2DownTime;
-			if (totalDownTime >= ShortPressThreshold) {
-				Encoder2LongPress();
-				Encoder2LongPressFired = true;
-			}
-		}
-	}
 }
 
 

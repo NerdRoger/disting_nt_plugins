@@ -2,12 +2,14 @@
 #include <distingnt/api.h>
 #include <stddef.h>
 #include "ownedBase.h"
+#include "viewBase.h"
 
 
 struct WeightedQuantizer;
 
 
-struct QuantizerView : OwnedBase<WeightedQuantizer> {
+// TODO:  derive from ViewBase also
+struct QuantizerView : ViewBase, OwnedBase<WeightedQuantizer> {
 private:
 
 	struct Control {
@@ -46,22 +48,17 @@ private:
 	void LoadKeyControlForEditing();
 
 public:
-	void Draw() const;
-
-	void FixupPotValues(_NT_float3& pots);
-	void ParameterChanged(int paramIndex);
-	void Activate();
-
-	void Encoder1Turn(int8_t x);
-	void Encoder2Turn(int8_t x);
-	void Pot1Turn(float val);
-	void Pot3Turn(float val);
-	void Pot3Push();
-	void Button3Push();
-	void Button3Release();
-
-
-	void Encoder2ShortPress();
-	void Encoder2LongPress();
-
+	void Draw() const override;
+	void Encoder1Turn(int8_t x) override;
+	void Encoder2Turn(int8_t x) override;
+	void Encoder2ShortPress() override;
+	void Encoder2LongPress() override;
+	void Pot1Turn(float val) override;
+	void Pot3Turn(float val) override;
+	void Pot3ShortPress() override;
+	void Button3Push() override;
+	void Button3Release() override;
+	void FixupPotValues(_NT_float3& pots) override;
+	void Activate() override;
+	void ParameterChanged(int paramIndex) override;
 };

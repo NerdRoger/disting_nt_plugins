@@ -2,19 +2,19 @@
 #include <math.h>
 #include <distingnt/api.h>
 #include "common.h"
-#include "gridMode.h"
+#include "gridView.h"
 #include "helpTextHelper.h"
 #include "directionalSequencer.h"
 
 
-GridMode::GridMode() {
+GridView::GridView() {
 	// TODO:  make these sensible
 	SelectedCell = { .x = 0, .y = 0};
 	SelectedParameterIndex = CellDataType::Direction;
 }
 
 
-Bounds GridMode::CellCoordsToBounds(const CellCoords& coords) const {
+Bounds GridView::CellCoordsToBounds(const CellCoords& coords) const {
 	Bounds result; // TODO:  should this be preallocated?
 	result.x1 = coords.x * CellSize + GridPosition.x;
 	result.y1 = coords.y * CellSize + GridPosition.y;
@@ -24,17 +24,7 @@ Bounds GridMode::CellCoordsToBounds(const CellCoords& coords) const {
 }
 
 
-void GridMode::DrawIcon(int x, int y, int color) const {
-	NT_drawShapeI(kNT_box, x + 0, y + 0, x + 16, y +  8, color);
-	NT_drawShapeI(kNT_box, x + 0, y + 4, x + 16, y + 12, color);
-	NT_drawShapeI(kNT_box, x + 0, y + 8, x + 16, y + 16, color);
-	NT_drawShapeI(kNT_box, x + 0, y + 0, x +  8, y + 16, color);
-	NT_drawShapeI(kNT_box, x + 4, y + 0, x + 12, y + 16, color);
-	NT_drawShapeI(kNT_box, x + 8, y + 0, x + 16, y + 16, color);
-}
-
-
-void GridMode::Draw() const {
+void GridView::Draw() const {
 
 	// TODO:  remove this test code ad the end of development
 	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
@@ -54,7 +44,7 @@ void GridMode::Draw() const {
 }
 
 
-void GridMode::DrawCells() const {
+void GridView::DrawCells() const {
 	for(uint8_t x = 0; x < GridSizeX; x++) {
 		for(uint8_t y = 0; y < GridSizeY; y++) {
 			// is this cell selected?
@@ -80,7 +70,7 @@ void GridMode::DrawCells() const {
 }
 
 
-void GridMode::DrawInitialCellBorder() const {
+void GridView::DrawInitialCellBorder() const {
 	auto cb = CellCoordsToBounds(AlgorithmInstance->Seq.InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + 5;
@@ -95,7 +85,7 @@ void GridMode::DrawInitialCellBorder() const {
 }
 
 
-void GridMode::DrawSelectedCellBorder() const {
+void GridView::DrawSelectedCellBorder() const {
 	auto cb = CellCoordsToBounds(SelectedCell);
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
@@ -107,14 +97,14 @@ void GridMode::DrawSelectedCellBorder() const {
 }
 
 
-void GridMode::DrawBullet(int x, int y, int color) const {
+void GridView::DrawBullet(int x, int y, int color) const {
 	NT_drawShapeI(kNT_rectangle, x, y, x + 2, y + 2, color * 0.4);
 	NT_drawShapeI(kNT_line, x + 1, y, x + 1, y + 2, color);
 	NT_drawShapeI(kNT_line, x, y + 1, x + 2, y + 1, color);
 }
 
 
-void GridMode::DrawParamLine(int paramIndex, int top) const {
+void GridView::DrawParamLine(int paramIndex, int top) const {
 	auto paramListX = GridPosition.x + (GridSizeX * CellSize) + 5;
 	auto paramNameX = paramListX + 5;
 	auto paramValueX = paramListX + 5 + 68;
@@ -136,7 +126,7 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 }
 
 
-void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
+void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
 	const auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 	float fval = cell.GetField(*AlgorithmInstance, ct);
 
@@ -212,7 +202,7 @@ void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 }
 
 
-void GridMode::DrawParams() const {
+void GridView::DrawParams() const {
 	auto top = max(static_cast<int>(SelectedParameterIndex) - 2, 0);
 	int paramCount = ARRAY_SIZE(CellDefinitions);
 	top = min(top, paramCount - 5);
@@ -222,7 +212,7 @@ void GridMode::DrawParams() const {
 }
 
 
-void GridMode::DrawHelpSection() const {
+void GridView::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
 	if (!AlgorithmInstance->HelpText.Draw()) {
 		if (Editable) {
@@ -240,7 +230,7 @@ void GridMode::DrawHelpSection() const {
 }
 
 
-void GridMode::DrawCellPercentage(float val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellPercentage(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	auto color = selected ? CellBrightColor : CellDimColor;
 	auto size = CellSize - 3;
 	auto scaled = val * size / 100.0f;
@@ -260,18 +250,18 @@ void GridMode::DrawCellPercentage(float val, bool selected, int x1, int y1, int 
 }
 
 
-void GridMode::DrawCellValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	DrawCellPercentage(val * 10, selected, x1, y1, x2, y2);
 }
 
 
-void GridMode::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	// convert velocity to a percentage
 	DrawCellPercentage(val / 1.27, selected, x1, y1, x2, y2);
 }
 
 
-void GridMode::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val >= 0 && val <= 9) {
 		auto color = selected ? CellBrightColor : CellDimColor;
 		int xoff = val == 1 ? 1 : 0;
@@ -282,7 +272,7 @@ void GridMode::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2
 }
 
 
-void GridMode::DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val == 0) return;
 	auto color = selected ? CellBrightColor : CellDimColor;
 	int size = (CellSize - 3 + 1) / 2;
@@ -311,7 +301,7 @@ void GridMode::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 
 
 
-void GridMode::DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const {
 	using enum CellDataType;
 	float val = cell.GetField(*AlgorithmInstance, SelectedParameterIndex);
 	switch (SelectedParameterIndex)	{
@@ -360,7 +350,7 @@ void GridMode::DrawCell(const CellData& cell, bool selected, int x1, int y1, int
 }
 
 
-void GridMode::DrawDirectionArrow(unsigned int dir, int x, int y, int color) const {
+void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) const {
 	switch (dir)
 	{
 		case 1: // North
@@ -421,41 +411,41 @@ void GridMode::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 }
 
 // calculate an epsilon for a given cell parameter that we can add to our value to put it exactly in between pot "ticks"
-float GridMode::CalculateEpsilon(const CellDefinition& cd) const {
+float GridView::CalculateEpsilon(const CellDefinition& cd) const {
 	return 0.5 * static_cast<int16_t>(pow(10, -cd.Precision));
 }
 
 
-void GridMode::LoadParamForEditing() {
+void GridView::LoadParamForEditing() {
 	const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 	const auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 	ParamEditRaw = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) + CalculateEpsilon(cd);
 }
 
 
-void GridMode::Encoder1Turn(int8_t x) {
+void GridView::Encoder1Turn(int8_t x) {
 	SelectedCell.x = wrap(SelectedCell.x + x, 0, GridSizeX - 1);
 	LoadParamForEditing();
 }
 
 
-void GridMode::Encoder2Turn(int8_t x) {
+void GridView::Encoder2Turn(int8_t x) {
 	SelectedCell.y = wrap(SelectedCell.y + x, 0, GridSizeY - 1);
 	LoadParamForEditing();
 }
 
 
-void GridMode::Encoder2ShortPress() {
+void GridView::Encoder2ShortPress() {
 	Editable = !Editable;
 }
 
 
-void GridMode::Encoder2LongPress() {
+void GridView::Encoder2LongPress() {
 	AlgorithmInstance->Seq.InitialStep = SelectedCell;
 }
 
 
-void GridMode::Pot2Turn(float val) {
+void GridView::Pot2Turn(float val) {
 //	p2 = val;
 
 	auto old = SelectedParameterIndex;
@@ -470,7 +460,7 @@ void GridMode::Pot2Turn(float val) {
 }
 
 
-void GridMode::Pot3Turn(float val) {
+void GridView::Pot3Turn(float val) {
 //	p3 = val;
 
 	if (Editable) {
@@ -483,7 +473,7 @@ void GridMode::Pot3Turn(float val) {
 }
 
 
-void GridMode::Pot3ShortPress() {
+void GridView::Pot3ShortPress() {
 	// only change values if we are editable
 	if (Editable) {
 		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
@@ -502,7 +492,7 @@ void GridMode::Pot3ShortPress() {
 }
 
 
-void GridMode::Pot3LongPress() {
+void GridView::Pot3LongPress() {
 	if (Editable) {
 		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
@@ -523,7 +513,7 @@ void GridMode::Pot3LongPress() {
 }
 
 
-void GridMode::FixupPotValues(_NT_float3& pots) {
+void GridView::FixupPotValues(_NT_float3& pots) {
 	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"
 	// this way we aren't right on the edge, where a slight pot bump could change the value
 	auto epsilon2 = 0.5 / ARRAY_SIZE(CellDefinitions);
@@ -536,6 +526,6 @@ void GridMode::FixupPotValues(_NT_float3& pots) {
 }
 
 
-void GridMode::Activate() {
+void GridView::Activate() {
 	LoadParamForEditing();
 }

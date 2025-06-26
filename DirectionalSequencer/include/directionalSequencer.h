@@ -2,10 +2,10 @@
 #include <new>
 #include <distingnt/api.h>
 #include "baseAlgorithm.h"
-#include "modeSelector.h"
 #include "helpTextHelper.h"
 #include "cellDefinition.h"
 #include "sequencer.h"
+#include "gridView.h"
 
 
 enum {	
@@ -95,7 +95,7 @@ public:
 	RandomGenerator Random;
 
 	// TODO:  Maybe find a better naming scheme for types/members
-	ModeSelector Selector;
+	GridView Grid;
 	HelpTextHelper HelpText;
 	Sequencer Seq;
 
