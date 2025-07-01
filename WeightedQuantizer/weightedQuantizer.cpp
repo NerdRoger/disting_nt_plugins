@@ -380,7 +380,7 @@ const _NT_factory WeightedQuantizer::Factory =
 	.guid = NT_MULTICHAR( 'A', 'T', 'w', 'q' ),
 	.name = "Weighted Quantizer",
 	// TODO:  flesh this out
-	.description = "A quantizer where each note is weighter, and the larger the weight, the more pull it has",
+	.description = "A quantizer where each note is weighted, and the larger the weight, the more pull it has",
 	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
 	.specifications = SpecificationsDef,
 	.calculateRequirements = CalculateRequirements,
