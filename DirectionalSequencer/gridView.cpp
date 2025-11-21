@@ -260,13 +260,15 @@ void GridView::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2
 }
 
 
-void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
+void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2, bool hideZero) const {
 	if (val >= 0 && val <= 9) {
 		auto color = selected ? CellBrightColor : CellDimColor;
 		int xoff = val == 1 ? 1 : 0;
 		char buf[2];
-		NT_intToString(buf, val);
-		NT_drawText(x1 + 4 + xoff, y1 + 10, buf, color);
+		if (!hideZero || (val != 0)) {
+			NT_intToString(buf, val);
+			NT_drawText(x1 + 4 + xoff, y1 + 10, buf, color);
+		}
 	}
 }
 
@@ -317,10 +319,10 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
 		case Ratchets:
-			DrawCellNumber(val, selected, x1, y1, x2, y2);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
 			break;
 		case RestAfter:
-			DrawCellNumber(val, selected, x1, y1, x2, y2);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
 			break;
 		case GateLength:
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
@@ -332,7 +334,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellValue(val, selected, x1, y1, x2, y2);
 			break;
 		case Repeats:
-			DrawCellNumber(val, selected, x1, y1, x2, y2);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
 			break;
 		case Glide:
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
@@ -341,7 +343,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellBipolarValue(val, selected, x1, y1, x2, y2);
 			break;
 		case AccumTimes:
-			DrawCellNumber(val, selected, x1, y1, x2, y2);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
 			break;
 		default:
 			break;
