@@ -250,7 +250,8 @@ void Sequencer::ProcessAccumulator() {
 
 	// add the accumulation amount as many times as specified
 	if (accumTimes > 0) {
-		auto visit = CellVisitCounts[CurrentStep.x][CurrentStep.y];
+		// the visit for this iteration has already been incremented by this point, so subtract 1 to make it zero-based
+		auto visit = CellVisitCounts[CurrentStep.x][CurrentStep.y] - 1;
 		auto times = visit % static_cast<uint32_t>(accumTimes + 1);
 		StepVal += (accumAdd * times);
 	}
