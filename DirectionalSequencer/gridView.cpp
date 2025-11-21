@@ -158,12 +158,13 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Ratchets:
-			NT_intToString(&NumToStrBuf[0], ival);
-			NT_drawText(x, y, NumToStrBuf, color);
+			// ratchets display is 1-8, but the packed field and underlying calcs use 0-7, so add 1 here when rendering
+			NT_intToString(&NumToStrBuf[0], ival + 1);
+			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
 		case RestAfter:
 			NT_intToString(&NumToStrBuf[0], ival);
-			NT_drawText(x, y, NumToStrBuf, color);
+			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
 		case GateLength:
 			NT_intToString(&NumToStrBuf[0], ival);
@@ -180,7 +181,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			break;
 		case Repeats:
 			NT_intToString(&NumToStrBuf[0], ival);
-			NT_drawText(x, y, NumToStrBuf, color);
+			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
 		case Glide:
 			NT_intToString(&NumToStrBuf[0], ival);
@@ -193,7 +194,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			break;
 		case AccumTimes:
 			NT_intToString(&NumToStrBuf[0], ival);
-			NT_drawText(x, y, NumToStrBuf, color);
+			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
 		default:
 			break;
@@ -260,15 +261,14 @@ void GridView::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2
 }
 
 
-void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2, bool hideZero) const {
+void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2, int16_t specialCase, const char *specialCaseTxt) const {
 	if (val >= 0 && val <= 9) {
 		auto color = selected ? CellBrightColor : CellDimColor;
 		int xoff = val == 1 ? 1 : 0;
 		char buf[2];
-		if (!hideZero || (val != 0)) {
-			NT_intToString(buf, val);
-			NT_drawText(x1 + 4 + xoff, y1 + 10, buf, color);
-		}
+		NT_intToString(buf, val);
+		auto txt = (val == specialCase) ? specialCaseTxt : buf;
+		NT_drawText(x1 + 4 + xoff, y1 + 10, txt, color);
 	}
 }
 
@@ -319,10 +319,11 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
 		case Ratchets:
-			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
+			// ratchets display is 1-8, but the packed field and underlying calcs use 0-7, so add 1 here when rendering
+			DrawCellNumber(val + 1, selected, x1, y1, x2, y2, 1, "");
 			break;
 		case RestAfter:
-			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
 			break;
 		case GateLength:
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
@@ -334,7 +335,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellValue(val, selected, x1, y1, x2, y2);
 			break;
 		case Repeats:
-			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
 			break;
 		case Glide:
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
@@ -343,7 +344,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellBipolarValue(val, selected, x1, y1, x2, y2);
 			break;
 		case AccumTimes:
-			DrawCellNumber(val, selected, x1, y1, x2, y2, true);
+			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
 			break;
 		default:
 			break;
