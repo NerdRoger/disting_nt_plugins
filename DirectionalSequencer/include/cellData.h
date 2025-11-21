@@ -27,7 +27,8 @@ private:
 
 public:
 	// methods here take a sequencer reference, because we don't want to carry that per cell
-	float GetField(const DirectionalSequencer& alg, CellDataType ct) const;
-	void SetField(const DirectionalSequencer& alg, CellDataType ct, float val);
+//	float GetField(const DirectionalSequencer& alg, CellDataType ct) const;
+//	void SetField(const DirectionalSequencer& alg, CellDataType ct, float val);
 
+	friend class Sequencer;
 };

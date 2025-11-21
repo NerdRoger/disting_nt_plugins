@@ -1,5 +1,6 @@
 #include <math.h>
 #include <new>
+#include <string.h>
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
 #include "common.h"
@@ -7,44 +8,31 @@
 #include "sequencer.h"
 
 
-const char* const DirectionalSequencer::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+
+// TODO:  remove this once we get strcat/strncat
+void concatenateStrings(char *destination, const char *source) {
+	int i = 0;
+	// Find the end of the destination string
+	while (destination[i] != '\0') {
+		i++;
+	}
+
+	int j = 0;
+	// Copy characters from source to destination
+	while (source[j] != '\0') {
+		destination[i] = source[j];
+		i++;
+		j++;
+	}
+	// Null-terminate the concatenated string
+	destination[i] = '\0';
+}
 
 
-const char* const DirectionalSequencer::EnumStringsResetWhenInactive[] = { "No", "Yes" };
-
-
-const _NT_parameter DirectionalSequencer::ParametersDef[] {
-	// TODO:  change I/O defaults to final....  these are for ease of development
-	NT_PARAMETER_CV_INPUT("Clock", 1, 1)
-	NT_PARAMETER_CV_INPUT("Reset", 0, 2)
-
-	NT_PARAMETER_CV_INPUT("Quant Return", 0, 3)
-
-	NT_PARAMETER_CV_OUTPUT("Value",    1, 13)
-	NT_PARAMETER_CV_OUTPUT("Gate",     1, 14)
-	NT_PARAMETER_CV_OUTPUT("Velocity", 1, 15)
-
-	NT_PARAMETER_CV_OUTPUT("Quant Send", 0, 16)
-
-	{ .name = "Atten. Value", .min = 0,     .max = 1000, .def = 1000, .unit = kNT_unitPercent,   .scaling = kNT_scaling10,   .enumStrings = NULL },
-	{ .name = "Offset Value", .min = -5000, .max = 5000, .def = 0,    .unit = kNT_unitVolts,     .scaling = kNT_scaling1000, .enumStrings = NULL },
-
-	{ .name = "Gate Len From",       .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom },
-	{ .name = "Max Gate Len",        .min =    0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Gate Atten. %",       .min =    0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL },
-	{ .name = "Humanize %",          .min =    0, .max =  250, .def =    0, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL },
-	{ .name = "Atten. Velocity",     .min =    0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL },
-	{ .name = "Offset Velocity",     .min = -127, .max =  127, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Move N Cells",        .min =    1, .max =    7, .def =    1, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Rest after N steps",  .min =    0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Skip after N steps",  .min =    0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Reset after N steps", .min =    0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Reset when Inactive", .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsResetWhenInactive },
-};
-
-
-const uint8_t DirectionalSequencer::QuantizePageDef[] = {
-	kParamAttenValue, kParamOffsetValue
+const uint8_t DirectionalSequencer::SequencerPageDef[] = {
+	kParamGateLengthSource, kParamMaxGateLength, kParamGateLengthAttenuate, kParamHumanizeValue,
+	kParamAttenValue, kParamOffsetValue, kParamVelocityAttenuate, kParamVelocityOffset,
+	kParamMoveNCells, kParamRestAfterNSteps,kParamSkipAfterNSteps, kParamResetAfterNSteps, kParamResetWhenInactive
 };
 
 
@@ -53,27 +41,125 @@ const uint8_t DirectionalSequencer::RoutingPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencer::SequencerPageDef[] = {
-	kParamGateLengthSource, kParamMaxGateLength, kParamGateLengthAttenuate, kParamHumanizeValue, kParamVelocityAttenuate, 
-	kParamVelocityOffset, kParamMoveNCells, kParamRestAfterNSteps, kParamSkipAfterNSteps, kParamResetAfterNSteps, kParamResetWhenInactive
+const uint8_t DirectionalSequencer::ModATargetPageDef[] = {
+	kParamModATarget,
+	kParamModATargetCell1,  kParamModATargetCell2,  kParamModATargetCell3,  kParamModATargetCell4,
+	kParamModATargetCell5,  kParamModATargetCell6,  kParamModATargetCell7,  kParamModATargetCell8,
+	kParamModATargetCell9,  kParamModATargetCell10, kParamModATargetCell11, kParamModATargetCell12,
+	kParamModATargetCell13, kParamModATargetCell14, kParamModATargetCell15, kParamModATargetCell16,
+	kParamModATargetCell17, kParamModATargetCell18, kParamModATargetCell19, kParamModATargetCell20,
+	kParamModATargetCell21, kParamModATargetCell22, kParamModATargetCell23, kParamModATargetCell24,
+	kParamModATargetCell25, kParamModATargetCell26, kParamModATargetCell27, kParamModATargetCell28,
+	kParamModATargetCell29, kParamModATargetCell30, kParamModATargetCell31, kParamModATargetCell32,
+
 };
 
 
-const _NT_parameterPage DirectionalSequencer::PagesDef[] = {
-	{ .name = "Sequencer", .numParams = ARRAY_SIZE(SequencerPageDef), .params = SequencerPageDef },
-	{ .name = "Quantize",  .numParams = ARRAY_SIZE(QuantizePageDef),  .params = QuantizePageDef },
-	{ .name = "Routing",   .numParams = ARRAY_SIZE(RoutingPageDef),   .params = RoutingPageDef },
+const char* const DirectionalSequencer::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+
+
+const char* const DirectionalSequencer::EnumStringsResetWhenInactive[] = { "No", "Yes" };
+
+
+const char* const DirectionalSequencer::CellNamesDef[] = {
+	"Cell 1",  "Cell 2",  "Cell 3",  "Cell 4",  "Cell 5",  "Cell 6",  "Cell 7",  "Cell 8", 
+	"Cell 9",  "Cell 10", "Cell 11", "Cell 12", "Cell 13", "Cell 14", "Cell 15", "Cell 16", 
+	"Cell 17", "Cell 18", "Cell 19", "Cell 20", "Cell 21", "Cell 22", "Cell 23", "Cell 24", 
+	"Cell 25", "Cell 26", "Cell 27", "Cell 28", "Cell 29", "Cell 30", "Cell 31", "Cell 32", 
 };
 
 
-const _NT_parameterPages DirectionalSequencer::ParameterPagesDef = {
-	.numPages = ARRAY_SIZE(PagesDef),
-	.pages = PagesDef,
-};
+void DirectionalSequencer::BuildParameters() {
+	int numPages = 0;
+
+	// sequencer page
+	PageDefs[numPages] = { .name = "Sequencer", .numParams = ARRAY_SIZE(SequencerPageDef), .params = SequencerPageDef };
+	ParameterDefs[kParamGateLengthSource]    = { .name = "Gate Len From",       .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom };
+	ParameterDefs[kParamMaxGateLength]       = { .name = "Max Gate Len",        .min =     0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamGateLengthAttenuate] = { .name = "Gate Atten. %",       .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
+	ParameterDefs[kParamHumanizeValue]       = { .name = "Humanize %",          .min =     0, .max =  250, .def =    0, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
+	ParameterDefs[kParamAttenValue]          = { .name = "Atten. Value",        .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
+	ParameterDefs[kParamOffsetValue]         = { .name = "Offset Value",        .min = -5000, .max = 5000, .def =    0, .unit = kNT_unitVolts,   .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[kParamVelocityAttenuate]   = { .name = "Atten. Velocity",     .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
+	ParameterDefs[kParamVelocityOffset]      = { .name = "Offset Velocity",     .min =  -127, .max =  127, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamMoveNCells]          = { .name = "Move N Cells",        .min =     1, .max =    7, .def =    1, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamRestAfterNSteps]     = { .name = "Rest after N steps",  .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamSkipAfterNSteps]     = { .name = "Skip after N steps",  .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamResetAfterNSteps]    = { .name = "Reset after N steps", .min =     0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamResetWhenInactive]   = { .name = "Reset when Inactive", .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsResetWhenInactive };
+	numPages++;
+
+	// routing page
+	// TODO:  change I/O defaults to final....  these are for ease of development
+	PageDefs[numPages] = { .name = "Routing",   .numParams = ARRAY_SIZE(RoutingPageDef), .params = RoutingPageDef };
+	ParameterDefs[kParamClock]       = { .name = "Clock",        .min = 1, .max = 28, .def = 1,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamReset]       = { .name = "Reset",        .min = 0, .max = 28, .def = 2,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamValue]       = { .name = "Value",        .min = 0, .max = 28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamGate]        = { .name = "Gate",         .min = 0, .max = 28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamVelocity]    = { .name = "Velocity",     .min = 0, .max = 28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamQuantSend]   = { .name = "Quant Send",   .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+	ParameterDefs[kParamQuantReturn] = { .name = "Quant Return", .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
+	numPages++;
+
+	// param target A page
+	uint8_t numCells = GridSizeX * GridSizeY;
+
+	PageDefs[numPages] = { .name = "Mod A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
+	ParameterDefs[kParamModATarget] = { .name = "Mod A Target", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
+	auto cd = CellDefinitions[ParameterDefs[kParamModATarget].def];
+	for (int i = 0; i < numCells; i++) {
+		int16_t min = cd.Min * pow(10, cd.Precision);
+		int16_t max = cd.Max * pow(10, cd.Precision);
+		int16_t def = cd.Default * pow(10, cd.Precision);
+		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellNamesDef[i], .min = min, .max = max, .def = def, .unit = cd.Unit, .scaling = cd.Scaling, .enumStrings = NULL };
+	}
+	numPages++;
+
+
+	PagesDefs.numPages = numPages;
+	PagesDefs.pages = PageDefs;
+
+	parameters = ParameterDefs;
+	parameterPages = &PagesDefs;
+}
+
+
+void DirectionalSequencer::MapModParameters(int modTargetParamIndex) {
+	auto algIndex = NT_algorithmIndex(this);
+	int16_t modTarget = v[modTargetParamIndex];
+
+	uint8_t numCells = GridSizeX * GridSizeY;
+
+	// TODO:  combine this with loop below once it's working as I expect
+	auto cd = CellDefinitions[modTarget];
+	for (int i = 0; i < numCells; i++) {
+		int16_t min = cd.Min * pow(10, cd.Precision);
+		int16_t max = cd.Max * pow(10, cd.Precision);
+		int16_t def = cd.Default * pow(10, cd.Precision);
+		ParameterDefs[modTargetParamIndex + 1 + i].min = min;
+		ParameterDefs[modTargetParamIndex + 1 + i].max = max;
+		ParameterDefs[modTargetParamIndex + 1 + i].def = def;
+		ParameterDefs[modTargetParamIndex + 1 + i].unit = cd.Unit;
+		ParameterDefs[modTargetParamIndex + 1 + i].scaling = cd.Scaling;
+		ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = NULL; // TODO:  use for direction
+		NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
+	}
+
+
+	int multiplier = pow(10, CellDefinitions[modTarget].Precision);
+	for (size_t x = 0; x < GridSizeX; x++) {
+		for (size_t y = 0; y < GridSizeY; y++) {
+			auto cellIndex = y * GridSizeX + x;
+			auto fval = Seq.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget), false);
+			int16_t val = fval * multiplier;
+			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + cellIndex + NT_parameterOffset(), val);
+		}
+	}
+}
 
 
 void DirectionalSequencer::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-	req.numParameters = ARRAY_SIZE(ParametersDef);
+	req.numParameters = kNumCommonParameters;
 	req.sram = sizeof(DirectionalSequencer);
 	req.dram = 0;
 	req.dtc = 0;
@@ -83,27 +169,44 @@ void DirectionalSequencer::CalculateRequirements(_NT_algorithmRequirements& req,
 
 _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto& alg = *new (ptrs.sram) DirectionalSequencer();
-	alg.parameters = ParametersDef;
-	alg.parameterPages = &ParameterPagesDef;
+	alg.Grid.Initialize(alg);
+	alg.Seq.Initialize(alg);
+	alg.BuildParameters();
+	alg.Grid.Activate();
+	alg.Seq.SetDefaultCellValues();
 
 	// "seed" the random sequence
 	alg.Random.Seed(NT_getCpuCycleCount());
 
-	alg.Grid.Initialize(alg);
-	alg.Seq.Initialize(alg);
+	// whenever we construct, we need to sync NT parameters to cell parameters
+//	alg.ParametersOutOfSync = true;
+
 	return &alg;
 }
 
 
 void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
-	// notify every mode of the parameter change
+
+	if (p == kParamModATarget) {
+		alg.MapModParameters(p);
+	}
+
+	// notify every view of the parameter change
 	alg.Grid.ParameterChanged(p);
 }
 
 
 void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
+
+	// ideally, this would happen from some sort of "doneConstructing" lifecycle event
+	// TODO:  can I do this at the end of Construct?
+	if (!alg.ModParametersMapped) {
+		alg.MapModParameters(kParamModATarget);
+		alg.ModParametersMapped = true;
+	}
+
 	auto numFrames = numFramesBy4 * 4;
 
 	// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
@@ -229,7 +332,7 @@ void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 			stream.openObject();
 			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				auto fval = alg.Seq.Cells[x][y].GetField(alg, cdt);
+				auto fval = alg.Seq.GetBaseCellValue(x, y, cdt);
 				stream.addMemberName(CellDefinitions[i].FieldName);
 				if (CellDefinitions[i].Precision > 0) {
 					stream.addNumber(fval);
@@ -325,12 +428,12 @@ bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_json
 						if (!parse.number(fval)) {
 							return false;
 						}
-						alg.Seq.Cells[x][y].SetField(alg, cdt, fval);
+						alg.Seq.SetBaseCellValue(x, y, cdt, fval);
 					} else {
 						if (!parse.number(ival)) {
 							return false;
 						}
-						alg.Seq.Cells[x][y].SetField(alg, cdt, ival);
+						alg.Seq.SetBaseCellValue(x, y, cdt, ival);
 					}
 					found = true;
 					break;

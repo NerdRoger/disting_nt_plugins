@@ -104,5 +104,9 @@ public:
 	void ProcessResetTrigger();
 	void Process();
 
-	Sequencer();
+	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam = true) const;
+	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
+	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam = true);
+
+	void SetDefaultCellValues();
 };

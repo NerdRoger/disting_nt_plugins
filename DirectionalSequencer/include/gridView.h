@@ -36,7 +36,7 @@ private:
 	void DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const;
 
-	void DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const;
+	void DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCells() const;
 	void DrawInitialCellBorder() const;
 	void DrawSelectedCellBorder() const;
