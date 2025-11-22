@@ -207,6 +207,10 @@ void WeightedQuantizer::Step(_NT_algorithm* self, float* busFrames, int numFrame
 		if (sample) {
 			// get the bus number for the input
 			auto inBus  = alg.v[kWQNumCommonParameters + (ch * kWQNumPerChannelParameters) + kWQParamInput] - 1;
+
+			// if we have a valid input bus, take it's value, otherwise use zero
+			auto inputValue = (inBus >= 0) ? busFrames[inBus * numFrames] : 0.0f;
+
 			// get other parameters
 			auto atten  = alg.GetScaledParameterValue(kWQNumCommonParameters + (ch * kWQNumPerChannelParameters) + kWQParamAttenValue);
 			auto offset = alg.GetScaledParameterValue(kWQNumCommonParameters + (ch * kWQNumPerChannelParameters) + kWQParamOffsetValue);
@@ -217,7 +221,7 @@ void WeightedQuantizer::Step(_NT_algorithm* self, float* busFrames, int numFrame
 			alg.QuantRequest.Attenuate = atten;
 			alg.QuantRequest.Offset = offset;
 			alg.QuantRequest.Transpose = trans;
-			alg.QuantRequest.UnquantizedValue = busFrames[inBus * numFrames];
+			alg.QuantRequest.UnquantizedValue = inputValue;
 			alg.Quant.Quantize(alg.QuantRequest);
 			alg.OutputValues[ch] = alg.QuantRequest.OutputValue;
 			alg.QuantizedNoteNames[ch] = alg.QuantRequest.QuantizedNoteName;
@@ -226,9 +230,13 @@ void WeightedQuantizer::Step(_NT_algorithm* self, float* busFrames, int numFrame
 
 		// get the bus number for the output
 		auto outBus = alg.v[kWQNumCommonParameters + (ch * kWQNumPerChannelParameters) + kWQParamOutput] - 1;
-		//fill the whole output block with our result
-		for (int i = 0; i < numFrames; i++) {
-			busFrames[outBus * numFrames + i] = alg.OutputValues[ch];
+
+		// don't write anything if the output bus is "none"
+		if (outBus >= 0) {
+			//fill the whole output block with our result
+			for (int i = 0; i < numFrames; i++) {
+				busFrames[outBus * numFrames + i] = alg.OutputValues[ch];
+			}
 		}
 
 	}
