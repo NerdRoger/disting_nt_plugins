@@ -173,6 +173,99 @@ _NT_algorithm* WeightedQuantizer::Construct(const _NT_algorithmMemoryPtrs& ptrs,
 		alg.FinalNoteNames[ch] = "C";
 	}
 
+	// lets give the banks some defaults
+
+	// bank 0 - Ionian
+	alg.Banks[0].NoteValues[0] = 1000;
+	alg.Banks[0].NoteValues[2] = 1000;
+	alg.Banks[0].NoteValues[4] = 1000;
+	alg.Banks[0].NoteValues[5] = 1000;
+	alg.Banks[0].NoteValues[7] = 1000;
+	alg.Banks[0].NoteValues[9] = 1000;
+	alg.Banks[0].NoteValues[11] = 1000;
+
+	// bank 1 - Dorian
+	alg.Banks[1].NoteValues[0] = 1000;
+	alg.Banks[1].NoteValues[2] = 1000;
+	alg.Banks[1].NoteValues[3] = 1000;
+	alg.Banks[1].NoteValues[5] = 1000;
+	alg.Banks[1].NoteValues[7] = 1000;
+	alg.Banks[1].NoteValues[9] = 1000;
+	alg.Banks[1].NoteValues[10] = 1000;
+
+	// bank 2 - Phrygian
+	alg.Banks[2].NoteValues[0] = 1000;
+	alg.Banks[2].NoteValues[1] = 1000;
+	alg.Banks[2].NoteValues[3] = 1000;
+	alg.Banks[2].NoteValues[5] = 1000;
+	alg.Banks[2].NoteValues[7] = 1000;
+	alg.Banks[2].NoteValues[8] = 1000;
+	alg.Banks[2].NoteValues[10] = 1000;
+
+	// bank 3 - Lydian
+	alg.Banks[3].NoteValues[0] = 1000;
+	alg.Banks[3].NoteValues[2] = 1000;
+	alg.Banks[3].NoteValues[4] = 1000;
+	alg.Banks[3].NoteValues[6] = 1000;
+	alg.Banks[3].NoteValues[7] = 1000;
+	alg.Banks[3].NoteValues[9] = 1000;
+	alg.Banks[3].NoteValues[11] = 1000;
+
+	// bank 4 - Mixolydian
+	alg.Banks[4].NoteValues[0] = 1000;
+	alg.Banks[4].NoteValues[2] = 1000;
+	alg.Banks[4].NoteValues[4] = 1000;
+	alg.Banks[4].NoteValues[5] = 1000;
+	alg.Banks[4].NoteValues[7] = 1000;
+	alg.Banks[4].NoteValues[9] = 1000;
+	alg.Banks[4].NoteValues[10] = 1000;
+
+	// bank 5 - Aeolian
+	alg.Banks[5].NoteValues[0] = 1000;
+	alg.Banks[5].NoteValues[2] = 1000;
+	alg.Banks[5].NoteValues[3] = 1000;
+	alg.Banks[5].NoteValues[5] = 1000;
+	alg.Banks[5].NoteValues[7] = 1000;
+	alg.Banks[5].NoteValues[8] = 1000;
+	alg.Banks[5].NoteValues[10] = 1000;
+
+	// bank 6 - Locrian
+	alg.Banks[6].NoteValues[0] = 1000;
+	alg.Banks[6].NoteValues[1] = 1000;
+	alg.Banks[6].NoteValues[3] = 1000;
+	alg.Banks[6].NoteValues[5] = 1000;
+	alg.Banks[6].NoteValues[6] = 1000;
+	alg.Banks[6].NoteValues[8] = 1000;
+	alg.Banks[6].NoteValues[10] = 1000;
+
+	// bank 7 - Major Pentatonic
+	alg.Banks[7].NoteValues[0] = 1000;
+	alg.Banks[7].NoteValues[2] = 1000;
+	alg.Banks[7].NoteValues[4] = 1000;
+	alg.Banks[7].NoteValues[7] = 1000;
+	alg.Banks[7].NoteValues[9] = 1000;
+
+	// bank 8 - Minor Pentatonic
+	alg.Banks[8].NoteValues[0] = 1000;
+	alg.Banks[8].NoteValues[3] = 1000;
+	alg.Banks[8].NoteValues[5] = 1000;
+	alg.Banks[8].NoteValues[7] = 1000;
+	alg.Banks[8].NoteValues[10] = 1000;
+
+	// bank 9 - Chromatic
+	alg.Banks[9].NoteValues[0] = 1000;
+	alg.Banks[9].NoteValues[1] = 1000;
+	alg.Banks[9].NoteValues[2] = 1000;
+	alg.Banks[9].NoteValues[3] = 1000;
+	alg.Banks[9].NoteValues[4] = 1000;
+	alg.Banks[9].NoteValues[5] = 1000;
+	alg.Banks[9].NoteValues[6] = 1000;
+	alg.Banks[9].NoteValues[7] = 1000;
+	alg.Banks[9].NoteValues[8] = 1000;
+	alg.Banks[9].NoteValues[9] = 1000;
+	alg.Banks[9].NoteValues[10] = 1000;
+	alg.Banks[9].NoteValues[11] = 1000;
+
 	return &alg;
 }
 
