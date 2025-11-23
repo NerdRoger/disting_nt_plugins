@@ -115,3 +115,47 @@ public:
 		return x;
 	}
 };
+
+
+// helper used when dynamically allocating/aligning memory for various types from the same memory block
+template <typename T>
+struct MemoryHelper {
+private:	
+	static constexpr size_t size = sizeof(T);
+	static constexpr size_t alignment = alignof(T);
+	
+public:
+	static void AlignAndIncrementMemoryRequirement(uint32_t& memRequired, size_t numElements) {
+		// align the memory requirement to the next alignment boundary for the type
+		memRequired = (memRequired + alignment - 1) & ~(alignment - 1);
+		// then increment it by the size of the type * number of elements
+		memRequired += size * numElements;
+	}
+
+	static T* AlignMemoryPointer(uint8_t*& ptr) {
+		// advance the pointer to the next alignment boundary for the type
+		uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
+		uintptr_t remainder = addr % alignment;
+		if (remainder != 0) {
+				addr += (alignment - remainder);
+		}
+		ptr = reinterpret_cast<uint8_t*>(addr);
+		return reinterpret_cast<T*>(ptr);
+	}
+
+	static T* InitializeDynamicDataAndIncrementPointer(uint8_t*& ptr, size_t num) {
+		// align the memory pointer to the boundary for the type
+		T* result = AlignMemoryPointer(ptr);
+
+		// construct each element in place using placement new
+		// placement new is not strictly necessary for primitive types, but if the type has a constructor we want it to be called
+		for (size_t i = 0; i < num; i++) {
+			new (result + i) T();
+		}
+
+		// advance the raw pointer by the total size of the allocated elements
+		ptr = reinterpret_cast<uint8_t*>(result + num);
+
+		return result;
+	}
+};

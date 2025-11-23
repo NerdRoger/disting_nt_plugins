@@ -63,7 +63,7 @@ const char* const WeightedQuantizer::TransposeNamesDef[] = {
 
 
 const _NT_specification WeightedQuantizer::SpecificationsDef[] = {
-	{ .name = "Channels", .min = 1, .max = WeightedQuantizer::MaxChannels, .def = 1, .type = kNT_typeGeneric },
+	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
 };
 
 
@@ -127,22 +127,48 @@ void WeightedQuantizer::BuildParameters() {
 void WeightedQuantizer::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	int32_t numChannels = specifications[0];
 	req.numParameters = kWQNumCommonParameters + numChannels * kWQNumPerChannelParameters;
-	req.sram = sizeof(WeightedQuantizer);
+	req.sram = 0;
 	req.dram = 0;
 	req.dtc = 0;
 	req.itc = 0;
+
+	// calculate the memory requirements for all of the objects and dynamic arrays we need to create
+	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
+	MemoryHelper<WeightedQuantizer>::AlignAndIncrementMemoryRequirement(req.sram, 1); // WeightedQuantizer
+	MemoryHelper<Trigger>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::Triggers
+	MemoryHelper<const char*>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::QuantizedNoteNames
+	MemoryHelper<const char*>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::FinalNoteNames
+	MemoryHelper<float>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::OutputValues
+	MemoryHelper<uint32_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::DelayedTriggers
+	MemoryHelper<_NT_parameter>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WeightedQuantizer::ParameterDefs
+	MemoryHelper<_NT_parameterPage>::AlignAndIncrementMemoryRequirement(req.sram, numChannels + 2); // WeightedQuantizer::PageDefs
+	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels * kWQNumPerChannelParameters); // WeightedQuantizer::PageParams
 }
 
 
 _NT_algorithm* WeightedQuantizer::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
-	auto& alg = *new (ptrs.sram) WeightedQuantizer();
+	auto numChannels = specifications[0];
+	auto mem = ptrs.sram;
+
+	// initialize arrays that depend on number of channels
+	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
+	auto& alg = *MemoryHelper<WeightedQuantizer>::InitializeDynamicDataAndIncrementPointer(mem, 1);
+	alg.Triggers = MemoryHelper<Trigger>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.QuantizedNoteNames = MemoryHelper<const char*>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.FinalNoteNames = MemoryHelper<const char*>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.OutputValues = MemoryHelper<float>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.DelayedTriggers = MemoryHelper<uint32_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
+	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 2);
+	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels * kWQNumPerChannelParameters);
+
 	alg.QuantView.Initialize(alg);
 	alg.NumChannels = specifications[0];
 	alg.BuildParameters();
 	alg.QuantView.Activate();
 
 	// default note names to C, since the values default to zero
-	for (int ch = 0; ch < MaxChannels; ch++) {
+	for (int ch = 0; ch < numChannels; ch++) {
 		alg.QuantizedNoteNames[ch] = "C";
 		alg.FinalNoteNames[ch] = "C";
 	}

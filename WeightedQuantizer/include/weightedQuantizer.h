@@ -40,9 +40,6 @@ enum {
 
 
 struct WeightedQuantizer : public BaseAlgorithm {
-public:
-	static constexpr uint8_t MaxChannels = 8;
-
 private:
 
 	struct Bank {
@@ -60,10 +57,10 @@ private:
 	static const char* const OffsetNamesDef[];
 	static const char* const TransposeNamesDef[];
 	static const _NT_specification SpecificationsDef[];
-	_NT_parameter ParameterDefs[kWQNumCommonParameters + MaxChannels * kWQNumPerChannelParameters];
+	_NT_parameter* ParameterDefs;
 	_NT_parameterPages PagesDefs;
-	_NT_parameterPage	PageDefs[MaxChannels + 2];
-	uint8_t PageParams[MaxChannels * kWQNumPerChannelParameters];
+	_NT_parameterPage* PageDefs;
+	uint8_t* PageParams;
 	void BuildParameters();
 
 	// NT factory "methods"
@@ -79,7 +76,7 @@ private:
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 
 	int16_t PreviousBankScanParameterValue = 0;
-	uint32_t DelayedTriggers[MaxChannels];
+	uint32_t* DelayedTriggers;
 
 public:
 	static const _NT_factory Factory;
@@ -90,11 +87,11 @@ public:
 	QuantizerView QuantView;
 	Quantizer Quant;
 	Quantizer::QuantRequest QuantRequest;
-	Trigger Triggers[MaxChannels];
+	Trigger* Triggers;
 
-	const char* QuantizedNoteNames[MaxChannels];
-	const char* FinalNoteNames[MaxChannels];
-	float OutputValues[MaxChannels];
+	const char** QuantizedNoteNames;
+	const char** FinalNoteNames;
+	float* OutputValues;
 	bool ScanningLocked = true;
 	Bank Banks[10];
 
