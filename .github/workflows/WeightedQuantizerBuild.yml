@@ -20,7 +20,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: . # Build context is the repository root
-          file: Dockerfile # Dockerfile is at the root
+          file: .devcontainer/Dockerfile # Correctly points to the Dockerfile location
           tags: local-dev-environment:latest # Tag the image for local use
           load: true # Load the image into the runner's local Docker daemon
 
