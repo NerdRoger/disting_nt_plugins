@@ -19,8 +19,11 @@ jobs:
     # -----------------------------------------------------
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repository and Submodules
         uses: actions/checkout@v4
+        with:
+          # ❗ FIX: Add submodules: true to clone all dependencies
+          submodules: true
         
       # -----------------------------------------------------
       # FIX: Convert Repository Path to Lowercase for GHCR
