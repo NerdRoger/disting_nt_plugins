@@ -8,41 +8,40 @@ on:
 jobs:
   build_quantizer:
     name: Build WeightedQuantizer Plugin
-    # Use a Linux runner, as Docker build is natively supported and efficient
     runs-on: ubuntu-latest
     
-    # 1. Define the execution environment using the local Dockerfile
-    # This updated syntax resolves the "invalid reference format" error
-    container:
-      # Use the 'docker' command to define the image build explicitly
-      image: local-build-image
-      
-      options: --user root
-      
-      # The 'services' section is used to define the build context
-      # This forces the build process to use a valid internal tag
-      services:
-        docker-build:
-          image: local-build-image
-          build:
-            context: .  # Build context is the repository root
-            dockerfile: Dockerfile # Dockerfile is at the root
-
     steps:
       - name: Checkout Repository
-        # Must checkout the code so the container has access to the source files
         uses: actions/checkout@v4
         
-      - name: Run Make Build
-        # Execute the 'make' command specifically within the project's directory.
+      # 1. Build the Docker image from your Dockerfile
+      - name: Build Dev Container Image
+        id: build_image
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Build context is the repository root
+          file: Dockerfile # Dockerfile is at the root
+          tags: local-dev-environment:latest # Tag the image for local use
+          load: true # Load the image into the runner's local Docker daemon
+
+      # 2. Run the build command inside the newly created container
+      # This maintains the exact environment consistency
+      - name: Run Make Build inside Container
         run: |
           echo "Building WeightedQuantizer..."
-          make clean
-          make all
-        working-directory: ./WeightedQuantizer
-        
+          # Use docker run to execute the build commands inside the custom image.
+          # -v mounts the current workspace (source code) into the container at /src
+          # -w sets the working directory inside the container
+          # The final part executes the build commands via bash
+          docker run --rm \
+            -v ${{ github.workspace }}:/src \
+            -w /src/WeightedQuantizer \
+            local-dev-environment:latest \
+            /bin/bash -c "make clean && make all"
+
       - name: Verify Build Artifact
-        # Set the working directory to ./plugins
+        # The artifact is generated back into the host file system (the runner)
+        # because the workspace was mounted via -v.
         working-directory: ./plugins
         run: |
           if [ -f "weightedQuantizer.o" ]; then
