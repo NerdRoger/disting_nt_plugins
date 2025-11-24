@@ -101,7 +101,7 @@ jobs:
         if: startsWith(inputs.tag_ref, 'refs/tags/')
         with:
           files: plugins/${{ inputs.artifact_file }}
-          name: Release ${{ inputs.tag_ref }} 
+          name: ${{ replace(replace(inputs.tag_ref, 'refs/tags/', ''), '/', ' ') }}
           body: |
             Automated build for release tag ${{ inputs.tag_ref }}. 
             Includes the compiled plugin binary (${{ inputs.artifact_file }}).
