@@ -15,6 +15,12 @@ jobs:
         uses: actions/checkout@v4
         
       # -----------------------------------------------------
+      # ❗ FIX: Set up Docker Buildx (Required for Cache)
+      # This step switches the Docker driver to support registry-based caching.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      # -----------------------------------------------------
       # Caching Setup
       # -----------------------------------------------------
       - name: Log in to GitHub Container Registry (GHCR)
