@@ -1,0 +1,55 @@
+name: DistingNT WeightedQuantizer Build
+
+on:
+  # This section replaces the 'push' trigger, making the workflow run only manually
+  workflow_dispatch:
+    # You can add inputs here later if you want to pass custom values when running manually
+
+jobs:
+  build_quantizer:
+    name: Build WeightedQuantizer Plugin
+    # Use a Linux runner, as Docker build is natively supported and efficient
+    runs-on: ubuntu-latest
+    
+    # 1. Define the execution environment using the local Dockerfile
+    # GitHub Actions will automatically build this image and use it for all steps
+    container:
+      # IMPORTANT: If your Dockerfile is not at the root, update this path.
+      # Example: image: dockerfile://.devcontainer/Dockerfile
+      image: dockerfile://Dockerfile
+      
+      # Use the 'root' user to avoid permission issues if the container's default 
+      # user doesn't have the necessary access to the mounted GitHub workspace.
+      options: --user root
+
+    steps:
+      - name: Checkout Repository
+        # Must checkout the code so the container has access to the source files
+        uses: actions/checkout@v4
+        
+      - name: Run Make Build
+        # Execute the 'make' command specifically within the project's directory.
+        run: |
+          echo "Building WeightedQuantizer..."
+          make clean
+          make all
+        working-directory: ./WeightedQuantizer
+        
+      - name: Verify Build Artifact
+        # Set the working directory to ./plugins
+        working-directory: ./plugins
+        run: |
+          if [ -f "weightedQuantizer.o" ]; then
+            echo "Build successful: weightedQuantizer.o found."
+          else
+            echo "Build failed: Expected artifact weightedQuantizer.o not found."
+            exit 1
+          fi
+
+      # Upload the artifact for download from the GitHub Actions run summary page.
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weightedQuantizer-binary
+          # This path remains relative to the root of the repository checkout
+          path: plugins/weightedQuantizer.o
