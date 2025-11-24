@@ -95,13 +95,23 @@ jobs:
         with:
           name: ${{ inputs.artifact_base_name }}-build-${{ github.run_number }}
           path: plugins/${{ inputs.artifact_file }}
+
+      # Converts the full tag name to the release name by stripping 'refs/tags/' and replacing '/' with ' '
+      # i.e.:  refs/tags/weighted-quantizer/v0.9.0  ->  weighted-quantizer v0.9.0
+      - name: Format Release Name
+        id: format_name
+        if: startsWith(inputs.tag_ref, 'refs/tags/')
+        run: |
+          TAG_WITHOUT_PREFIX="${{ inputs.tag_ref/refs/tags/ }}"
+          CLEAN_NAME=$(echo "$TAG_WITHOUT_PREFIX" | sed 's/\// /')
+          echo "release_name=$CLEAN_NAME" >> $GITHUB_OUTPUT
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(inputs.tag_ref, 'refs/tags/')
         with:
           files: plugins/${{ inputs.artifact_file }}
-          name: ${{ replace(replace(inputs.tag_ref, 'refs/tags/', ''), '/', ' ') }}
+          name: ${{ steps.format_name.outputs.release_name }}
           body: |
             Automated build for release tag ${{ inputs.tag_ref }}. 
             Includes the compiled plugin binary (${{ inputs.artifact_file }}).
