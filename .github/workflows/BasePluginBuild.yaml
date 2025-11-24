@@ -102,7 +102,8 @@ jobs:
         id: format_name
         if: startsWith(inputs.tag_ref, 'refs/tags/')
         run: |
-          TAG_WITHOUT_PREFIX="${{ inputs.tag_ref/refs/tags/ }}"
+          TAG_REF="${{ inputs.tag_ref }}"
+          TAG_WITHOUT_PREFIX="${TAG_REF#refs/tags/}"
           CLEAN_NAME=$(echo "$TAG_WITHOUT_PREFIX" | sed 's/\// /')
           echo "release_name=$CLEAN_NAME" >> $GITHUB_OUTPUT
       
