@@ -1,0 +1,18 @@
+name: DistingNT NewPlugin Build
+
+on:
+  push:
+    tags:
+      - 'weighted-quantizer/v*'
+  workflow_dispatch:
+
+jobs:
+  call_build_workflow:
+    name: Call Base Plugin Build Workflow
+    uses: ./.github/workflows/BasePluginBuild.yaml
+    with:
+      plugin_name: WeightedQuantizer
+      artifact_file: weightedQuantizer.o
+      artifact_base_name: weightedQuantizer
+      source_path: /src/WeightedQuantizer
+      tag_ref: ${{ github.ref }}
