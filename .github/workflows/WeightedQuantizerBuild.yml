@@ -10,14 +10,21 @@ jobs:
     name: Build WeightedQuantizer Plugin
     runs-on: ubuntu-latest
     
+    # -----------------------------------------------------
+    # ❗ FIX: Explicitly grant write access to packages
+    # This resolves the "403 Forbidden / denied: installation not allowed" error.
+    permissions:
+      contents: read # Required for actions/checkout
+      packages: write # Required to push cache layers to GHCR
+    # -----------------------------------------------------
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         
       # -----------------------------------------------------
-      # ❗ FIX: Convert Repository Path to Lowercase for GHCR
-      # GHCR requires image references to be strictly lowercase, 
-      # but ${{ github.repository }} preserves the original casing.
+      # FIX: Convert Repository Path to Lowercase for GHCR
+      # GHCR requires image references to be strictly lowercase.
       - name: Calculate Lowercase Repository Path
         id: repo_lc
         run: |
