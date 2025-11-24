@@ -1,4 +1,4 @@
-name: DistingNT NewPlugin Build
+name: DistingNT WeightedQuantizer Build
 
 on:
   push:
