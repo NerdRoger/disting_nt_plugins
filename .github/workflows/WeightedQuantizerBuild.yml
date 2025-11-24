@@ -14,15 +14,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         
+      # -----------------------------------------------------
+      # Caching Setup
+      # -----------------------------------------------------
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # Use the built-in token for authentication
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
       # 1. Build the Docker image from your Dockerfile
-      - name: Build Dev Container Image
+      - name: Build Dev Container Image (with Cache)
         id: build_image
         uses: docker/build-push-action@v5
         with:
-          context: . # Build context is the repository root
-          file: .devcontainer/Dockerfile # Correctly points to the Dockerfile location
-          tags: local-dev-environment:latest # Tag the image for local use
-          load: true # Load the image into the runner's local Docker daemon
+          context: . 
+          file: .devcontainer/Dockerfile 
+          tags: local-dev-environment:latest 
+          load: true 
+          # Pull cache layers from previous builds in GHCR
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/dev-env-cache:latest
+          # Push new layers back to GHCR for future runs (mode=max saves all layers)
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/dev-env-cache:latest,mode=max
 
       # 2. Run the build command inside the newly created container
       # This maintains the exact environment consistency
@@ -30,9 +45,6 @@ jobs:
         run: |
           echo "Building WeightedQuantizer..."
           # Use docker run to execute the build commands inside the custom image.
-          # -v mounts the current workspace (source code) into the container at /src
-          # -w sets the working directory inside the container
-          # The final part executes the build commands via bash
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -w /src/WeightedQuantizer \
