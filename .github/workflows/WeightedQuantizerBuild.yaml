@@ -1,4 +1,4 @@
-name: DistingNT WeightedQuantizer Build
+name: WeightedQuantizer Build
 
 on:
   push:
