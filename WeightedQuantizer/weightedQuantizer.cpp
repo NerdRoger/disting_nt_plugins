@@ -29,39 +29,6 @@ const char* const WeightedQuantizer::PageNamesDef[] = {
 };
 
 
-const char* const WeightedQuantizer::InputNamesDef[] = {
-	"1:Input", "2:Input", "3:Input", "4:Input", "5:Input", "6:Input", "7:Input", "8:Input",
-};
-
-
-const char* const WeightedQuantizer::TriggerNamesDef[] = {
-	"1:Trigger", "2:Trigger", "3:Trigger", "4:Trigger", "5:Trigger", "6:Trigger", "7:Trigger", "8:Trigger",
-};
-
-
-const char* const WeightedQuantizer::OutputNamesDef[] = {
-	"1:Output", "2:Output", "3:Output", "4:Output", "5:Output", "6:Output", "7:Output", "8:Output",
-};
-
-
-const char* const WeightedQuantizer::AttenuateNamesDef[] = {
-	"1:(Pre) Attenuate", "2:(Pre) Attenuate", "3:(Pre) Attenuate", "4:(Pre) Attenuate",
-	"5:(Pre) Attenuate", "6:(Pre) Attenuate", "7:(Pre) Attenuate", "8:(Pre) Attenuate",
-};
-
-
-const char* const WeightedQuantizer::OffsetNamesDef[] = {
-	"1:(Pre) Offset", "2:(Pre) Offset", "3:(Pre) Offset", "4:(Pre) Offset",
-	"5:(Pre) Offset", "6:(Pre) Offset", "7:(Pre) Offset", "8:(Pre) Offset",
-};
-
-
-const char* const WeightedQuantizer::TransposeNamesDef[] = {
-	"1:(Post) Transpose", "2:(Post) Transpose", "3:(Post) Transpose", "4:(Post) Transpose",
-	"5:(Post) Transpose", "6:(Post) Transpose", "7:(Post) Transpose", "8:(Post) Transpose",
-};
-
-
 const _NT_specification WeightedQuantizer::SpecificationsDef[] = {
 	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
 };
@@ -97,13 +64,13 @@ void WeightedQuantizer::BuildParameters() {
 	uint8_t* pagePtr = PageParams;
 	for (int16_t i = 0; i < NumChannels; i++) {
 		// inputs and outputs
-		ParameterDefs[idx + kWQParamInput]   = { .name = InputNamesDef[i],   .min = 0, .max = 28, .def = static_cast<int16_t>(i + 1),  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
-		ParameterDefs[idx + kWQParamTrigger] = { .name = TriggerNamesDef[i], .min = 0, .max = 28, .def = 0,                            .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
-		ParameterDefs[idx + kWQParamOutput]  = { .name = OutputNamesDef[i],  .min = 0, .max = 28, .def = static_cast<int16_t>(i + 13), .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamInput]   = { .name = "Input",   .min = 0, .max = 28, .def = static_cast<int16_t>(i + 1),  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamTrigger] = { .name = "Trigger", .min = 0, .max = 28, .def = 0,                            .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamOutput]  = { .name = "Output",  .min = 0, .max = 28, .def = static_cast<int16_t>(i + 13), .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
 		// parameters
-		ParameterDefs[idx + kWQParamAttenValue]  = { .name = AttenuateNamesDef[i], .min = 0,     .max = 1000, .def = 1000, .unit = kNT_unitPercent,   .scaling = kNT_scaling10,   .enumStrings = NULL };
-		ParameterDefs[idx + kWQParamOffsetValue] = { .name = OffsetNamesDef[i],    .min = -5000, .max = 5000, .def = 0,    .unit = kNT_unitVolts,     .scaling = kNT_scaling1000, .enumStrings = NULL };
-		ParameterDefs[idx + kWQParamTranspose]   = { .name = TransposeNamesDef[i], .min = -60,   .max = 60,   .def = 0,    .unit = kNT_unitSemitones, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamAttenValue]  = { .name = "(Pre) Attenuate",  .min = 0,     .max = 1000, .def = 1000, .unit = kNT_unitPercent,   .scaling = kNT_scaling10,   .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamOffsetValue] = { .name = "(Pre) Offset",     .min = -5000, .max = 5000, .def = 0,    .unit = kNT_unitVolts,     .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kWQParamTranspose]   = { .name = "(Post) Transpose", .min = -60,   .max = 60,   .def = 0,    .unit = kNT_unitSemitones, .scaling = kNT_scalingNone, .enumStrings = NULL };
 
 		for (int j = 0; j < kWQNumPerChannelParameters; j++) {
 			pagePtr[j] = idx + j;
@@ -462,6 +429,19 @@ bool WeightedQuantizer::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 }
 
 
+int WeightedQuantizer::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
+	int len = 0;
+	if (p >= kWQNumCommonParameters) {
+		auto channel = (p - kWQNumCommonParameters) / kWQNumPerChannelParameters;
+		channel++;
+		len = NT_intToString( buff, channel );
+		buff[len++] = ':';
+		buff[len] = 0;
+	}
+	return len;
+}
+
+
 void WeightedQuantizer::LoadNotesFromBank(size_t bankNum) {
 	auto& bank = Banks[bankNum];
 	auto algIndex = NT_algorithmIndex(this);
@@ -520,5 +500,6 @@ const _NT_factory WeightedQuantizer::Factory =
 	.customUi = CustomUI,
 	.setupUi = SetupUI,
 	.serialise = Serialise,
-	.deserialise = Deserialise
+	.deserialise = Deserialise,
+	.parameterUiPrefix = ParameterUiPrefix,
 };

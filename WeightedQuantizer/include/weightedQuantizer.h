@@ -50,12 +50,6 @@ private:
 	static const uint8_t GeneralPageDef[];
 	static const uint8_t NoteWeightsPageDef[];
 	static const char* const PageNamesDef[];
-	static const char* const InputNamesDef[];
-	static const char* const TriggerNamesDef[];
-	static const char* const OutputNamesDef[];
-	static const char* const AttenuateNamesDef[];
-	static const char* const OffsetNamesDef[];
-	static const char* const TransposeNamesDef[];
 	static const _NT_specification SpecificationsDef[];
 	_NT_parameter* ParameterDefs;
 	_NT_parameterPages PagesDefs;
@@ -74,6 +68,7 @@ private:
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
 	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
+	static int  ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
 	int16_t PreviousBankScanParameterValue = 0;
 	uint32_t* DelayedTriggers;
