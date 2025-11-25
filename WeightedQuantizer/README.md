@@ -106,3 +106,5 @@ This plugin utilizes features in API version 10 of the Disting NT API.  This ver
 Here is a video I made a while back covering most of the functionality described above.
 
 [Video](https://www.youtube.com/watch?v=RbKRSuCFE7E)
+
+Bugs, PRs, etc on [GitHub](https://github.com/NerdRoger/disting_nt_plugins) or find me (AgentTerror) on the Expert Sleepers Discord.
