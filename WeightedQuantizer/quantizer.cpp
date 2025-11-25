@@ -1,5 +1,6 @@
 #include <math.h>
 #include <float.h>
+#include "common.h"
 #include "quantizer.h"
 
 
@@ -50,7 +51,9 @@ void Quantizer::Quantize(Quantizer::QuantRequest& req) {
 		req.FinalNoteName = "??";
 	} else {
 		req.QuantizedNoteName = Notes[bestNoteIndex].Name;
-		auto transposedNoteIndex = (bestNoteIndex + req.Transpose) % NumberOfNotes;
+		// transposition might take us out of range of our notes array, so wrap it around the boundaries
+		// simple modulo won't work for negative numbers, so use this helper
+		auto transposedNoteIndex = wrap(bestNoteIndex + req.Transpose, 0, 11);
 		req.FinalNoteName = Notes[transposedNoteIndex].Name;
 
 	}
