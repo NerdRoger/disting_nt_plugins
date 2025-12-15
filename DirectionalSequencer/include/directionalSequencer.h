@@ -86,7 +86,7 @@ private:
 
 	void BuildParameters();
 
-	 bool ModParametersMapped;
+	 bool DoneConstructing = false;
 	 void MapModParameters(int modTargetParamIndex);
 
 	// NT factory "methods"

@@ -189,6 +189,12 @@ _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& pt
 
 void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
+	auto algIndex = NT_algorithmIndex(self);
+
+	// Max Gate Length is only relevant if we are using it to source the gate length
+	if (p == kParamGateLengthSource) {
+		NT_setParameterGrayedOut(algIndex, kParamMaxGateLength + NT_parameterOffset(), alg.v[kParamGateLengthSource] != 0);
+	}
 
 	if (p == kParamModATarget) {
 		alg.MapModParameters(p);
@@ -203,10 +209,13 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
 
 	// ideally, this would happen from some sort of "doneConstructing" lifecycle event
-	// TODO:  can I do this at the end of Construct?
-	if (!alg.ModParametersMapped) {
+	if (!alg.DoneConstructing) {
 		alg.MapModParameters(kParamModATarget);
-		alg.ModParametersMapped = true;
+
+		auto algIndex = NT_algorithmIndex(&alg);
+		NT_setParameterGrayedOut(algIndex, kParamMaxGateLength + NT_parameterOffset(), alg.v[kParamGateLengthSource] != 0);
+
+		alg.DoneConstructing = true;
 	}
 
 	auto numFrames = numFramesBy4 * 4;
