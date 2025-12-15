@@ -5,7 +5,8 @@
 #include "baseAlgorithm.h"
 #include "helpTextHelper.h"
 #include "cellDefinition.h"
-#include "sequencer.h"
+#include "stepDataRegion.h"
+#include "playhead.h"
 #include "gridView.h"
 
 
@@ -72,7 +73,6 @@ enum {
 
 struct DirectionalSequencer : public BaseAlgorithm {
 private:
-
 	// NT Parameter Data
 	static const char* const EnumStringsMaxGateFrom[];
 	static const char* const EnumStringsResetWhenInactive[];
@@ -111,11 +111,8 @@ public:
 	// TODO:  Maybe find a better naming scheme for types/members
 	GridView Grid;
 	HelpTextHelper HelpText;
-	Sequencer Seq;
-
-	// TODO:  consider visibility, maybe some of this stuff is private to the algorithm
-	Trigger ResetTrigger;
-	Trigger ClockTrigger;
+	StepDataRegion StepData;
+	Playhead Head;
 
 	DirectionalSequencer() {}
 	~DirectionalSequencer() {}

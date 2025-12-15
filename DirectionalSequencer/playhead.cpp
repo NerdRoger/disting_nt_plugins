@@ -1,32 +1,17 @@
 #include <stdio.h>
 #include <distingnt/api.h>
 #include <distingnt/slot.h>
-#include "sequencer.h"
+#include "playhead.h"
 #include "directionalSequencer.h"
 #include "cellDefinition.h"
 
 
-void Sequencer::SetDefaultCellValues() {
-	// set the default cell values
-	for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
-		auto& cd = CellDefinitions[i];
-		for (int x = 0; x < GridSizeX; x++) {
-			for (int y = 0; y < GridSizeY; y++) {
-				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.Default);
-			}
-		}
-	}
-	// default state for direction should give us an initial direction (east)
-	SetBaseCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction, 3);
-}
-
-
-void Sequencer::Reset() {
+void Playhead::Reset() {
 	CurrentStep = { -1, -1 };
 	AdvanceCount = 0;
 	UniqueAdvanceCount = 0;
 	// if there is no direction on the initial step, set us moving to the right
-	auto dir = GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
+	auto dir = AlgorithmInstance->StepData.GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
 	dir = (dir == 0 ? 3 : dir);
 	Direction = dir;
 	RepeatCount = 0;
@@ -37,7 +22,7 @@ void Sequencer::Reset() {
 }
 
 
-void Sequencer::InitVisitCounts() {
+void Playhead::InitVisitCounts() {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
 			CellVisitCounts[x][y] = 0;
@@ -46,7 +31,7 @@ void Sequencer::InitVisitCounts() {
 }
 
 
-void Sequencer::ProcessClockTrigger() {
+void Playhead::ProcessClockTrigger() {
 	// we can't calculate the clock rate without knowing the time of the last clock
 	if (LastClock > 0) {
 		// if the clock rate has been stable, but we are now longer by more than 10x, assume this is because the clock was stopped,
@@ -73,12 +58,12 @@ void Sequencer::ProcessClockTrigger() {
 }
 
 
-void Sequencer::ProcessResetTrigger() {
+void Playhead::ProcessResetTrigger() {
 	ResetQueued = true;
 }
 
 
-void Sequencer::Process() {
+void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
 	bool resetWhenInactive = (AlgorithmInstance->v[kParamResetWhenInactive] == 1);
 	if (resetWhenInactive) {
@@ -134,7 +119,7 @@ void Sequencer::Process() {
 }
 
 
-void Sequencer::Advance() {
+void Playhead::Advance() {
 	ResetIfNecessary();
 
 	LastAdvanceTime = AlgorithmInstance->TotalMs;
@@ -180,7 +165,7 @@ void Sequencer::Advance() {
 }
 
 
-void Sequencer::ResetIfNecessary() {
+void Playhead::ResetIfNecessary() {
 	if (ResetQueued) {
 		Reset();
 		ResetQueued = false;
@@ -196,7 +181,7 @@ void Sequencer::ResetIfNecessary() {
 }
 
 
-void Sequencer::MoveToNextCell() {
+void Playhead::MoveToNextCell() {
 	IsRepeat = false;
 	// if we don't have a current step, start at the initial step, otherwise, move to the next step
 	if (CurrentStep.x == -1 && CurrentStep.y == -1) {
@@ -207,7 +192,7 @@ void Sequencer::MoveToNextCell() {
 		RepeatCount--;
 	} else {
 		// if we have a new direction, change to that, otherwise keep going in the direction we had
-		uint8_t dir = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
+		uint8_t dir = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
 		if (dir > 0) {
 			Direction = dir;
 		}
@@ -239,14 +224,14 @@ void Sequencer::MoveToNextCell() {
 }
 
 
-void Sequencer::CalculateStepValue() {
-	StepVal = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
+void Playhead::CalculateStepValue() {
+	StepVal = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
 }
 
 
-void Sequencer::ProcessAccumulator() {
-	auto accumAdd = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
-	auto accumTimes = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
+void Playhead::ProcessAccumulator() {
+	auto accumAdd = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
+	auto accumTimes = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
 
 	// add the accumulation amount as many times as specified
 	if (accumTimes > 0) {
@@ -258,8 +243,8 @@ void Sequencer::ProcessAccumulator() {
 }
 
 
-void Sequencer::ProcessDrift() {
-	auto driftProb = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
+void Playhead::ProcessDrift() {
+	auto driftProb = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
 	if (AlgorithmInstance->Random.Next(1, 100) <= driftProb) {
 		// we are going to drift the value, now let's figure out by how much
 		// we want a much higher likelihood of the drift amount being small vs. large, so use an exponential scale
@@ -270,7 +255,7 @@ void Sequencer::ProcessDrift() {
 		auto driftScale = static_cast<float>(AlgorithmInstance->Random.Next(0, res)) / res;
 		driftScale = pow(driftScale, 0.5f);
 		// calculate the drift range from the max
-		auto driftRange = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
+		auto driftRange = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
 		// scale the drift range to get the actual drift, and make it negative half of the time
 		auto actualDrift = driftRange * driftScale * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
 		StepVal += actualDrift;
@@ -278,7 +263,7 @@ void Sequencer::ProcessDrift() {
 }
 
 
-void Sequencer::AttenuateValue() {
+void Playhead::AttenuateValue() {
 	auto& param = AlgorithmInstance->parameters[kParamAttenValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = AlgorithmInstance->v[kParamAttenValue] / scaling;
@@ -286,7 +271,7 @@ void Sequencer::AttenuateValue() {
 }
 
 
-void Sequencer::OffsetValue() {
+void Playhead::OffsetValue() {
 	auto& param = AlgorithmInstance->parameters[kParamOffsetValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto offset = AlgorithmInstance->v[kParamOffsetValue] / scaling;
@@ -294,7 +279,7 @@ void Sequencer::OffsetValue() {
 }
 
 
-void Sequencer::QuantizeValue()	{
+void Playhead::QuantizeValue()	{
 	if (QuantReturnSupplied) {
 		PreQuantStepVal = StepVal;
 		StepVal = QuantReturn;
@@ -302,9 +287,9 @@ void Sequencer::QuantizeValue()	{
 }
 
 
-void Sequencer::ProcessRest() {
+void Playhead::ProcessRest() {
 	// calculate if we should rest this cell this time around
-	uint8_t restAfter = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
+	uint8_t restAfter = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
 	if (restAfter > 0) {
 		if (CellVisitCounts[CurrentStep.x][CurrentStep.y] % (restAfter + 1) == restAfter) {
 			EmitGate = false;
@@ -321,30 +306,30 @@ void Sequencer::ProcessRest() {
 }
 
 
-void Sequencer::ProcessProbability() {
+void Playhead::ProcessProbability() {
 	// apply probability to see if we should emit a gate for this step
-	auto prob = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
+	auto prob = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
 	if (AlgorithmInstance->Random.Next(1, 100) > prob) {
 		EmitGate = false;
 	}
 }
 
 
-void Sequencer::ProcessRepeats() {
+void Playhead::ProcessRepeats() {
 	// if we're not already playing a repeated cell, set the repeat counter.  If we are repeating, this will tick down above
 	if (!IsRepeat) {
-		RepeatCount = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
+		RepeatCount = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
 	}
 }
 
 
-void Sequencer::RecordCellVisit() {
+void Playhead::RecordCellVisit() {
 	CellVisitCounts[CurrentStep.x][CurrentStep.y]++;
 }
 
 
-void Sequencer::CalculateGateLength() {
-	GatePct = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
+void Playhead::CalculateGateLength() {
+	GatePct = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
 
 	if (GatePct == 0) {
 		EmitGate = false;
@@ -372,7 +357,7 @@ void Sequencer::CalculateGateLength() {
 }
 
 
-void Sequencer::SetupStepValue() {
+void Playhead::SetupStepValue() {
 	// a duration of zero means no glide, just a normal step.  We will adjust duration below, if required
 	Glide.OldStepVal = Glide.NewStepVal;
 	Glide.NewStepVal = StepVal;
@@ -381,7 +366,7 @@ void Sequencer::SetupStepValue() {
 }
 
 
-void Sequencer::DipIfNeccessary() {
+void Playhead::DipIfNeccessary() {
 	// unless we are playing legato (last step gate len = 100), we have to briefly dip to end the previous gate,
 	// no matter the calculated length, unless of course we are already low
 	if (LastGatePct < 100 && Outputs.Gate > 0.0) {
@@ -390,8 +375,8 @@ void Sequencer::DipIfNeccessary() {
 }
 
 
-void Sequencer::ProcessGlide() {
-	auto glidePct = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
+void Playhead::ProcessGlide() {
+	auto glidePct = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
 	if (glidePct > 0) {
 		// calculate the glide as a percentage of the gate length
 		Glide.Duration = GateLen * glidePct / 100;
@@ -403,8 +388,8 @@ void Sequencer::ProcessGlide() {
 }
 
 
-void Sequencer::ProcessRatchets() {
-	auto ratchets = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
+void Playhead::ProcessRatchets() {
+	auto ratchets = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
 	// only ratchet when our clock is stable, otherwise it will sound weird
 	if (ratchets > 0 && StableClock) {
 		auto divisions = ratchets + 1;
@@ -422,7 +407,7 @@ void Sequencer::ProcessRatchets() {
 }
 
 
-void Sequencer::AttenuateGateLength() {
+void Playhead::AttenuateGateLength() {
 	// if we are using a defined max gate length, we change that to attenuate.  We don't want to double attenuate here
 	auto gateLengthSource = AlgorithmInstance->v[kParamGateLengthSource];
 	if (gateLengthSource == 0) {
@@ -458,13 +443,13 @@ void Sequencer::AttenuateGateLength() {
 }
 
 
-void Sequencer::CalculateGate() {
+void Playhead::CalculateGate() {
 	GateStart = AlgorithmInstance->TotalMs;
 	GateEnd = GateStart + GateLen;
 }
 
 
-void Sequencer::HumanizeGate() {
+void Playhead::HumanizeGate() {
 	// only humanize non-legato gates
 	if (GatePct < 100) {
 		auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
@@ -484,19 +469,19 @@ void Sequencer::HumanizeGate() {
 }
 
 
-void Sequencer::CalculateVelocity() {
+void Playhead::CalculateVelocity() {
 	auto& param = AlgorithmInstance->parameters[kParamVelocityAttenuate];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = AlgorithmInstance->v[kParamVelocityAttenuate] / scaling;
 	auto offset = AlgorithmInstance->v[kParamVelocityOffset];
-	auto velo = GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
+	auto velo = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
 	velo = velo * atten / 100.0f;
 	velo += offset;
 	Velocity = clamp(static_cast<int>(velo), 1, 127);
 }
 
 
-void Sequencer::HumanizeVelocity() {
+void Playhead::HumanizeVelocity() {
 	auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto human = AlgorithmInstance->v[kParamHumanizeValue] / scaling;
@@ -511,122 +496,7 @@ void Sequencer::HumanizeVelocity() {
 }
 
 
-float Sequencer::NormalizeVelocityForOutput() {
+float Playhead::NormalizeVelocityForOutput() {
 	// scale the velocity to a 0-10V range
 	return static_cast<float>(Velocity) * 10.0 / 127.0f;
-}
-
-
-float Sequencer::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam) const {
-	// TODO:  make these methods better and not just copy/paste
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
-
-	if (readFromParam) {
-		int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
-		// if this cell type is wired up to an NT parameter, get info from there
-		if (ct == static_cast<CellDataType>(modATarget)) {
-			auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-			_NT_slot slot;
-			NT_getSlot(slot, algIndex);
-			auto cellIndex = y * GridSizeX + x;
-			auto val = static_cast<float>(slot.parameterPresetValue(kParamModATargetCell1 + cellIndex + 1)) / static_cast<int16_t>(pow(10, cd.Precision));
-			return val;
-		}
-	}
-
-	int result;
-	auto& cell = Cells[x][y];
-	switch (ct)
-	{
-		case CellDataType::Direction:   result = cell.Direction;        break;
-		case CellDataType::Value:       result = cell.StepValue;        break;
-		case CellDataType::Velocity:    result = cell.Velocity;         break;
-		case CellDataType::Probability: result = cell.Probability;      break;
-		case CellDataType::Ratchets:    result = cell.RatchetCount;     break;
-		case CellDataType::RestAfter:   result = cell.RestAfter;        break;
-		case CellDataType::GateLength:  result = cell.GateLength;       break;
-		case CellDataType::DriftProb:   result = cell.DriftProbability; break;
-		case CellDataType::MaxDrift:    result = cell.MaxDriftAmount;   break;
-		case CellDataType::Repeats:     result = cell.RepeatCount;      break;
-		case CellDataType::Glide:       result = cell.GlidePercent;     break;
-		case CellDataType::AccumAdd:    result = cell.AccumulatorAdd;   break;
-		case CellDataType::AccumTimes:  result = cell.AccumulatorTimes; break;
-		default: result = 0; break;
-	}
-	float fresult = static_cast<float>(result) / static_cast<int16_t>(pow(10, cd.Precision));
-	return fresult;
-}
-
-
-float Sequencer::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
-	auto& cell = Cells[x][y];
-	int result;
-
-	int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
-	// if this cell type is wired up to an NT parameter, get info from there
-	if (ct == static_cast<CellDataType>(modATarget)) {
-		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-		_NT_slot slot;
-		NT_getSlot(slot, algIndex);
-		auto cellIndex = y * GridSizeX + x;
-		auto val = static_cast<float>(slot.parameterValue(kParamModATargetCell1 + cellIndex + 1)) / static_cast<int16_t>(pow(10, cd.Precision));
-		return val;
-	}
-
-	switch (ct)
-	{
-		case CellDataType::Direction:   result = cell.Direction;        break;
-		case CellDataType::Value:       result = cell.StepValue;        break;
-		case CellDataType::Velocity:    result = cell.Velocity;         break;
-		case CellDataType::Probability: result = cell.Probability;      break;
-		case CellDataType::Ratchets:    result = cell.RatchetCount;     break;
-		case CellDataType::RestAfter:   result = cell.RestAfter;        break;
-		case CellDataType::GateLength:  result = cell.GateLength;       break;
-		case CellDataType::DriftProb:   result = cell.DriftProbability; break;
-		case CellDataType::MaxDrift:    result = cell.MaxDriftAmount;   break;
-		case CellDataType::Repeats:     result = cell.RepeatCount;      break;
-		case CellDataType::Glide:       result = cell.GlidePercent;     break;
-		case CellDataType::AccumAdd:    result = cell.AccumulatorAdd;   break;
-		case CellDataType::AccumTimes:  result = cell.AccumulatorTimes; break;
-		default: result = 0; break;
-	}
-	float fresult = static_cast<float>(result) / static_cast<int16_t>(pow(10, cd.Precision));
-	return fresult;
-}
-
-
-void Sequencer::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam) {
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
-	auto& cell = Cells[x][y];
-	val = clamp(val, cd.Min, cd.Max);
-	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Precision));
-	switch (ct)
-	{
-		case CellDataType::Direction:   cell.Direction = ival;        break;
-		case CellDataType::Value:       cell.StepValue = ival;        break;
-		case CellDataType::Velocity:    cell.Velocity = ival;         break;
-		case CellDataType::Probability: cell.Probability = ival;      break;
-		case CellDataType::Ratchets:    cell.RatchetCount = ival;     break;
-		case CellDataType::RestAfter:   cell.RestAfter = ival;        break;
-		case CellDataType::GateLength:  cell.GateLength = ival;       break;
-		case CellDataType::DriftProb:   cell.DriftProbability = ival; break;
-		case CellDataType::MaxDrift:    cell.MaxDriftAmount = ival;   break;
-		case CellDataType::Repeats:     cell.RepeatCount = ival;      break;
-		case CellDataType::Glide:       cell.GlidePercent = ival;     break;
-		case CellDataType::AccumAdd:    cell.AccumulatorAdd = ival;   break;
-		case CellDataType::AccumTimes:  cell.AccumulatorTimes = ival; break;
-		default: break;  // do nothing
-	}
-
-	// if we have an NT parameter mapped to the value we are changing, also change the parameter value
-	if (updateParam) {
-		int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
-		if (ct == static_cast<CellDataType>(modATarget)) {
-			auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-			auto cellIndex = y * GridSizeX + x;
-			NT_setParameterFromAudio(algIndex, kParamModATargetCell1 + cellIndex + NT_parameterOffset(), ival);
-//			NT_setParameterFromUi(algIndex, kParamModATargetCell1 + cellIndex + NT_parameterOffset(), ival);
-		}
-	}
 }

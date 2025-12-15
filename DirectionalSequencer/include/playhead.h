@@ -1,14 +1,16 @@
 #pragma once
 
+#include "common.h"
 #include "ownedBase.h"
 #include "gridInfo.h"
-#include "cellData.h"
+#include "cellDefinition.h"
 
 
 struct DirectionalSequencer;
 
 
-struct Sequencer : OwnedBase<DirectionalSequencer> {
+// this class represents a single playhead moving thru the sequencer field
+struct Playhead : OwnedBase<DirectionalSequencer> {
 private:
 	struct RatchetInfo {
 		bool Active;
@@ -73,7 +75,7 @@ private:
 	void ProcessDrift();
 	void AttenuateValue();
 	void OffsetValue();
-	void QuantizeValue()	;
+	void QuantizeValue();
 	void ProcessRest();
 	void ProcessProbability();
 	void ProcessRepeats();
@@ -94,19 +96,15 @@ public:
 	CellCoords InitialStep { 0, 0 };
 	CellCoords CurrentStep = { -1, -1 };
 
-	CellData Cells[GridSizeX][GridSizeY];	
 	OutputInfo Outputs;
 
 	bool QuantReturnSupplied;
 	float QuantReturn;
 
+	Trigger ResetTrigger;
+	Trigger ClockTrigger;
+
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();
 	void Process();
-
-	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam = true) const;
-	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
-	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam = true);
-
-	void SetDefaultCellValues();
 };

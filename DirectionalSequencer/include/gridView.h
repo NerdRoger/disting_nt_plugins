@@ -5,7 +5,6 @@
 #include "ownedBase.h"
 #include "viewBase.h"
 #include "cellDefinition.h"
-#include "cellData.h"
 
 
 struct DirectionalSequencer;

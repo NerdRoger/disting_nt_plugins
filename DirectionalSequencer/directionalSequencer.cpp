@@ -5,7 +5,8 @@
 #include <distingnt/serialisation.h>
 #include "common.h"
 #include "directionalSequencer.h"
-#include "sequencer.h"
+#include "stepDataRegion.h"
+#include "playhead.h"
 
 
 
@@ -150,7 +151,7 @@ void DirectionalSequencer::MapModParameters(int modTargetParamIndex) {
 	for (size_t x = 0; x < GridSizeX; x++) {
 		for (size_t y = 0; y < GridSizeY; y++) {
 			auto cellIndex = y * GridSizeX + x;
-			auto fval = Seq.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget), false);
+			auto fval = StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget), false);
 			int16_t val = fval * multiplier;
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + cellIndex + NT_parameterOffset(), val);
 		}
@@ -170,10 +171,11 @@ void DirectionalSequencer::CalculateRequirements(_NT_algorithmRequirements& req,
 _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto& alg = *new (ptrs.sram) DirectionalSequencer();
 	alg.Grid.Initialize(alg);
-	alg.Seq.Initialize(alg);
+	alg.StepData.Initialize(alg);
+	alg.Head.Initialize(alg);
 	alg.BuildParameters();
 	alg.Grid.Activate();
-	alg.Seq.SetDefaultCellValues();
+	alg.StepData.SetDefaultCellValues();
 
 	// "seed" the random sequence
 	alg.Random.Seed(NT_getCpuCycleCount());
@@ -221,7 +223,7 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 	auto quantReturnBusIndex = alg.v[kParamQuantReturn] - 1; 
 
 	// check to see if we are using a return for quant values
-	alg.Seq.QuantReturnSupplied = (quantReturnBusIndex >= 0);
+	alg.Head.QuantReturnSupplied = (quantReturnBusIndex >= 0);
 
 	for (int i = 0; i < numFrames; i++) {
 
@@ -229,39 +231,39 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 
 		// process triggers
 		if (resetBusIndex >= 0) {
-			auto reset = alg.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
+			auto reset = alg.Head.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
 			if (reset == Trigger::Edge::Rising) {
-				alg.Seq.ProcessResetTrigger();
+				alg.Head.ProcessResetTrigger();
 			}
 		}
 
 		if (clockBusIndex >= 0) {
-			auto clock = alg.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
+			auto clock = alg.Head.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
 			if (clock == Trigger::Edge::Rising) {
-				alg.Seq.ProcessClockTrigger();
+				alg.Head.ProcessClockTrigger();
 			}
 		}
 
 		// process other inputs
-		if (alg.Seq.QuantReturnSupplied) {
-			alg.Seq.QuantReturn = busFrames[quantReturnBusIndex * numFrames + i];
+		if (alg.Head.QuantReturnSupplied) {
+			alg.Head.QuantReturn = busFrames[quantReturnBusIndex * numFrames + i];
 		}
 
 		// process outputs
 		if (valueBusIndex >= 0) {
-			busFrames[valueBusIndex * numFrames + i] = alg.Seq.Outputs.Value;
+			busFrames[valueBusIndex * numFrames + i] = alg.Head.Outputs.Value;
 		}
 
 		if (gateBusIndex >= 0) {
-			busFrames[gateBusIndex * numFrames + i] = alg.Seq.Outputs.Gate;
+			busFrames[gateBusIndex * numFrames + i] = alg.Head.Outputs.Gate;
 		}
 
 		if (velocityBusIndex >= 0) {
-			busFrames[velocityBusIndex * numFrames + i] = alg.Seq.Outputs.Velocity;
+			busFrames[velocityBusIndex * numFrames + i] = alg.Head.Outputs.Velocity;
 		}
 		
 		if (quantSendBusIndex >= 0) {
-			busFrames[quantSendBusIndex * numFrames + i] = alg.Seq.Outputs.PreQuantStepVal;
+			busFrames[quantSendBusIndex * numFrames + i] = alg.Head.Outputs.PreQuantStepVal;
 		}
 	}
 
@@ -271,7 +273,7 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 
 	// process the sequencer once per millisecond, we don't need sample-accurate changes
 	if (deltaMs > 0) {
-		alg.Seq.Process();
+		alg.Head.Process();
 	}
 
 }
@@ -332,7 +334,7 @@ void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 			stream.openObject();
 			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				auto fval = alg.Seq.GetBaseCellValue(x, y, cdt);
+				auto fval = alg.StepData.GetBaseCellValue(x, y, cdt);
 				stream.addMemberName(CellDefinitions[i].FieldName);
 				if (CellDefinitions[i].Precision > 0) {
 					stream.addNumber(fval);
@@ -349,9 +351,9 @@ void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 	stream.openObject();
 	{
 		stream.addMemberName("x");
-		stream.addNumber(alg.Seq.InitialStep.x);
+		stream.addNumber(alg.Head.InitialStep.x);
 		stream.addMemberName("y");
-		stream.addNumber(alg.Seq.InitialStep.y);
+		stream.addNumber(alg.Head.InitialStep.y);
 	}
 	stream.closeObject();
 
@@ -372,12 +374,12 @@ bool DirectionalSequencer::DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonP
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Seq.InitialStep.x = val;
+			alg.Head.InitialStep.x = val;
 		} else if (parse.matchName("y")) {
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Seq.InitialStep.y = val;
+			alg.Head.InitialStep.y = val;
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -428,12 +430,12 @@ bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_json
 						if (!parse.number(fval)) {
 							return false;
 						}
-						alg.Seq.SetBaseCellValue(x, y, cdt, fval);
+						alg.StepData.SetBaseCellValue(x, y, cdt, fval);
 					} else {
 						if (!parse.number(ival)) {
 							return false;
 						}
-						alg.Seq.SetBaseCellValue(x, y, cdt, ival);
+						alg.StepData.SetBaseCellValue(x, y, cdt, ival);
 					}
 					found = true;
 					break;

@@ -53,7 +53,7 @@ void GridView::DrawCells() const {
 			// is this cell selected?
 			bool selected = (x == SelectedCell.x) && (y == SelectedCell.y);
 			// is this the current step?
-			bool current = (x == AlgorithmInstance->Seq.CurrentStep.x) && (y == AlgorithmInstance->Seq.CurrentStep.y);
+			bool current = (x == AlgorithmInstance->Head.CurrentStep.x) && (y == AlgorithmInstance->Head.CurrentStep.y);
 
 			CellCoords coords { static_cast<int8_t>(x), static_cast<int8_t>(y) };
 			auto cb = CellCoordsToBounds(coords);
@@ -73,7 +73,7 @@ void GridView::DrawCells() const {
 
 
 void GridView::DrawInitialCellBorder() const {
-	auto cb = CellCoordsToBounds(AlgorithmInstance->Seq.InitialStep);
+	auto cb = CellCoordsToBounds(AlgorithmInstance->Head.InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + 5;
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
@@ -92,7 +92,7 @@ void GridView::DrawSelectedCellBorder() const {
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
 	NT_drawShapeI(kNT_box, cb.x1 - 1, cb.y1 - 1, cb.x2 + 1, cb.y2 + 1, color);
-	auto& initial = AlgorithmInstance->Seq.InitialStep;
+	auto& initial = AlgorithmInstance->Head.InitialStep;
 	if (SelectedCell.x != initial.x || SelectedCell.y != initial.y) {
 		NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, 0);
 	}
@@ -129,7 +129,7 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 
 
 void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
-	float fval = AlgorithmInstance->Seq.GetBaseCellValue(SelectedCell.x, SelectedCell.y, ct);
+	float fval = AlgorithmInstance->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, ct);
 
 	// if the value is negativem keep it lined up with the others
 	if (fval < 0) {
@@ -304,7 +304,7 @@ void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 
 void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, int x2, int y2) const {
 	using enum CellDataType;
-	float val = AlgorithmInstance->Seq.GetAdjustedCellValue(cx, cy, SelectedParameterIndex);
+	float val = AlgorithmInstance->StepData.GetAdjustedCellValue(cx, cy, SelectedParameterIndex);
 	switch (SelectedParameterIndex)	{
 		case Direction:
 			DrawDirectionArrow(val, x1, y1, selected ? CellBrightColor : CellDimColor);
@@ -420,7 +420,7 @@ float GridView::CalculateEpsilon(const CellDefinition& cd) const {
 
 void GridView::LoadParamForEditing() {
 	const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
-	ParamEditRaw = AlgorithmInstance->Seq.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + CalculateEpsilon(cd);
+	ParamEditRaw = AlgorithmInstance->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + CalculateEpsilon(cd);
 }
 
 
@@ -442,7 +442,7 @@ void GridView::Encoder2ShortPress() {
 
 
 void GridView::Encoder2LongPress() {
-	AlgorithmInstance->Seq.InitialStep = SelectedCell;
+	AlgorithmInstance->Head.InitialStep = SelectedCell;
 }
 
 
@@ -467,7 +467,7 @@ void GridView::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		AlgorithmInstance->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
-		AlgorithmInstance->Seq.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
+		AlgorithmInstance->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
 	}
 }
@@ -478,11 +478,11 @@ void GridView::Pot3ShortPress() {
 	if (Editable) {
 		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
-		AlgorithmInstance->Seq.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
+		AlgorithmInstance->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			if (AlgorithmInstance->Seq.InitialStep == SelectedCell) {
-				AlgorithmInstance->Seq.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3);
+			if (AlgorithmInstance->Head.InitialStep == SelectedCell) {
+				AlgorithmInstance->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3);
 			}
 		}
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
@@ -497,12 +497,12 @@ void GridView::Pot3LongPress() {
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				AlgorithmInstance->Seq.SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw);
+				AlgorithmInstance->StepData.SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw);
 			}
 		}
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			AlgorithmInstance->Seq.SetBaseCellValue(AlgorithmInstance->Seq.InitialStep.x, AlgorithmInstance->Seq.InitialStep.y, SelectedParameterIndex, 3);
+			AlgorithmInstance->StepData.SetBaseCellValue(AlgorithmInstance->Head.InitialStep.x, AlgorithmInstance->Head.InitialStep.y, SelectedParameterIndex, 3);
 		}
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
 		LoadParamForEditing();
@@ -518,7 +518,7 @@ void GridView::FixupPotValues(_NT_float3& pots) {
 
 	const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 	auto range = cd.Max - cd.Min;
-	pots[2] = AlgorithmInstance->Seq.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
+	pots[2] = AlgorithmInstance->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
 }
 
 
