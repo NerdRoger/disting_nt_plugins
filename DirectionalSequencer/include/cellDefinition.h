@@ -39,9 +39,11 @@ enum class CellDataType {
 	Repeats,
 	Glide,
 	AccumAdd,
-	AccumTimes
+	AccumTimes,
+
+	NumCellDataTypes
 };
 
 
-extern const char* const CellNames[13];
-extern const CellDefinition CellDefinitions[13];
+extern const char* const CellNames[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];
+extern const CellDefinition CellDefinitions[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];

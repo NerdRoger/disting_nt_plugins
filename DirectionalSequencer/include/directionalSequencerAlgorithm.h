@@ -2,12 +2,13 @@
 #include <new>
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
-#include "baseAlgorithm.h"
+#include "potManager.h"
 #include "helpTextHelper.h"
 #include "cellDefinition.h"
 #include "stepDataRegion.h"
 #include "playhead.h"
 #include "gridView.h"
+#include "timeKeeper.h"
 
 
 enum {	
@@ -71,12 +72,13 @@ enum {
 };
 
 
-struct DirectionalSequencer : public BaseAlgorithm {
+struct DirectionalSequencerAlgorithm : public _NT_algorithm{
 private:
 	// NT Parameter Data
 	static const char* const EnumStringsMaxGateFrom[];
 	static const char* const EnumStringsResetWhenInactive[];
 	static const char* const CellNamesDef[];
+	static const char* const CellDirectionNames[];
 	static const uint8_t RoutingPageDef[];
 	static const uint8_t SequencerPageDef[];
 	static const uint8_t ModATargetPageDef[];
@@ -86,8 +88,7 @@ private:
 
 	void BuildParameters();
 
-	 bool DoneConstructing = false;
-	 void MapModParameters(int modTargetParamIndex);
+	void MapModParameters(int modTargetParamIndex);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
@@ -104,16 +105,22 @@ private:
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 
 public:
+
+	const CellDefinition* CellDefs = nullptr;
+
 	static const _NT_factory Factory;
 
-	RandomGenerator Random;
 
 	// TODO:  Maybe find a better naming scheme for types/members
-	GridView Grid;
+	// order is important here, as some classes depend on others being constructed first
+	TimeKeeper Timer;
+	RandomGenerator Random;
+	PotManager PotMgr;
 	HelpTextHelper HelpText;
 	StepDataRegion StepData;
 	Playhead Head;
+	GridView Grid;
 
-	DirectionalSequencer() {}
-	~DirectionalSequencer() {}
+	DirectionalSequencerAlgorithm(const CellDefinition* cellDefs);
+	~DirectionalSequencerAlgorithm();
 };

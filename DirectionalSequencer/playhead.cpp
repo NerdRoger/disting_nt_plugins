@@ -2,8 +2,15 @@
 #include <distingnt/api.h>
 #include <distingnt/slot.h>
 #include "playhead.h"
-#include "directionalSequencer.h"
-#include "cellDefinition.h"
+#include "directionalSequencerAlgorithm.h"
+
+
+Playhead::Playhead(_NT_algorithm* alg, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData) {
+	Algorithm = alg;
+	Timer = timer;
+	Random = rnd;
+	StepData = stepData;
+}
 
 
 void Playhead::Reset() {
@@ -11,7 +18,7 @@ void Playhead::Reset() {
 	AdvanceCount = 0;
 	UniqueAdvanceCount = 0;
 	// if there is no direction on the initial step, set us moving to the right
-	auto dir = AlgorithmInstance->StepData.GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
+	auto dir = StepData->GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
 	dir = (dir == 0 ? 3 : dir);
 	Direction = dir;
 	RepeatCount = 0;
@@ -36,12 +43,12 @@ void Playhead::ProcessClockTrigger() {
 	if (LastClock > 0) {
 		// if the clock rate has been stable, but we are now longer by more than 10x, assume this is because the clock was stopped,
 		// and continue to use the old clock rate instead of calculating a new one.
-		auto newRate = AlgorithmInstance->TotalMs - LastClock;
+		auto newRate = Timer->TotalMs - LastClock;
 		bool wayOff = newRate > (ClockRate * 10);
 		if (StableClock && wayOff) {
 			// don't change the clock rate
 		} else {
-			ClockRate = AlgorithmInstance->TotalMs - LastClock;
+			ClockRate = Timer->TotalMs - LastClock;
 		}
 	}
 
@@ -53,7 +60,7 @@ void Playhead::ProcessClockTrigger() {
 	float percentOff = fabsf(delta) / static_cast<float>(PrevClockRate);
 	StableClock = (percentOff <= 0.05f);
 
-	LastClock = AlgorithmInstance->TotalMs;
+	LastClock = Timer->TotalMs;
 	PrevClockRate = ClockRate;
 }
 
@@ -65,9 +72,9 @@ void Playhead::ProcessResetTrigger() {
 
 void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
-	bool resetWhenInactive = (AlgorithmInstance->v[kParamResetWhenInactive] == 1);
+	bool resetWhenInactive = (Algorithm->v[kParamResetWhenInactive] == 1);
 	if (resetWhenInactive) {
-		auto inactiveFor = AlgorithmInstance->TotalMs - LastAdvanceTime;
+		auto inactiveFor = Timer->TotalMs - LastAdvanceTime;
 		if (inactiveFor > InactiveTime) {
 			Reset();
 		}
@@ -86,7 +93,7 @@ void Playhead::Process() {
 				Ratchets.AccumulatedTime += Ratchets.Substep;
 				Ratchets.RemainingDuration = static_cast<int>(Ratchets.AccumulatedTime);
 				Ratchets.AccumulatedTime -= static_cast<int>(Ratchets.AccumulatedTime);
-				GateStart = AlgorithmInstance->TotalMs;
+				GateStart = Timer->TotalMs;
 				GateEnd = GateStart + Ratchets.GateLen;
 			}
 		}
@@ -105,7 +112,7 @@ void Playhead::Process() {
 		Glide.Duration -= 1;
 	}
 
-	float gate = ((AlgorithmInstance->TotalMs >= GateStart) && (AlgorithmInstance->TotalMs < GateEnd)) ? GateHigh : GateLow;
+	float gate = ((Timer->TotalMs >= GateStart) && (Timer->TotalMs < GateEnd)) ? GateHigh : GateLow;
 
 	if (Dip > 0) {
 		Dip -= 1;
@@ -122,7 +129,7 @@ void Playhead::Process() {
 void Playhead::Advance() {
 	ResetIfNecessary();
 
-	LastAdvanceTime = AlgorithmInstance->TotalMs;
+	LastAdvanceTime = Timer->TotalMs;
 	AdvanceCount++;
 	if (RepeatCount <= 0) {
 		UniqueAdvanceCount++;
@@ -172,7 +179,7 @@ void Playhead::ResetIfNecessary() {
 		return;
 	}
 
-	uint32_t resetAfter = AlgorithmInstance->v[kParamResetAfterNSteps];
+	uint32_t resetAfter = Algorithm->v[kParamResetAfterNSteps];
 	if (resetAfter > 0) {
 		if (AdvanceCount > resetAfter) {
 			Reset();
@@ -192,16 +199,16 @@ void Playhead::MoveToNextCell() {
 		RepeatCount--;
 	} else {
 		// if we have a new direction, change to that, otherwise keep going in the direction we had
-		uint8_t dir = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
+		uint8_t dir = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
 		if (dir > 0) {
 			Direction = dir;
 		}
 
 		// we want to move forward in the given direction this many times
-		auto nSteps = AlgorithmInstance->v[kParamMoveNCells];
+		auto nSteps = Algorithm->v[kParamMoveNCells];
 
 		// also we want to skip forward in the sequence, in the direction of travel, by one step every so often, but only counting non-repeated steps
-		auto skipEveryN = AlgorithmInstance->v[kParamSkipAfterNSteps];
+		auto skipEveryN = Algorithm->v[kParamSkipAfterNSteps];
 
 		uint8_t skip = 0;
 		if (skipEveryN > 0) {
@@ -225,13 +232,13 @@ void Playhead::MoveToNextCell() {
 
 
 void Playhead::CalculateStepValue() {
-	StepVal = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
+	StepVal = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
 }
 
 
 void Playhead::ProcessAccumulator() {
-	auto accumAdd = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
-	auto accumTimes = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
+	auto accumAdd = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
+	auto accumTimes = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
 
 	// add the accumulation amount as many times as specified
 	if (accumTimes > 0) {
@@ -244,37 +251,37 @@ void Playhead::ProcessAccumulator() {
 
 
 void Playhead::ProcessDrift() {
-	auto driftProb = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
-	if (AlgorithmInstance->Random.Next(1, 100) <= driftProb) {
+	auto driftProb = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
+	if (Random->Next(1, 100) <= driftProb) {
 		// we are going to drift the value, now let's figure out by how much
 		// we want a much higher likelihood of the drift amount being small vs. large, so use an exponential scale
 		// this gives us a scaling factor from 0 to 1
 		// don't use UINT32_MAX here because I'm not sure of the uniformity of the randomness distribution.
 		// Instead use a smaller number, which gives us less resolution, but hopefully better uniformity due to modulo distribution
 		static constexpr uint32_t res = 987654;
-		auto driftScale = static_cast<float>(AlgorithmInstance->Random.Next(0, res)) / res;
+		auto driftScale = static_cast<float>(Random->Next(0, res)) / res;
 		driftScale = pow(driftScale, 0.5f);
 		// calculate the drift range from the max
-		auto driftRange = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
+		auto driftRange = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
 		// scale the drift range to get the actual drift, and make it negative half of the time
-		auto actualDrift = driftRange * driftScale * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
+		auto actualDrift = driftRange * driftScale * (Random->Next(0, 1) == 1 ? -1 : 1);
 		StepVal += actualDrift;
 	}
 }
 
 
 void Playhead::AttenuateValue() {
-	auto& param = AlgorithmInstance->parameters[kParamAttenValue];
+	auto& param = Algorithm->parameters[kParamAttenValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = AlgorithmInstance->v[kParamAttenValue] / scaling;
+	auto atten = Algorithm->v[kParamAttenValue] / scaling;
 	StepVal *= (atten / 100.0f);
 }
 
 
 void Playhead::OffsetValue() {
-	auto& param = AlgorithmInstance->parameters[kParamOffsetValue];
+	auto& param = Algorithm->parameters[kParamOffsetValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto offset = AlgorithmInstance->v[kParamOffsetValue] / scaling;
+	auto offset = Algorithm->v[kParamOffsetValue] / scaling;
 	StepVal += offset;
 }
 
@@ -289,7 +296,7 @@ void Playhead::QuantizeValue()	{
 
 void Playhead::ProcessRest() {
 	// calculate if we should rest this cell this time around
-	uint8_t restAfter = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
+	uint8_t restAfter = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
 	if (restAfter > 0) {
 		if (CellVisitCounts[CurrentStep.x][CurrentStep.y] % (restAfter + 1) == restAfter) {
 			EmitGate = false;
@@ -297,7 +304,7 @@ void Playhead::ProcessRest() {
 	}
 
 	// calculate if we should apply the global rest
-	auto restEvery = AlgorithmInstance->v[kParamRestAfterNSteps];
+	auto restEvery = Algorithm->v[kParamRestAfterNSteps];
 	if (restEvery > 0) {
 		if (AdvanceCount % (restEvery + 1) == static_cast<uint32_t>(restEvery)) {
 			EmitGate = false;
@@ -308,8 +315,8 @@ void Playhead::ProcessRest() {
 
 void Playhead::ProcessProbability() {
 	// apply probability to see if we should emit a gate for this step
-	auto prob = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
-	if (AlgorithmInstance->Random.Next(1, 100) > prob) {
+	auto prob = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
+	if (Random->Next(1, 100) > prob) {
 		EmitGate = false;
 	}
 }
@@ -318,7 +325,7 @@ void Playhead::ProcessProbability() {
 void Playhead::ProcessRepeats() {
 	// if we're not already playing a repeated cell, set the repeat counter.  If we are repeating, this will tick down above
 	if (!IsRepeat) {
-		RepeatCount = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
+		RepeatCount = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
 	}
 }
 
@@ -329,7 +336,7 @@ void Playhead::RecordCellVisit() {
 
 
 void Playhead::CalculateGateLength() {
-	GatePct = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
+	GatePct = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
 
 	if (GatePct == 0) {
 		EmitGate = false;
@@ -342,9 +349,9 @@ void Playhead::CalculateGateLength() {
 	}
 
 	// calculate the gate length for the step
-	auto gateLengthSource = AlgorithmInstance->v[kParamGateLengthSource];
+	auto gateLengthSource = Algorithm->v[kParamGateLengthSource];
 	if (gateLengthSource == 0) {
-		auto maxLen = AlgorithmInstance->v[kParamMaxGateLength];
+		auto maxLen = Algorithm->v[kParamMaxGateLength];
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == 1) {
 		GateLen = ClockRate * GatePct / 100;
@@ -376,7 +383,7 @@ void Playhead::DipIfNeccessary() {
 
 
 void Playhead::ProcessGlide() {
-	auto glidePct = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
+	auto glidePct = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
 	if (glidePct > 0) {
 		// calculate the glide as a percentage of the gate length
 		Glide.Duration = GateLen * glidePct / 100;
@@ -389,7 +396,7 @@ void Playhead::ProcessGlide() {
 
 
 void Playhead::ProcessRatchets() {
-	auto ratchets = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
+	auto ratchets = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
 	// only ratchet when our clock is stable, otherwise it will sound weird
 	if (ratchets > 0 && StableClock) {
 		auto divisions = ratchets + 1;
@@ -409,14 +416,14 @@ void Playhead::ProcessRatchets() {
 
 void Playhead::AttenuateGateLength() {
 	// if we are using a defined max gate length, we change that to attenuate.  We don't want to double attenuate here
-	auto gateLengthSource = AlgorithmInstance->v[kParamGateLengthSource];
+	auto gateLengthSource = Algorithm->v[kParamGateLengthSource];
 	if (gateLengthSource == 0) {
 		return;
 	}
 
-	auto& param = AlgorithmInstance->parameters[kParamGateLengthAttenuate];
+	auto& param = Algorithm->parameters[kParamGateLengthAttenuate];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = AlgorithmInstance->v[kParamGateLengthAttenuate] / scaling;
+	auto atten = Algorithm->v[kParamGateLengthAttenuate] / scaling;
 
 	// if we've attenuated down to zero, don't even calculate
 	if (atten == 0) {
@@ -444,7 +451,7 @@ void Playhead::AttenuateGateLength() {
 
 
 void Playhead::CalculateGate() {
-	GateStart = AlgorithmInstance->TotalMs;
+	GateStart = Timer->TotalMs;
 	GateEnd = GateStart + GateLen;
 }
 
@@ -452,29 +459,29 @@ void Playhead::CalculateGate() {
 void Playhead::HumanizeGate() {
 	// only humanize non-legato gates
 	if (GatePct < 100) {
-		auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
+		auto& param = Algorithm->parameters[kParamHumanizeValue];
 		float scaling = CalculateScaling(param.scaling);
-		auto human = AlgorithmInstance->v[kParamHumanizeValue] / scaling;
+		auto human = Algorithm->v[kParamHumanizeValue] / scaling;
 		human *= 1000;
-		float pct1 = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
-		float pct2 = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
+		float pct1 = Random->Next(0, human) / 1000.0f;
+		float pct2 = Random->Next(0, human) / 1000.0f;
 		auto off1 = GateLen * pct1 / 100.0f;
 		auto off2 = GateLen * pct2 / 100.0f;
 		// we always have to start late, because we can't read the future...
 		GateStart += off1;
 		// but we can end early or late
-		off2 = off2 * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
+		off2 = off2 * (Random->Next(0, 1) == 1 ? -1 : 1);
 		GateEnd -= off2;
 	}
 }
 
 
 void Playhead::CalculateVelocity() {
-	auto& param = AlgorithmInstance->parameters[kParamVelocityAttenuate];
+	auto& param = Algorithm->parameters[kParamVelocityAttenuate];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = AlgorithmInstance->v[kParamVelocityAttenuate] / scaling;
-	auto offset = AlgorithmInstance->v[kParamVelocityOffset];
-	auto velo = AlgorithmInstance->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
+	auto atten = Algorithm->v[kParamVelocityAttenuate] / scaling;
+	auto offset = Algorithm->v[kParamVelocityOffset];
+	auto velo = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
 	velo = velo * atten / 100.0f;
 	velo += offset;
 	Velocity = clamp(static_cast<int>(velo), 1, 127);
@@ -482,14 +489,14 @@ void Playhead::CalculateVelocity() {
 
 
 void Playhead::HumanizeVelocity() {
-	auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
+	auto& param = Algorithm->parameters[kParamHumanizeValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto human = AlgorithmInstance->v[kParamHumanizeValue] / scaling;
+	auto human = Algorithm->v[kParamHumanizeValue] / scaling;
 	human *= 1000;
-	float pct = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
+	float pct = Random->Next(0, human) / 1000.0f;
 	auto off = Velocity * pct / 100.0f;
 	// we can move up or down in velocity
-	off = off * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
+	off = off * (Random->Next(0, 1) == 1 ? -1 : 1);
 	auto velo = Velocity + off;
 	// clamp the result to the velocity range
 	Velocity = clamp(static_cast<int>(velo), 1, 127);

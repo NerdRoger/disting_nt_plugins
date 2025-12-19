@@ -1,6 +1,6 @@
 #include <string.h>
 #include "quantizerView.h"
-#include "weightedQuantizer.h"
+#include "weightedQuantizerAlgorithm.h"
 #include "common.h"
 
 
@@ -18,6 +18,15 @@ const QuantizerView::Control QuantizerView::KeyControls[] = {
 	{ kWQParamQuantWeightASharp, "  Adjust the attraction weighting of note A#" },
 	{ kWQParamQuantWeightB,      "  Adjust the attraction weighting of note B"  },
 };
+
+
+QuantizerView::QuantizerView(_NT_algorithm* alg, TimeKeeper* timer, uint16_t numChannels, HelpTextHelper* helpText, PotManager* potMgr, NoteBanks* banks, Quantizer::QuantResult*& quantResults) : ViewBase(timer), QuantResults(quantResults) {
+	Algorithm = alg;
+	NumChannels = numChannels;
+	HelpText = helpText;
+	PotMgr = potMgr;
+	Banks = banks;
+}
 
 
 void QuantizerView::Draw() const {
@@ -41,11 +50,11 @@ void QuantizerView::DrawBank(size_t bankNum, const char* label) const {
 
 void QuantizerView::DrawBanks() const {
 	// draw the bank scanner
-	if (AlgorithmInstance->ScanningLocked) {
+	if (Banks->ScanningLocked) {
 		NT_drawShapeI(kNT_rectangle, 0, 6, 255, 8, KeyForegroundColor);
 		NT_drawShapeI(kNT_line, 0, 7, 255, 7, KeyBackgroundColor);
 	} else {
-		auto scanPos = AlgorithmInstance->GetScaledParameterValue(kWQParamBankScanPosition);
+		auto scanPos = GetScaledParameterValue(*Algorithm, kWQParamBankScanPosition);
 		int barPos = 255 * (scanPos - 1) / 9.0f;
 		NT_drawShapeI(kNT_rectangle, 0, 6, 255, 8, KeyBackgroundColor);
 		NT_drawShapeI(kNT_rectangle, 0, 6, barPos, 8, KeyForegroundColor);
@@ -67,8 +76,9 @@ void QuantizerView::DrawBanks() const {
 
 
 void QuantizerView::DrawKey(uint8_t x, uint8_t y, uint16_t paramIndex) const {
-	auto rawVal = BankPeeking ? AlgorithmInstance->Banks[SelectedBankIndex].NoteValues[paramIndex - kWQParamQuantWeightC] : AlgorithmInstance->v[paramIndex];
-	float val = static_cast<float>(rawVal) / CalculateScaling(AlgorithmInstance->parameters[paramIndex].scaling);
+	auto bank = (*Banks)[SelectedBankIndex];
+	auto rawVal = BankPeeking ? bank.NoteValues[paramIndex - kWQParamQuantWeightC] : Algorithm->v[paramIndex];
+	float val = static_cast<float>(rawVal) / CalculateScaling(Algorithm->parameters[paramIndex].scaling);
 	
 	// draw the background color
 	NT_drawShapeI(kNT_rectangle, x, y, x + KeyWidth - 1, y + KeyHeight - 1, KeyBackgroundColor);
@@ -143,7 +153,7 @@ void QuantizerView::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
 
 	// draw the transient help text if present
-	if (!AlgorithmInstance->HelpText.Draw()) {
+	if (!HelpText->Draw()) {
 		NT_drawText(2, 58, "Set Weight", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(43, 64, "Select Note", 15, kNT_textLeft, kNT_textTiny);
 
@@ -163,8 +173,8 @@ void QuantizerView::DrawArrow(uint8_t x, uint8_t y, uint8_t color) const {
 
 
 void QuantizerView::DrawResult(uint8_t x, uint8_t y, const char* label, size_t channelIndex, uint8_t color) const {
-	auto a = AlgorithmInstance->QuantizedNoteNames[channelIndex];
-	auto b = AlgorithmInstance->FinalNoteNames[channelIndex];
+	auto a = QuantResults[channelIndex].QuantizedNoteName;
+	auto b = QuantResults[channelIndex].FinalNoteName;
 	NT_drawText(x, y, label, 8);
 	NT_drawText(x + 28, y, a, 8);
 	if (strcmp(a, b) != 0) {
@@ -175,7 +185,7 @@ void QuantizerView::DrawResult(uint8_t x, uint8_t y, const char* label, size_t c
 
 
 void QuantizerView::DrawResults() const {
-	switch (AlgorithmInstance->NumChannels)	{
+	switch (NumChannels)	{
 		// these cases explicity fall-through
 		case 8:
 			DrawResult(192, 49, "Ch 8:", 7, 8);
@@ -201,7 +211,7 @@ void QuantizerView::DrawResults() const {
 
 void QuantizerView::LoadKeyControlForEditing() {
 	auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-	auto val = AlgorithmInstance->v[parameterIndex];
+	auto val = Algorithm->v[parameterIndex];
 	// since we are dealing with unscaled numbers here, epsilon is always 0.5
 	SelectedKeyValueRaw = val + 0.5f;
 }
@@ -210,8 +220,8 @@ void QuantizerView::LoadKeyControlForEditing() {
 void QuantizerView::FixupPotValues(_NT_float3& pots) {
 	// calculate p1
 	auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-	auto& keyParam = AlgorithmInstance->parameters[parameterIndex];
-	auto keyVal = AlgorithmInstance->v[parameterIndex];
+	auto& keyParam = Algorithm->parameters[parameterIndex];
+	auto keyVal = Algorithm->v[parameterIndex];
 	bool isEnum = keyParam.unit == kNT_unitEnum;
 	auto min = keyParam.min;
 	auto max = keyParam.max + (isEnum ? 0 : 0.99f);
@@ -219,8 +229,8 @@ void QuantizerView::FixupPotValues(_NT_float3& pots) {
 	pots[0] = (keyVal - min) / range;
 
 	// calculate p3
-	auto& scanParam = AlgorithmInstance->parameters[kWQParamBankScanPosition];
-	auto scanVal = AlgorithmInstance->v[kWQParamBankScanPosition];
+	auto& scanParam = Algorithm->parameters[kWQParamBankScanPosition];
+	auto scanVal = Algorithm->v[kWQParamBankScanPosition];
 	pots[2] = static_cast<float>(scanVal - scanParam.min) / static_cast<float>(scanParam.max - scanParam.min);
 	// we need to reload our control for editing because the underlying parameter value could have changed while we were "sleeping"
 	// this works because this event is fired when returning to our algorithm from other disting screens
@@ -242,7 +252,7 @@ void QuantizerView::Encoder1Turn(int8_t x) {
 	if (!BankPeeking) {
 		SelectedKeyIndex = wrap(static_cast<int>(SelectedKeyIndex) + x, 0, 11);
 		LoadKeyControlForEditing();
-		AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+		HelpText->DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
 	}
 }
 
@@ -250,32 +260,32 @@ void QuantizerView::Encoder1Turn(int8_t x) {
 void QuantizerView::Encoder2Turn(int8_t x) {
 	if (!BankPeeking) {
 		SelectedBankIndex = wrap(static_cast<int>(SelectedBankIndex) + x, 0, 9);
-		AlgorithmInstance->HelpText.DisplayHelpText("   Short press to load, long press to save");
+		HelpText->DisplayHelpText("   Short press to load, long press to save");
 	}
 }
 
 
 void QuantizerView::Pot1Turn(float val) {
 	if (!BankPeeking) {
-		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
+		auto algIndex = NT_algorithmIndex(Algorithm);
 		auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-		auto& param = AlgorithmInstance->parameters[parameterIndex];
-		AlgorithmInstance->UpdateValueWithPot(0, val, SelectedKeyValueRaw, param.min, param.max);
+		auto& param = Algorithm->parameters[parameterIndex];
+		PotMgr->UpdateValueWithPot(0, val, SelectedKeyValueRaw, param.min, param.max);
 		NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), SelectedKeyValueRaw);
-		AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+		HelpText->DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
 	}
 }
 
 
 void QuantizerView::Pot3Turn(float val) {
-	if (!AlgorithmInstance->ScanningLocked && !BankPeeking) {
-		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-		auto& param = AlgorithmInstance->parameters[kWQParamBankScanPosition];
-		auto scanPos = AlgorithmInstance->GetScaledParameterValue(kWQParamBankScanPosition);
+	if (!Banks->ScanningLocked && !BankPeeking) {
+		auto algIndex = NT_algorithmIndex(Algorithm);
+		auto& param = Algorithm->parameters[kWQParamBankScanPosition];
+		auto scanPos = GetScaledParameterValue(*Algorithm, kWQParamBankScanPosition);
 		auto scaling = CalculateScaling(param.scaling);
 		auto min = param.min / scaling;
 		auto max = param.max / scaling;
-		AlgorithmInstance->UpdateValueWithPot(2, val, scanPos, min, max);
+		PotMgr->UpdateValueWithPot(2, val, scanPos, min, max);
 		auto paramVal = scanPos * scaling;
 		NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), paramVal);
 	}
@@ -284,9 +294,9 @@ void QuantizerView::Pot3Turn(float val) {
 
 void QuantizerView::Pot3ShortPress() {
 	if (!BankPeeking) {
-		AlgorithmInstance->ScanningLocked = !AlgorithmInstance->ScanningLocked;
-		if (!AlgorithmInstance->ScanningLocked) {
-			AlgorithmInstance->DoBankScan(AlgorithmInstance->v[kWQParamBankScanPosition]);
+		Banks->ScanningLocked = !Banks->ScanningLocked;
+		if (!Banks->ScanningLocked) {
+			Banks->DoBankScan(Algorithm->v[kWQParamBankScanPosition]);
 		}
 	}
 }
@@ -303,20 +313,20 @@ void QuantizerView::Button3Release() {
 
 
 void QuantizerView::Encoder2ShortPress() {
-	auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-	auto& param = AlgorithmInstance->parameters[kWQParamBankScanPosition];
+	auto algIndex = NT_algorithmIndex(Algorithm);
+	auto& param = Algorithm->parameters[kWQParamBankScanPosition];
 	auto val = (SelectedBankIndex + 1) * CalculateScaling(param.scaling);
 	NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val);
 
-	AlgorithmInstance->LoadNotesFromBank(SelectedBankIndex);
+	Banks->LoadNotesFromBank(SelectedBankIndex);
 	LoadKeyControlForEditing();
-	AlgorithmInstance->HelpText.DisplayHelpText("            Loaded notes from bank");
+	HelpText->DisplayHelpText("            Loaded notes from bank");
 }
 
 
 void QuantizerView::Encoder2LongPress() {
-	AlgorithmInstance->SaveNotesToBank(SelectedBankIndex);
-	AlgorithmInstance->HelpText.DisplayHelpText("             Saved notes to bank");
+	Banks->SaveNotesToBank(SelectedBankIndex);
+	HelpText->DisplayHelpText("             Saved notes to bank");
 }
 
 

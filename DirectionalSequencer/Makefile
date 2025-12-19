@@ -5,7 +5,8 @@ endif
 INCLUDE_PATHS := -I$(NT_API_PATH)/include -I./include -I../Common/include
 
 CPP_FLAGS := -std=c++23 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -fPIC -Wall
-CPP_FLAGS_DEBUG := $(CPP_FLAGS) -g -O0
+CPP_FLAGS_DEBUG := $(CPP_FLAGS) -DDEBUG
+CPP_FLAGS_GOT := $(CPP_FLAGS) -g -O0
 
 CPP_FILES := $(wildcard *.cpp ../Common/*.cpp)
 OBJ_FILES := $(patsubst %.cpp,%.o,$(CPP_FILES))
@@ -27,6 +28,9 @@ clean:
 
 debug: CPP_FLAGS := $(CPP_FLAGS_DEBUG)
 debug: $(FINAL_OUTPUT)
+
+got: CPP_FLAGS := $(CPP_FLAGS_GOT)
+got: $(FINAL_OUTPUT)
 	@echo "GOT Relocations with Source Lines:"
 	@arm-none-eabi-readelf -r $(FINAL_OUTPUT) | grep GOT | \
 	while read -r line; do \

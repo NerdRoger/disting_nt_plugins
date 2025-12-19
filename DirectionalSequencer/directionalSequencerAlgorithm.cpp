@@ -4,45 +4,25 @@
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
 #include "common.h"
-#include "directionalSequencer.h"
+#include "directionalSequencerAlgorithm.h"
 #include "stepDataRegion.h"
 #include "playhead.h"
 
 
 
-// TODO:  remove this once we get strcat/strncat
-void concatenateStrings(char *destination, const char *source) {
-	int i = 0;
-	// Find the end of the destination string
-	while (destination[i] != '\0') {
-		i++;
-	}
-
-	int j = 0;
-	// Copy characters from source to destination
-	while (source[j] != '\0') {
-		destination[i] = source[j];
-		i++;
-		j++;
-	}
-	// Null-terminate the concatenated string
-	destination[i] = '\0';
-}
-
-
-const uint8_t DirectionalSequencer::SequencerPageDef[] = {
+const uint8_t DirectionalSequencerAlgorithm::SequencerPageDef[] = {
 	kParamGateLengthSource, kParamMaxGateLength, kParamGateLengthAttenuate, kParamHumanizeValue,
 	kParamAttenValue, kParamOffsetValue, kParamVelocityAttenuate, kParamVelocityOffset,
 	kParamMoveNCells, kParamRestAfterNSteps,kParamSkipAfterNSteps, kParamResetAfterNSteps, kParamResetWhenInactive
 };
 
 
-const uint8_t DirectionalSequencer::RoutingPageDef[] = {
+const uint8_t DirectionalSequencerAlgorithm::RoutingPageDef[] = {
 	kParamClock, kParamReset, kParamValue, kParamGate, kParamVelocity, kParamQuantSend, kParamQuantReturn
 };
 
 
-const uint8_t DirectionalSequencer::ModATargetPageDef[] = {
+const uint8_t DirectionalSequencerAlgorithm::ModATargetPageDef[] = {
 	kParamModATarget,
 	kParamModATargetCell1,  kParamModATargetCell2,  kParamModATargetCell3,  kParamModATargetCell4,
 	kParamModATargetCell5,  kParamModATargetCell6,  kParamModATargetCell7,  kParamModATargetCell8,
@@ -56,13 +36,13 @@ const uint8_t DirectionalSequencer::ModATargetPageDef[] = {
 };
 
 
-const char* const DirectionalSequencer::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+const char* const DirectionalSequencerAlgorithm::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
 
 
-const char* const DirectionalSequencer::EnumStringsResetWhenInactive[] = { "No", "Yes" };
+const char* const DirectionalSequencerAlgorithm::EnumStringsResetWhenInactive[] = { "No", "Yes" };
 
 
-const char* const DirectionalSequencer::CellNamesDef[] = {
+const char* const DirectionalSequencerAlgorithm::CellNamesDef[] = {
 	"Cell 1",  "Cell 2",  "Cell 3",  "Cell 4",  "Cell 5",  "Cell 6",  "Cell 7",  "Cell 8", 
 	"Cell 9",  "Cell 10", "Cell 11", "Cell 12", "Cell 13", "Cell 14", "Cell 15", "Cell 16", 
 	"Cell 17", "Cell 18", "Cell 19", "Cell 20", "Cell 21", "Cell 22", "Cell 23", "Cell 24", 
@@ -70,7 +50,25 @@ const char* const DirectionalSequencer::CellNamesDef[] = {
 };
 
 
-void DirectionalSequencer::BuildParameters() {
+const char* const DirectionalSequencerAlgorithm::CellDirectionNames[] = {
+	"None", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
+};
+
+
+DirectionalSequencerAlgorithm::DirectionalSequencerAlgorithm(const CellDefinition* cellDefs) : Timer(NT_globals.sampleRate), StepData(this, cellDefs), Head(this, &Timer, &Random, &StepData), Grid(cellDefs, &Timer, &Head, &StepData, &HelpText, &PotMgr) {
+	CellDefs = cellDefs;
+	BuildParameters();
+	Grid.Activate();
+	Random.Seed(NT_getCpuCycleCount());
+}
+
+
+DirectionalSequencerAlgorithm::~DirectionalSequencerAlgorithm() {
+
+}
+
+
+void DirectionalSequencerAlgorithm::BuildParameters() {
 	int numPages = 0;
 
 	// sequencer page
@@ -107,12 +105,16 @@ void DirectionalSequencer::BuildParameters() {
 
 	PageDefs[numPages] = { .name = "Mod A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
 	ParameterDefs[kParamModATarget] = { .name = "Mod A Target", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	auto cd = CellDefinitions[ParameterDefs[kParamModATarget].def];
+	auto cd = CellDefs[ParameterDefs[kParamModATarget].def];
+	auto enums = ParameterDefs[kParamModATarget].def == 0 ? CellDirectionNames : NULL;
+	uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
 	for (int i = 0; i < numCells; i++) {
 		int16_t min = cd.Min * pow(10, cd.Precision);
 		int16_t max = cd.Max * pow(10, cd.Precision);
-		int16_t def = cd.Default * pow(10, cd.Precision);
-		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellNamesDef[i], .min = min, .max = max, .def = def, .unit = cd.Unit, .scaling = cd.Scaling, .enumStrings = NULL };
+		// we want to default the cell parameters to the values already specified in the cell data
+    auto val = StepData.GetBaseCellValue(i % GridSizeX, i / GridSizeX, static_cast<CellDataType>(ParameterDefs[kParamModATarget].def));
+		int16_t def = val * pow(10, cd.Precision);
+		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellNamesDef[i], .min = min, .max = max, .def = def, .unit = unit, .scaling = cd.Scaling, .enumStrings = enums };
 	}
 	numPages++;
 
@@ -125,14 +127,16 @@ void DirectionalSequencer::BuildParameters() {
 }
 
 
-void DirectionalSequencer::MapModParameters(int modTargetParamIndex) {
+void DirectionalSequencerAlgorithm::MapModParameters(int modTargetParamIndex) {
 	auto algIndex = NT_algorithmIndex(this);
 	int16_t modTarget = v[modTargetParamIndex];
 
 	uint8_t numCells = GridSizeX * GridSizeY;
 
 	// TODO:  combine this with loop below once it's working as I expect
-	auto cd = CellDefinitions[modTarget];
+	auto cd = CellDefs[modTarget];
+	auto enums = modTarget == 0 ? CellDirectionNames : NULL;
+	uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
 	for (int i = 0; i < numCells; i++) {
 		int16_t min = cd.Min * pow(10, cd.Precision);
 		int16_t max = cd.Max * pow(10, cd.Precision);
@@ -140,14 +144,14 @@ void DirectionalSequencer::MapModParameters(int modTargetParamIndex) {
 		ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 		ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 		ParameterDefs[modTargetParamIndex + 1 + i].def = def;
-		ParameterDefs[modTargetParamIndex + 1 + i].unit = cd.Unit;
+		ParameterDefs[modTargetParamIndex + 1 + i].unit = unit;
 		ParameterDefs[modTargetParamIndex + 1 + i].scaling = cd.Scaling;
-		ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = NULL; // TODO:  use for direction
+		ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = enums;
 		NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
 	}
 
 
-	int multiplier = pow(10, CellDefinitions[modTarget].Precision);
+	int multiplier = pow(10, CellDefs[modTarget].Precision);
 	for (size_t x = 0; x < GridSizeX; x++) {
 		for (size_t y = 0; y < GridSizeY; y++) {
 			auto cellIndex = y * GridSizeX + x;
@@ -159,36 +163,32 @@ void DirectionalSequencer::MapModParameters(int modTargetParamIndex) {
 }
 
 
-void DirectionalSequencer::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
+void DirectionalSequencerAlgorithm::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = kNumCommonParameters;
-	req.sram = sizeof(DirectionalSequencer);
+	req.sram = 0;
 	req.dram = 0;
 	req.dtc = 0;
 	req.itc = 0;
+
+	// use the memory helper instead of just a normal placement new to ensure proper alignment
+	// this becomes important when we start allocating space for other objects here dynamically, so that they are also properly aligned
+	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
+	MemoryHelper<DirectionalSequencerAlgorithm>::AlignAndIncrementMemoryRequirement(req.sram, 1);
 }
 
 
-_NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
-	auto& alg = *new (ptrs.sram) DirectionalSequencer();
-	alg.Grid.Initialize(alg);
-	alg.StepData.Initialize(alg);
-	alg.Head.Initialize(alg);
-	alg.BuildParameters();
-	alg.Grid.Activate();
-	alg.StepData.SetDefaultCellValues();
+_NT_algorithm* DirectionalSequencerAlgorithm::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+	auto mem = ptrs.sram;
 
-	// "seed" the random sequence
-	alg.Random.Seed(NT_getCpuCycleCount());
-
-	// whenever we construct, we need to sync NT parameters to cell parameters
-//	alg.ParametersOutOfSync = true;
+	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
+	auto& alg = *MemoryHelper<DirectionalSequencerAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerAlgorithm* addr, size_t){ new (addr) DirectionalSequencerAlgorithm(CellDefinitions); });
 
 	return &alg;
 }
 
 
-void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+void DirectionalSequencerAlgorithm::ParameterChanged(_NT_algorithm* self, int p) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	auto algIndex = NT_algorithmIndex(self);
 
 	// Max Gate Length is only relevant if we are using it to source the gate length
@@ -197,7 +197,7 @@ void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
 	}
 
 	if (p == kParamModATarget) {
-		alg.MapModParameters(p);
+//		alg.MapModParameters(p);
 	}
 
 	// notify every view of the parameter change
@@ -205,19 +205,8 @@ void DirectionalSequencer::ParameterChanged(_NT_algorithm* self, int p) {
 }
 
 
-void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
-
-	// ideally, this would happen from some sort of "doneConstructing" lifecycle event
-	if (!alg.DoneConstructing) {
-		alg.MapModParameters(kParamModATarget);
-
-		auto algIndex = NT_algorithmIndex(&alg);
-		NT_setParameterGrayedOut(algIndex, kParamMaxGateLength + NT_parameterOffset(), alg.v[kParamGateLengthSource] != 0);
-
-		alg.DoneConstructing = true;
-	}
-
+void DirectionalSequencerAlgorithm::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	auto numFrames = numFramesBy4 * 4;
 
 	// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
@@ -278,7 +267,7 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 
 	// we can do this tracking outside of the processing loop, because we don't need sample-level accuracy
 	// we are only tracking milliseconds, so block-level accuracy should be fine
-	auto deltaMs = alg.CountMilliseconds(numFrames);
+	auto deltaMs = alg.Timer.CountMilliseconds(numFrames);
 
 	// process the sequencer once per millisecond, we don't need sample-accurate changes
 	if (deltaMs > 0) {
@@ -288,10 +277,10 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 }
 
 
-bool DirectionalSequencer::Draw(_NT_algorithm* self) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+bool DirectionalSequencerAlgorithm::Draw(_NT_algorithm* self) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	// do this in draw, because we don't need it as frequently as step
-	alg.Grid.ProcessLongPresses(alg);
+	alg.Grid.ProcessLongPresses();
 
 
 // TODO:  remove this at the end of development
@@ -314,26 +303,26 @@ bool DirectionalSequencer::Draw(_NT_algorithm* self) {
 }
 
 
-uint32_t DirectionalSequencer::HasCustomUI(_NT_algorithm* self) {
+uint32_t DirectionalSequencerAlgorithm::HasCustomUI(_NT_algorithm* self) {
 	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
 }
 
 
-void DirectionalSequencer::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+void DirectionalSequencerAlgorithm::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	alg.Grid.FixupPotValues(pots);
 }
 
 
-void DirectionalSequencer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
-	alg.Grid.ProcessControlInput(alg, data);
-	RecordPreviousPotValues(self, data);
+void DirectionalSequencerAlgorithm::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
+	alg.Grid.ProcessControlInput(data);
+	alg.PotMgr.RecordPreviousPotValues(data);
 }
 
 
-void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+void DirectionalSequencerAlgorithm::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 
 	stream.addMemberName("GridCellData");
 	stream.openArray();
@@ -341,11 +330,11 @@ void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 	for (size_t x = 0; x < GridSizeX; x++) {
 		for (size_t y = 0; y < GridSizeY; y++) {
 			stream.openObject();
-			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
+			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
 				auto fval = alg.StepData.GetBaseCellValue(x, y, cdt);
-				stream.addMemberName(CellDefinitions[i].FieldName);
-				if (CellDefinitions[i].Precision > 0) {
+				stream.addMemberName(alg.CellDefs[i].FieldName);
+				if (alg.CellDefs[i].Precision > 0) {
 					stream.addNumber(fval);
 				} else {
 					stream.addNumber(static_cast<int>(fval));
@@ -369,8 +358,8 @@ void DirectionalSequencer::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 }
 
 
-bool DirectionalSequencer::DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+bool DirectionalSequencerAlgorithm::DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 
 	int numMembers;
 	if (!parse.numberOfObjectMembers(numMembers)) {
@@ -400,8 +389,8 @@ bool DirectionalSequencer::DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonP
 }
 
 
-bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse) {
-	auto& alg = *static_cast<DirectionalSequencer*>(self);
+bool DirectionalSequencerAlgorithm::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 
 	int numElements;
 	if (!parse.numberOfArrayElements(numElements)) {
@@ -423,7 +412,7 @@ bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_json
 		}
 
 		// validate we have the right number of data points
-		if (numMembers != ARRAY_SIZE(CellDefinitions)) {
+		if (numMembers != static_cast<int>(CellDataType::NumCellDataTypes)) {
 			return false;
 		}
 
@@ -432,10 +421,10 @@ bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_json
 		for (int member = 0; member < numMembers; member++) {
 
 			bool found = false;
-			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
+			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				if (parse.matchName(CellDefinitions[i].FieldName)) {
-					if (CellDefinitions[i].Precision > 0) {
+				if (parse.matchName(alg.CellDefs[i].FieldName)) {
+					if (alg.CellDefs[i].Precision > 0) {
 						if (!parse.number(fval)) {
 							return false;
 						}
@@ -464,7 +453,7 @@ bool DirectionalSequencer::DeserialiseGridCellData(_NT_algorithm* self, _NT_json
 }
 
 
-bool DirectionalSequencer::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
+bool DirectionalSequencerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 	int num;
 	if (!parse.numberOfObjectMembers(num)) {
 		return false;
@@ -490,7 +479,7 @@ bool DirectionalSequencer::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse
 }
 
 
-const _NT_factory DirectionalSequencer::Factory =
+const _NT_factory DirectionalSequencerAlgorithm::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'd', 's' ),
 	.name = "Directional Sequencer",

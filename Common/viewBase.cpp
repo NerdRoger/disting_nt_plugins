@@ -1,42 +1,10 @@
 #include <cstring>
 #include <distingnt/api.h>
 #include "viewBase.h"
-#include "baseAlgorithm.h"
 
 
-
-void ViewBase::FixFloatBuf() const {
-	// find the null terminator
-	uint32_t nt = strlen(NumToStrBuf);
-	// walk backward from it, setting any '0' to null
-	uint32_t end;
-	for(end = nt - 1; end > 0; end--) {
-		if (NumToStrBuf[end] == '0') {
-			NumToStrBuf[end] = '\0';
-		} else {
-			break;
-		}
-	}
-	// if we backed up all the way to the decimal point, get rid of that too
-	if (NumToStrBuf[end] == '.')
-		NumToStrBuf[end] = '\0';
-}
-
-
-void ViewBase::AddSuffixToBuf(const char* suffix) const {
-	// find the null terminator
-	uint32_t nt;
-	for(nt = 0; nt < sizeof(NumToStrBuf); nt++) {
-		if (NumToStrBuf[nt] == '\0')
-			break;
-	}
-	// add the suffix
-	for(uint32_t s = 0; s < strlen(suffix); s++) {
-		NumToStrBuf[nt] = suffix[s];
-		nt++;
-	}
-	// add our new null terminator
-	NumToStrBuf[nt] = '\0';
+ViewBase::ViewBase(TimeKeeper* timer) {
+	Timer = timer;
 }
 
 
@@ -52,7 +20,7 @@ void ViewBase::DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text
 }
 
 
-void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& data) {
+void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	if (data.encoders[0]) {
 		Encoder1Turn(data.encoders[0]);
 	}
@@ -71,13 +39,13 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 
 	if (data.controls & kNT_potR) {
 		// don't register turns during the brief period where we are lifting our finger after a press
-		if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= alg.TotalMs) {
+		if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= Timer->TotalMs) {
 			Pot3Turn(data.pots[2]);
 		}
 	}
 
 	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
-		Encoder2DownTime = alg.TotalMs;
+		Encoder2DownTime = Timer->TotalMs;
 		Encoder2Push();
 	}
 
@@ -85,7 +53,7 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 
 		if (Encoder2DownTime > 0) {
 			// calculate how long we held the encoder down (in ms)
-			auto totalDownTime = alg.TotalMs - Encoder2DownTime;
+			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
 			if (totalDownTime < ShortPressThreshold) {
 				Encoder2ShortPress();
 			} else {
@@ -100,7 +68,7 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 	}
 
 	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
-		Pot3DownTime = alg.TotalMs;
+		Pot3DownTime = Timer->TotalMs;
 		Pot3Push();
 	}
 
@@ -108,7 +76,7 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 
 		if (Pot3DownTime > 0) {
 			// calculate how long we held the encoder down (in ms)
-			auto totalDownTime = alg.TotalMs - Pot3DownTime;
+			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
 			if (totalDownTime < ShortPressThreshold) {
 				Pot3ShortPress();
 			} else {
@@ -118,7 +86,7 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 			}
 			Pot3DownTime = 0;
 			// block any changes from taking place for a brief period afterward, because lifting finger from the pot can cause minute changes otherwise
-			BlockPot3ChangesUntil = alg.TotalMs + 100;
+			BlockPot3ChangesUntil = Timer->TotalMs + 100;
 		}
 
 		Pot3Release();
@@ -136,11 +104,11 @@ void ViewBase::ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& d
 
 // this method needs to be called regularly in order to measure time and fire the long press
 // generally calling it from draw() is a good idea, because you don't need as frequently as step()
-void ViewBase::ProcessLongPresses(const BaseAlgorithm& alg) {
+void ViewBase::ProcessLongPresses() {
 	if (Pot3DownTime > 0) {
 		if (!Pot3LongPressFired) {
 			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = alg.TotalMs - Pot3DownTime;
+			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
 			if (totalDownTime >= ShortPressThreshold) {
 				Pot3LongPress();
 				Pot3LongPressFired = true;
@@ -150,7 +118,7 @@ void ViewBase::ProcessLongPresses(const BaseAlgorithm& alg) {
 	if (Encoder2DownTime > 0) {
 		if (!Encoder2LongPressFired) {
 			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = alg.TotalMs - Encoder2DownTime;
+			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
 			if (totalDownTime >= ShortPressThreshold) {
 				Encoder2LongPress();
 				Encoder2LongPressFired = true;

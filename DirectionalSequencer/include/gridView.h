@@ -2,15 +2,18 @@
 
 #include "common.h"
 #include "gridInfo.h"
-#include "ownedBase.h"
 #include "viewBase.h"
 #include "cellDefinition.h"
+#include "stepDataRegion.h"
+#include "playhead.h"
+#include "helpTextHelper.h"
+#include "potManager.h"
 
 
-struct DirectionalSequencer;
+struct DirectionalSequencerAlgorithm;
 
 
-struct GridView : ViewBase, OwnedBase<DirectionalSequencer> {
+struct GridView : ViewBase {
 private:
 	static constexpr int CellSize = 12;
 	static constexpr int CellBorderColor = 5;
@@ -20,6 +23,13 @@ private:
 	static constexpr int NonEditableCellBorderColor = 7;
 	static constexpr int SelectedParameterColor = 15;
 	static constexpr int UnselectedParameterColor = 5;
+
+	const CellDefinition* CellDefs = nullptr;
+	
+	Playhead* DisplayedPlayhead = nullptr;
+	StepDataRegion* StepData = nullptr;
+	HelpTextHelper* HelpText = nullptr;
+	PotManager* PotMgr = nullptr;
 
 	Point GridPosition { 50, 2 };
 	CellDataType SelectedParameterIndex = CellDataType::Direction;
@@ -51,7 +61,7 @@ public:
 
 	CellCoords SelectedCell;
 
-	GridView();
+	GridView(const CellDefinition* cellDefs, TimeKeeper* timer, Playhead* playhead, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

@@ -1,15 +1,14 @@
 #pragma once
 
-#include "ownedBase.h"
 #include "gridInfo.h"
 #include "cellDefinition.h"
 
 
-struct DirectionalSequencer;
+struct DirectionalSequencerAlgorithm;
 
 
 // this class represents all of the steps and their values
-struct StepDataRegion : OwnedBase<DirectionalSequencer> {
+struct StepDataRegion {
 private:
 
 	struct SingleCellData {
@@ -37,10 +36,13 @@ private:
 		friend class StepDataRegion;
 	};
 
-
+	_NT_algorithm* Algorithm = nullptr;
+	const CellDefinition* CellDefs = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
 public:
+	StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs);
+
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam = true) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam = true);

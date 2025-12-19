@@ -1,15 +1,19 @@
 #pragma once
 #include <distingnt/api.h>
 #include <stddef.h>
-#include "ownedBase.h"
 #include "viewBase.h"
+#include "helpTextHelper.h"
+#include "potManager.h"
+#include "noteBanks.h"
+#include "timeKeeper.h"
+#include "quantizer.h"
 
 
-struct WeightedQuantizer;
+struct WeightedQuantizerAlgorithm;
 
 
 // TODO:  derive from ViewBase also
-struct QuantizerView : ViewBase, OwnedBase<WeightedQuantizer> {
+struct QuantizerView : ViewBase {
 private:
 
 	struct Control {
@@ -26,6 +30,13 @@ private:
 	static constexpr int SelectedKeyBorderColor = 15;
 	static constexpr float MaxSliderValue = 10.0f;
 	
+	_NT_algorithm* Algorithm = nullptr;
+	Quantizer::QuantResult*& QuantResults;
+	uint16_t NumChannels;
+	HelpTextHelper* HelpText = nullptr;
+	PotManager* PotMgr = nullptr;
+	NoteBanks* Banks = nullptr;
+
 	bool BankPeeking = false;
 
 	static const Control KeyControls[];
@@ -48,6 +59,7 @@ private:
 	void LoadKeyControlForEditing();
 
 public:
+	QuantizerView(_NT_algorithm* alg, TimeKeeper* timer, uint16_t numChannels, HelpTextHelper* helpText, PotManager* potMgr, NoteBanks* banks, Quantizer::QuantResult*& quantResults);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

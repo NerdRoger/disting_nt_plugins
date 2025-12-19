@@ -8,7 +8,10 @@
         "cstddef": "cpp",
         "cstdint": "cpp",
         "random": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "cstdio": "cpp",
+        "cstdarg": "cpp",
+        "new": "cpp"
     },
     "search.exclude": {
         "distingNT_API/airwindows/*": true,

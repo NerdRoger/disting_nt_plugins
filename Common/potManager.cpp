@@ -1,34 +1,16 @@
-#include <math.h>
 #include "common.h"
-#include "baseAlgorithm.h"
+#include "potManager.h"
 
 
-uint32_t const BaseAlgorithm::SamplesPerMs = NT_globals.sampleRate / 1000;
-
-
-uint32_t BaseAlgorithm::CountMilliseconds(int numFrames) {
-	InternalFrameCount += numFrames;
-
-	uint32_t deltaMs = InternalFrameCount / SamplesPerMs;
-	TotalMs += deltaMs;
-
-	// subtract off the number of samples we just added to our running ms counter, to keep InternalFrameCount low
-	InternalFrameCount -= (deltaMs * SamplesPerMs);
-
-	return deltaMs;
-}
-
-
-void BaseAlgorithm::RecordPreviousPotValues(_NT_algorithm* self, const _NT_uiData& data) {
-	auto& alg = *static_cast<BaseAlgorithm*>(self);
+void PotManager::RecordPreviousPotValues(const _NT_uiData& data) {
 	for (size_t i = 0; i < ARRAY_SIZE(data.pots); i++) {
-		alg.PreviousPotValues[i] = data.pots[i];
+		PreviousPotValues[i] = data.pots[i];
 	}
-	alg.HasPreviousPotValues = true;
+	HasPreviousPotValues = true;
 }
 
 
-void BaseAlgorithm::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
+void PotManager::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
 	// if we have not yet recorded previous pot values, ignore this very first pot move
 	// this will "prime the pump" and stop large jumps in values on the very first move
 	if (!HasPreviousPotValues) {

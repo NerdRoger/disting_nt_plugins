@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <distingnt/api.h>
-#include "baseAlgorithm.h"
+#include "timeKeeper.h"
 
 
 struct ViewBase {
@@ -14,6 +14,8 @@ private:
 
 	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press	
 	
+	TimeKeeper* Timer = nullptr;
+
 	uint32_t Pot3DownTime = 0;
 	uint32_t BlockPot3ChangesUntil = 0;
 	uint32_t Encoder2DownTime = 0;
@@ -24,14 +26,14 @@ private:
 protected:
 	mutable char NumToStrBuf[20]; // for storing conversion results
 
-	void FixFloatBuf() const;
-	void AddSuffixToBuf(const char* suffix) const;
 	void DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const;
 
 public:
 
-	void ProcessControlInput(const BaseAlgorithm& alg, const _NT_uiData& data);
-	void ProcessLongPresses(const BaseAlgorithm& alg);
+	ViewBase(TimeKeeper* timer);
+
+	void ProcessControlInput(const _NT_uiData& data);
+	void ProcessLongPresses();
 
 	virtual void Activate() { }
 	virtual void Draw() const { }

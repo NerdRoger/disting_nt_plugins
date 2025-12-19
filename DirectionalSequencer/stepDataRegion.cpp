@@ -1,14 +1,21 @@
 #include <stdio.h>
 #include <distingnt/api.h>
 #include <distingnt/slot.h>
-#include "directionalSequencer.h"
+#include "directionalSequencerAlgorithm.h"
 #include "cellDefinition.h"
+
+
+StepDataRegion::StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs) {
+	Algorithm = alg;
+	CellDefs = cellDefs;
+	SetDefaultCellValues();
+}
 
 
 void StepDataRegion::SetDefaultCellValues() {
 	// set the default cell values
-	for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
-		auto& cd = CellDefinitions[i];
+	for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
+		auto& cd = CellDefs[i];
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
 				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.Default);
@@ -22,13 +29,13 @@ void StepDataRegion::SetDefaultCellValues() {
 
 float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam) const {
 	// TODO:  make these methods better and not just copy/paste
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 
 	if (readFromParam) {
-		int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
+		int16_t modATarget = Algorithm->v[kParamModATarget];
 		// if this cell type is wired up to an NT parameter, get info from there
 		if (ct == static_cast<CellDataType>(modATarget)) {
-			auto algIndex = NT_algorithmIndex(AlgorithmInstance);
+			auto algIndex = NT_algorithmIndex(Algorithm);
 			_NT_slot slot;
 			NT_getSlot(slot, algIndex);
 			auto cellIndex = y * GridSizeX + x;
@@ -62,14 +69,14 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bo
 
 
 float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	int result;
 
-	int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
+	int16_t modATarget = Algorithm->v[kParamModATarget];
 	// if this cell type is wired up to an NT parameter, get info from there
 	if (ct == static_cast<CellDataType>(modATarget)) {
-		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
+		auto algIndex = NT_algorithmIndex(Algorithm);
 		_NT_slot slot;
 		NT_getSlot(slot, algIndex);
 		auto cellIndex = y * GridSizeX + x;
@@ -100,7 +107,7 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 
 
 void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam) {
-	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.Min, cd.Max);
 	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Precision));
@@ -124,9 +131,9 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 
 	// if we have an NT parameter mapped to the value we are changing, also change the parameter value
 	if (updateParam) {
-		int16_t modATarget = AlgorithmInstance->v[kParamModATarget];
+		int16_t modATarget = Algorithm->v[kParamModATarget];
 		if (ct == static_cast<CellDataType>(modATarget)) {
-			auto algIndex = NT_algorithmIndex(AlgorithmInstance);
+			auto algIndex = NT_algorithmIndex(Algorithm);
 			auto cellIndex = y * GridSizeX + x;
 			NT_setParameterFromAudio(algIndex, kParamModATargetCell1 + cellIndex + NT_parameterOffset(), ival);
 //			NT_setParameterFromUi(algIndex, kParamModATargetCell1 + cellIndex + NT_parameterOffset(), ival);

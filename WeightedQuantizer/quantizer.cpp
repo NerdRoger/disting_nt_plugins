@@ -20,7 +20,7 @@ const Quantizer::NoteDef Quantizer::Notes[NumberOfNotes] = {
 };
 
 
-void Quantizer::Quantize(Quantizer::QuantRequest& req) {
+void Quantizer::Quantize(Quantizer::QuantRequest& req, Quantizer::QuantResult& result) {
 	float transposeOffset = static_cast<float>(req.Transpose) / 12.0f;
 
 	float val = req.UnquantizedValue * req.Attenuate / 100.0f + req.Offset;
@@ -45,16 +45,15 @@ void Quantizer::Quantize(Quantizer::QuantRequest& req) {
 		}
 	}
 
-	req.OutputValue = bestCandidate + transposeOffset;
+	result.QuantizedValue = bestCandidate + transposeOffset;
 	if (bestNoteIndex == -1) {
-		req.QuantizedNoteName = "??";
-		req.FinalNoteName = "??";
+		result.QuantizedNoteName = "??";
+		result.FinalNoteName = "??";
 	} else {
-		req.QuantizedNoteName = Notes[bestNoteIndex].Name;
+		result.QuantizedNoteName = Notes[bestNoteIndex].Name;
 		// transposition might take us out of range of our notes array, so wrap it around the boundaries
 		// simple modulo won't work for negative numbers, so use this helper
 		auto transposedNoteIndex = wrap(bestNoteIndex + req.Transpose, 0, 11);
-		req.FinalNoteName = Notes[transposedNoteIndex].Name;
-
+		result.FinalNoteName = Notes[transposedNoteIndex].Name;
 	}
 }

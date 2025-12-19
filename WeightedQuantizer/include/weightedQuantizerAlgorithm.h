@@ -1,10 +1,10 @@
 #pragma once
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
-#include "baseAlgorithm.h"
 #include "helpTextHelper.h"
 #include "quantizerView.h"
 #include "quantizer.h"
+#include "noteBanks.h"
 
 
 enum {
@@ -39,13 +39,8 @@ enum {
 };
 
 
-struct WeightedQuantizer : public BaseAlgorithm {
+struct WeightedQuantizerAlgorithm : public _NT_algorithm {
 private:
-
-	struct Bank {
-		int16_t NoteValues[12];
-	};
-
 	// NT Parameter Data
 	static const uint8_t GeneralPageDef[];
 	static const uint8_t NoteWeightsPageDef[];
@@ -70,7 +65,6 @@ private:
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 	static int  ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
-	int16_t PreviousBankScanParameterValue = 0;
 	uint32_t* DelayedTriggers;
 
 public:
@@ -78,23 +72,18 @@ public:
 
 	uint16_t NumChannels;
 
+	TimeKeeper Timer;
+	NoteBanks Banks;
+	PotManager PotMgr;
 	HelpTextHelper HelpText;
 	QuantizerView QuantView;
 	Quantizer Quant;
 	Quantizer::QuantRequest QuantRequest;
 	Trigger* Triggers;
+	Quantizer::QuantResult *QuantResults;
 
-	const char** QuantizedNoteNames;
-	const char** FinalNoteNames;
-	float* OutputValues;
-	bool ScanningLocked = true;
-	Bank Banks[10];
+	WeightedQuantizerAlgorithm(uint16_t numChannels);
+	~WeightedQuantizerAlgorithm();
 
-	WeightedQuantizer() {}
-	~WeightedQuantizer() {}
-
-	void LoadNotesFromBank(size_t bankNum);
-	void SaveNotesToBank(size_t bankNum);
-	void DoBankScan(int16_t val);
 
 };

@@ -1,5 +1,4 @@
 #pragma once
-#include "ownedBase.h"
 
 
 struct Quantizer {
@@ -22,14 +21,17 @@ public:
 		float       Attenuate;
 		float       Offset;
 		int16_t     Transpose;
-		// outputs
-		const char* QuantizedNoteName;
-		const char* FinalNoteName;
-    float       OutputValue;
+	};
+
+
+	struct QuantResult {
+		float       QuantizedValue = 0.0f;
+		const char* QuantizedNoteName = "C";
+		const char* FinalNoteName = "C";
 	};
 
 	float NoteWeights[12];
 
-	void Quantize(QuantRequest& req);
+	void Quantize(QuantRequest& req, QuantResult& result);
 
 };

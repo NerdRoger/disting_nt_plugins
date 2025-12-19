@@ -1,5 +1,5 @@
 #include <distingnt/api.h>
-#include "directionalSequencer.h"
+#include "directionalSequencerAlgorithm.h"
 
 
 uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
@@ -12,7 +12,7 @@ uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
 			return 1;
 		case kNT_selector_factoryInfo:
 			if (data == 0) {
-				return (uintptr_t)&DirectionalSequencer::Factory;
+				return (uintptr_t)&DirectionalSequencerAlgorithm::Factory;
 			}
 			return 0;
 	}

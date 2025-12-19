@@ -1,16 +1,18 @@
 #pragma once
 
+#include <distingnt/api.h>
 #include "common.h"
-#include "ownedBase.h"
 #include "gridInfo.h"
 #include "cellDefinition.h"
+#include "timeKeeper.h"
+#include "stepDataRegion.h"
 
 
-struct DirectionalSequencer;
+struct DirectionalSequencerAlgorithm;
 
 
 // this class represents a single playhead moving thru the sequencer field
-struct Playhead : OwnedBase<DirectionalSequencer> {
+struct Playhead {
 private:
 	struct RatchetInfo {
 		bool Active;
@@ -38,6 +40,11 @@ private:
 	static constexpr uint16_t InactiveTime = 10000;
 	static constexpr float GateHigh = 5.0;
 	static constexpr float GateLow = 0.0;
+
+	_NT_algorithm* Algorithm = nullptr;
+	StepDataRegion* StepData = nullptr;
+	TimeKeeper* Timer = nullptr;
+	RandomGenerator* Random = nullptr;
 
 	uint32_t LastClock;
 	uint32_t ClockRate = 500; // 500ms = 120BPM
@@ -103,6 +110,8 @@ public:
 
 	Trigger ResetTrigger;
 	Trigger ClockTrigger;
+
+	Playhead(_NT_algorithm* alg, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData);
 
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();
