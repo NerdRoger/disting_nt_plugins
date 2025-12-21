@@ -99,7 +99,7 @@ _NT_algorithm* DirectionalSequencerAlgorithm::Construct(const _NT_algorithmMemor
 	auto mem = ptrs.sram;
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<DirectionalSequencerAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerAlgorithm* addr, size_t){ new (addr) DirectionalSequencerAlgorithm(CellDefinitions); });
+	auto& alg = *MemoryHelper<DirectionalSequencerAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerAlgorithm* addr, size_t){ new (addr) DirectionalSequencerAlgorithm(CellDefinition::All); });
 
 	return &alg;
 }

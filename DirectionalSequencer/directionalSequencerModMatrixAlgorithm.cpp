@@ -83,7 +83,7 @@ const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes
 const char** DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums() {
 	CellTargetEnums[0] = "None";
 	for (size_t i = 0; i < static_cast<uint16_t>(CellDataType::NumCellDataTypes); i++) {
-		CellTargetEnums[i+1] = CellDefinitions[i].DisplayName;
+		CellTargetEnums[i+1] = CellDefs[i].DisplayName;
 	}
 	return CellTargetEnums;
 }
@@ -151,7 +151,7 @@ _NT_algorithm* DirectionalSequencerModMatrixAlgorithm::Construct(const _NT_algor
 	memset(mem, 0, req.sram);
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<DirectionalSequencerModMatrixAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerModMatrixAlgorithm* addr, size_t){ new (addr) DirectionalSequencerModMatrixAlgorithm(CellDefinitions); });
+	auto& alg = *MemoryHelper<DirectionalSequencerModMatrixAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerModMatrixAlgorithm* addr, size_t){ new (addr) DirectionalSequencerModMatrixAlgorithm(CellDefinition::All); });
 
 	return &alg;
 }

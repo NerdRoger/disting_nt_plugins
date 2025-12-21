@@ -1,7 +1,7 @@
 #include "cellDefinition.h"
 
 
-const CellDefinition CellDefinitions[] = {
+const CellDefinition CellDefinition::All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)] = {
 	// Don't Change
 	//   vvvv
 	{ "Direction",   "Direction",    0, 8,   0,   0, kNT_unitNone,    kNT_scalingNone, "  Direction of next step. Blank = keep going" },

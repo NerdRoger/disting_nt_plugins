@@ -68,7 +68,7 @@ private:
 	static const uint16_t MatrixStride = GridSizeX * GridSizeY + 1;
 
 	// NT Parameter Data
-	static const char** BuildCellTargetEnums();
+	const char** BuildCellTargetEnums();
 	static const char* const CellDirectionNames[];
 
 	char CellParamNames[5][32][20];
