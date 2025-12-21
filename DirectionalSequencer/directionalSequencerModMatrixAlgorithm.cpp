@@ -79,6 +79,15 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModETargetPageDef[] = {
 };
 
 
+const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
+const char** DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums() {
+	CellTargetEnums[0] = "None";
+	for (size_t i = 0; i < static_cast<uint16_t>(CellDataType::NumCellDataTypes); i++) {
+		CellTargetEnums[i+1] = CellDefinitions[i].DisplayName;
+	}
+	return CellTargetEnums;
+}
+
 
 DirectionalSequencerModMatrixAlgorithm::DirectionalSequencerModMatrixAlgorithm(const CellDefinition* cellDefs) {
 	CellDefs = cellDefs;
@@ -94,16 +103,18 @@ DirectionalSequencerModMatrixAlgorithm::~DirectionalSequencerModMatrixAlgorithm(
 void DirectionalSequencerModMatrixAlgorithm::BuildParameters() {
 	int numPages = 0;
 
+	auto cellTargetEnums = DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums();
+
 	PageDefs[numPages + 0] = { .name = "Matrix A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
 	PageDefs[numPages + 1] = { .name = "Matrix B", .numParams = ARRAY_SIZE(ModBTargetPageDef), .params = ModBTargetPageDef };
 	PageDefs[numPages + 2] = { .name = "Matrix C", .numParams = ARRAY_SIZE(ModCTargetPageDef), .params = ModCTargetPageDef };
 	PageDefs[numPages + 3] = { .name = "Matrix D", .numParams = ARRAY_SIZE(ModDTargetPageDef), .params = ModDTargetPageDef };
 	PageDefs[numPages + 4] = { .name = "Matrix E", .numParams = ARRAY_SIZE(ModETargetPageDef), .params = ModETargetPageDef };
-	ParameterDefs[kParamModATarget] = { .name = "Target A", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	ParameterDefs[kParamModBTarget] = { .name = "Target B", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	ParameterDefs[kParamModCTarget] = { .name = "Target C", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	ParameterDefs[kParamModDTarget] = { .name = "Target D", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	ParameterDefs[kParamModETarget] = { .name = "Target E", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
+	ParameterDefs[kParamModATarget] = { .name = "Target A", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+	ParameterDefs[kParamModBTarget] = { .name = "Target B", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+	ParameterDefs[kParamModCTarget] = { .name = "Target C", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+	ParameterDefs[kParamModDTarget] = { .name = "Target D", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+	ParameterDefs[kParamModETarget] = { .name = "Target E", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
 	for (int i = 0; i < 32; i++) {
 		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellParamNames[0][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[kParamModBTargetCell1 + i] = { .name = CellParamNames[1][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
