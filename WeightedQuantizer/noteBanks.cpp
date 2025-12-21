@@ -1,7 +1,7 @@
 #include <distingnt/api.h>
 #include "common.h"
 #include "noteBanks.h"
-#include "weightedQuantizerAlgorithm.h"
+#include "weightedQuantizerAlg.h"
 
 
 NoteBanks::NoteBanks(_NT_algorithm* alg) {

@@ -1,6 +1,6 @@
 #include <string.h>
 #include "quantizerView.h"
-#include "weightedQuantizerAlgorithm.h"
+#include "weightedQuantizerAlg.h"
 #include "common.h"
 
 

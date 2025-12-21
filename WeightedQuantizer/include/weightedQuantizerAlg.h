@@ -39,7 +39,7 @@ enum {
 };
 
 
-struct WeightedQuantizerAlgorithm : public _NT_algorithm {
+struct WeightedQuantizerAlg : public _NT_algorithm {
 private:
 	// NT Parameter Data
 	static const uint8_t GeneralPageDef[];
@@ -82,8 +82,8 @@ public:
 	Trigger* Triggers;
 	Quantizer::QuantResult *QuantResults;
 
-	WeightedQuantizerAlgorithm(uint16_t numChannels);
-	~WeightedQuantizerAlgorithm();
+	WeightedQuantizerAlg(uint16_t numChannels);
+	~WeightedQuantizerAlg();
 
 
 };

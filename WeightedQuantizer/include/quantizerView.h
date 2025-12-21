@@ -9,7 +9,7 @@
 #include "quantizer.h"
 
 
-struct WeightedQuantizerAlgorithm;
+struct WeightedQuantizerAlg;
 
 
 // TODO:  derive from ViewBase also

@@ -2,18 +2,18 @@
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
 #include "common.h"
-#include "weightedQuantizerAlgorithm.h"
+#include "weightedQuantizerAlg.h"
 #include "quantizer.h"
 
 
-const uint8_t WeightedQuantizerAlgorithm::GeneralPageDef[] = {
+const uint8_t WeightedQuantizerAlg::GeneralPageDef[] = {
 	kWQParamTransposeAll,
 	kWQParamBankScanPosition,
 	kWQParamTriggerSampleDelay,
 };
 
 
-const uint8_t WeightedQuantizerAlgorithm::NoteWeightsPageDef[] = {
+const uint8_t WeightedQuantizerAlg::NoteWeightsPageDef[] = {
 	kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
 	kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
 	kWQParamQuantWeightE,
@@ -24,27 +24,27 @@ const uint8_t WeightedQuantizerAlgorithm::NoteWeightsPageDef[] = {
 };
 
 
-const char* const WeightedQuantizerAlgorithm::PageNamesDef[] = {
+const char* const WeightedQuantizerAlg::PageNamesDef[] = {
 	"Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8",
 };
 
 
-const _NT_specification WeightedQuantizerAlgorithm::SpecificationsDef[] = {
+const _NT_specification WeightedQuantizerAlg::SpecificationsDef[] = {
 	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
 };
 
 
-WeightedQuantizerAlgorithm::WeightedQuantizerAlgorithm(uint16_t numChannels) : NumChannels(numChannels), Timer(NT_globals.sampleRate), Banks(this), QuantView(this, &Timer, numChannels, &HelpText, &PotMgr, &Banks, QuantResults) {
+WeightedQuantizerAlg::WeightedQuantizerAlg(uint16_t numChannels) : NumChannels(numChannels), Timer(NT_globals.sampleRate), Banks(this), QuantView(this, &Timer, numChannels, &HelpText, &PotMgr, &Banks, QuantResults) {
 
 }
 
 
-WeightedQuantizerAlgorithm::~WeightedQuantizerAlgorithm() {
+WeightedQuantizerAlg::~WeightedQuantizerAlg() {
 
 }
 
 
-void WeightedQuantizerAlgorithm::BuildParameters() {
+void WeightedQuantizerAlg::BuildParameters() {
 	int numPages = 0;
 
 	// general page
@@ -101,7 +101,7 @@ void WeightedQuantizerAlgorithm::BuildParameters() {
 }
 
 
-void WeightedQuantizerAlgorithm::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
+void WeightedQuantizerAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	int32_t numChannels = specifications[0];
 	req.numParameters = kWQNumCommonParameters + numChannels * kWQNumPerChannelParameters;
 	req.sram = 0;
@@ -112,7 +112,7 @@ void WeightedQuantizerAlgorithm::CalculateRequirements(_NT_algorithmRequirements
 	// calculate the memory requirements for all of the objects and dynamic arrays we need to create
 	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
 	MemoryHelper<Quantizer::QuantResult>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::QuantResults
-	MemoryHelper<WeightedQuantizerAlgorithm>::AlignAndIncrementMemoryRequirement(req.sram, 1); // WeightedQuantizer
+	MemoryHelper<WeightedQuantizerAlg>::AlignAndIncrementMemoryRequirement(req.sram, 1); // WeightedQuantizer
 	MemoryHelper<Trigger>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::Triggers
 	MemoryHelper<uint32_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WeightedQuantizer::DelayedTriggers
 	MemoryHelper<_NT_parameter>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WeightedQuantizer::ParameterDefs
@@ -121,13 +121,13 @@ void WeightedQuantizerAlgorithm::CalculateRequirements(_NT_algorithmRequirements
 }
 
 
-_NT_algorithm* WeightedQuantizerAlgorithm::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+_NT_algorithm* WeightedQuantizerAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto numChannels = specifications[0];
 	auto mem = ptrs.sram;
 
 	// initialize arrays that depend on number of channels
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<WeightedQuantizerAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [numChannels](WeightedQuantizerAlgorithm* addr, size_t){ new (addr) WeightedQuantizerAlgorithm(numChannels); });
+	auto& alg = *MemoryHelper<WeightedQuantizerAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [numChannels](WeightedQuantizerAlg* addr, size_t){ new (addr) WeightedQuantizerAlg(numChannels); });
 	alg.Triggers = MemoryHelper<Trigger>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.QuantResults = MemoryHelper<Quantizer::QuantResult>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.DelayedTriggers = MemoryHelper<uint32_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
@@ -142,8 +142,8 @@ _NT_algorithm* WeightedQuantizerAlgorithm::Construct(const _NT_algorithmMemoryPt
 }
 
 
-void WeightedQuantizerAlgorithm::ParameterChanged(_NT_algorithm* self, int p) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+void WeightedQuantizerAlg::ParameterChanged(_NT_algorithm* self, int p) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 	alg.QuantView.ParameterChanged(p);
 
 	// if one of the note weight parameters changes, set it on the quantizer, so we don't have to constantly interrogate it
@@ -160,8 +160,8 @@ void WeightedQuantizerAlgorithm::ParameterChanged(_NT_algorithm* self, int p) {
 }
 
 
-void WeightedQuantizerAlgorithm::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+void WeightedQuantizerAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 	auto numFrames = numFramesBy4 * 4;
 
 	auto ms = alg.Timer.CountMilliseconds(numFrames);
@@ -230,8 +230,8 @@ void WeightedQuantizerAlgorithm::Step(_NT_algorithm* self, float* busFrames, int
 }
 
 
-bool WeightedQuantizerAlgorithm::Draw(_NT_algorithm* self) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+bool WeightedQuantizerAlg::Draw(_NT_algorithm* self) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 	// do this in draw, because we don't need it as frequently as step
 	alg.QuantView.ProcessLongPresses();
 	alg.QuantView.Draw();
@@ -258,26 +258,26 @@ bool WeightedQuantizerAlgorithm::Draw(_NT_algorithm* self) {
 }
 
 
-uint32_t WeightedQuantizerAlgorithm::HasCustomUI(_NT_algorithm* self) {
+uint32_t WeightedQuantizerAlg::HasCustomUI(_NT_algorithm* self) {
 	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR | kNT_button3;
 }
 
 
-void WeightedQuantizerAlgorithm::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+void WeightedQuantizerAlg::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 	alg.QuantView.FixupPotValues(pots);
 }
 
 
-void WeightedQuantizerAlgorithm::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+void WeightedQuantizerAlg::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 	alg.QuantView.ProcessControlInput(data);
 	alg.PotMgr.RecordPreviousPotValues(data);
 }
 
 
-void WeightedQuantizerAlgorithm::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+void WeightedQuantizerAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 
 	stream.addMemberName("BankNoteValues");
 	stream.openArray();
@@ -290,8 +290,8 @@ void WeightedQuantizerAlgorithm::Serialise(_NT_algorithm* self, _NT_jsonStream& 
 }
 
 
-bool WeightedQuantizerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
-	auto& alg = *static_cast<WeightedQuantizerAlgorithm*>(self);
+bool WeightedQuantizerAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
+	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
 
 	int num;
 	if (!parse.numberOfObjectMembers(num)) {
@@ -330,7 +330,7 @@ bool WeightedQuantizerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonParse&
 }
 
 
-int WeightedQuantizerAlgorithm::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
+int WeightedQuantizerAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
 	int len = 0;
 	if (p >= kWQNumCommonParameters) {
 		auto channel = (p - kWQNumCommonParameters) / kWQNumPerChannelParameters;
@@ -343,7 +343,7 @@ int WeightedQuantizerAlgorithm::ParameterUiPrefix(_NT_algorithm* self, int p, ch
 }
 
 
-const _NT_factory WeightedQuantizerAlgorithm::Factory =
+const _NT_factory WeightedQuantizerAlg::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'w', 'q' ),
 	.name = "Weighted Quantizer",
