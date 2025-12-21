@@ -63,6 +63,10 @@ enum {
 
 struct DirectionalSequencerModMatrixAlgorithm : public _NT_algorithm{
 private:
+
+	// stride is the number of cells + 1 (the target parameter)
+	static const uint16_t MatrixStride = GridSizeX * GridSizeY + 1;
+
 	// NT Parameter Data
 	static const char* const CellDirectionNames[];
 

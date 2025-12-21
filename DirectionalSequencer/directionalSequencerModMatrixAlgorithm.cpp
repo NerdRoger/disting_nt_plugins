@@ -137,6 +137,7 @@ void DirectionalSequencerModMatrixAlgorithm::CalculateRequirements(_NT_algorithm
 
 _NT_algorithm* DirectionalSequencerModMatrixAlgorithm::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto mem = ptrs.sram;
+	memset(mem, 0, req.sram);
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirectionalSequencerModMatrixAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerModMatrixAlgorithm* addr, size_t){ new (addr) DirectionalSequencerModMatrixAlgorithm(CellDefinitions); });
@@ -147,20 +148,22 @@ _NT_algorithm* DirectionalSequencerModMatrixAlgorithm::Construct(const _NT_algor
 
 void DirectionalSequencerModMatrixAlgorithm::ParameterChanged(_NT_algorithm* self, int p) {
  	auto& alg = *static_cast<DirectionalSequencerModMatrixAlgorithm*>(self);
-	auto seq = alg.GetSequencerAlgorithm();
+	DirectionalSequencerAlgorithm* seq = alg.GetSequencerAlgorithm();
 
 	// a lambda function to update the cell value in the sequencer, called a number of times further down
-	auto updateCellValue = [&alg, p, seq](size_t modTargetParamIndex) {
-		auto target = alg.v[modTargetParamIndex] - 1;
-		if (target >= 0) {
-			auto cellNum = (p - 1) % 33;
-			auto cd = alg.CellDefs[target];
-			int multiplier = pow(10, cd.Precision);
-			auto algIndex = NT_algorithmIndex(&alg);
-			_NT_slot slot;
-			NT_getSlot(slot, algIndex);
-			auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / multiplier;
-			seq->StepData.SetBaseCellValue(cellNum % 8, cellNum / 8, static_cast<CellDataType>(target), val, false);
+	auto updateCellValue = [&](size_t modTargetParamIndex) {
+		if (seq != nullptr) {
+			auto target = alg.v[modTargetParamIndex] - 1;
+			if (target >= 0) {
+				auto cellNum = (p - 1) % MatrixStride;
+				auto cd = alg.CellDefs[target];
+				int multiplier = pow(10, cd.Precision);
+				auto algIndex = NT_algorithmIndex(&alg);
+				_NT_slot slot;
+				NT_getSlot(slot, algIndex);
+				auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / multiplier;
+				seq->StepData.SetBaseCellValue(cellNum % 8, cellNum / 8, static_cast<CellDataType>(target), val, false);
+			}
 		}
 	};
 
@@ -188,18 +191,35 @@ void DirectionalSequencerModMatrixAlgorithm::ParameterChanged(_NT_algorithm* sel
 
 bool DirectionalSequencerModMatrixAlgorithm::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirectionalSequencerModMatrixAlgorithm*>(self);
-	auto seq = alg.GetSequencerAlgorithm();
+	DirectionalSequencerAlgorithm* seq = alg.GetSequencerAlgorithm();
 
-	if (seq != nullptr) {
-		auto val = seq->StepData.GetBaseCellValue(2, 2, CellDataType::Value);
-		char buf[20];
-		NT_floatToString(buf, val, 3);
-		NT_drawText(100, 30, buf, 15);
+	if (seq == nullptr) {
+		NT_drawText( 20, 10, "This algorithm is a mod matrix expander", 15);
+		NT_drawText( 20, 20, "for Directional Sequencer.  Place it", 15);
+		NT_drawText( 20, 30, "directly below one to use it!!!", 15);
+		return true;
 	}
 
-	NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 5);
-	NT_drawShapeI(kNT_rectangle, 20, 20, 70, 70, 10);
-	NT_drawShapeI(kNT_rectangle, 40, 40, 90, 90, 15);
+	auto modTargetA = alg.v[kParamModATarget];
+	auto modTargetB = alg.v[kParamModBTarget];
+	auto modTargetC = alg.v[kParamModCTarget];
+	auto modTargetD = alg.v[kParamModDTarget];
+	auto modTargetE = alg.v[kParamModETarget];
+
+	NT_drawText( 40, 10, "Matrix A Target:  ", 15);
+	NT_drawText(140, 10, modTargetA == 0 ? "None" : alg.CellDefs[modTargetA - 1].DisplayName, 15);
+	
+	NT_drawText( 40, 20, "Matrix B Target:  ", 15);
+	NT_drawText(140, 20, modTargetB == 0 ? "None" : alg.CellDefs[modTargetB - 1].DisplayName, 15);
+
+	NT_drawText( 40, 30, "Matrix C Target:  ", 15);
+	NT_drawText(140, 30, modTargetC == 0 ? "None" : alg.CellDefs[modTargetC - 1].DisplayName, 15);
+
+	NT_drawText( 40, 40, "Matrix D Target:  ", 15);
+	NT_drawText(140, 40, modTargetD == 0 ? "None" : alg.CellDefs[modTargetD - 1].DisplayName, 15);
+
+	NT_drawText( 40, 50, "Matrix E Target:  ", 15);
+	NT_drawText(140, 50, modTargetE == 0 ? "None" : alg.CellDefs[modTargetE - 1].DisplayName, 15);
 
 	return true;
 }
@@ -229,7 +249,7 @@ void DirectionalSequencerModMatrixAlgorithm::SetupParametersForTarget(int modTar
 	int16_t modTarget = v[modTargetParamIndex];
 
 	// find the "linked" sequencer algorithm
-	auto seq = GetSequencerAlgorithm();
+	DirectionalSequencerAlgorithm* seq = GetSequencerAlgorithm();
 
 	// if "None" target is selected, or we don't have a linked sequencer, just make all the parameters "zeroes"
 	// otherwise, configure them to match the cell definition of the target
@@ -260,8 +280,8 @@ void DirectionalSequencerModMatrixAlgorithm::SetupParametersForTarget(int modTar
 			int16_t def = cd.Default * pow(10, cd.Precision);
 			char numbuf[3];
 			NT_intToString(numbuf, i + 1);
-			StringConcat(CellParamNames[modTargetParamIndex / 33][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);
-			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / 33][i];
+			StringConcat(CellParamNames[modTargetParamIndex / MatrixStride][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);
+			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / MatrixStride][i];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = def;
