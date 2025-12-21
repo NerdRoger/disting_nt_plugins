@@ -468,7 +468,7 @@ void GridView::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 		PotMgr->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
-		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
+		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		HelpText->DisplayHelpText(cd.HelpText);
 	}
 }
@@ -479,11 +479,11 @@ void GridView::Pot3ShortPress() {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
-		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw);
+		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
 			if (DisplayedPlayhead->InitialStep == SelectedCell) {
-				StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3);
+				StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3, true);
 			}
 		}
 		HelpText->DisplayHelpText(cd.HelpText);
@@ -498,12 +498,12 @@ void GridView::Pot3LongPress() {
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				StepData->SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw);
+				StepData->SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
 			}
 		}
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			StepData->SetBaseCellValue(DisplayedPlayhead->InitialStep.x, DisplayedPlayhead->InitialStep.y, SelectedParameterIndex, 3);
+			StepData->SetBaseCellValue(DisplayedPlayhead->InitialStep.x, DisplayedPlayhead->InitialStep.y, SelectedParameterIndex, 3, true);
 		}
 		HelpText->DisplayHelpText(cd.HelpText);
 		LoadParamForEditing();

@@ -45,5 +45,5 @@ enum class CellDataType {
 };
 
 
-extern const char* const CellNames[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];
+extern const char* const CellNames[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
 extern const CellDefinition CellDefinitions[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];

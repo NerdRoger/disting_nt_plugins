@@ -2,7 +2,7 @@
 
 #include "gridInfo.h"
 #include "cellDefinition.h"
-
+#include "directionalSequencerModMatrixAlgorithm.h"
 
 struct DirectionalSequencerAlgorithm;
 
@@ -40,11 +40,13 @@ private:
 	const CellDefinition* CellDefs = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
+	DirectionalSequencerModMatrixAlgorithm* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
+
 public:
 	StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs);
 
-	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, bool readFromParam = true) const;
+	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
-	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateParam = true);
+	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix);
 	void  SetDefaultCellValues();
 };

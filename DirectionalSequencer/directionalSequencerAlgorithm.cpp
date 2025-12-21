@@ -22,37 +22,10 @@ const uint8_t DirectionalSequencerAlgorithm::RoutingPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencerAlgorithm::ModATargetPageDef[] = {
-	kParamModATarget,
-	kParamModATargetCell1,  kParamModATargetCell2,  kParamModATargetCell3,  kParamModATargetCell4,
-	kParamModATargetCell5,  kParamModATargetCell6,  kParamModATargetCell7,  kParamModATargetCell8,
-	kParamModATargetCell9,  kParamModATargetCell10, kParamModATargetCell11, kParamModATargetCell12,
-	kParamModATargetCell13, kParamModATargetCell14, kParamModATargetCell15, kParamModATargetCell16,
-	kParamModATargetCell17, kParamModATargetCell18, kParamModATargetCell19, kParamModATargetCell20,
-	kParamModATargetCell21, kParamModATargetCell22, kParamModATargetCell23, kParamModATargetCell24,
-	kParamModATargetCell25, kParamModATargetCell26, kParamModATargetCell27, kParamModATargetCell28,
-	kParamModATargetCell29, kParamModATargetCell30, kParamModATargetCell31, kParamModATargetCell32,
-
-};
-
-
 const char* const DirectionalSequencerAlgorithm::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
 
 
 const char* const DirectionalSequencerAlgorithm::EnumStringsResetWhenInactive[] = { "No", "Yes" };
-
-
-const char* const DirectionalSequencerAlgorithm::CellNamesDef[] = {
-	"Cell 1",  "Cell 2",  "Cell 3",  "Cell 4",  "Cell 5",  "Cell 6",  "Cell 7",  "Cell 8", 
-	"Cell 9",  "Cell 10", "Cell 11", "Cell 12", "Cell 13", "Cell 14", "Cell 15", "Cell 16", 
-	"Cell 17", "Cell 18", "Cell 19", "Cell 20", "Cell 21", "Cell 22", "Cell 23", "Cell 24", 
-	"Cell 25", "Cell 26", "Cell 27", "Cell 28", "Cell 29", "Cell 30", "Cell 31", "Cell 32", 
-};
-
-
-const char* const DirectionalSequencerAlgorithm::CellDirectionNames[] = {
-	"None", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
-};
 
 
 DirectionalSequencerAlgorithm::DirectionalSequencerAlgorithm(const CellDefinition* cellDefs) : Timer(NT_globals.sampleRate), StepData(this, cellDefs), Head(this, &Timer, &Random, &StepData), Grid(cellDefs, &Timer, &Head, &StepData, &HelpText, &PotMgr) {
@@ -100,66 +73,11 @@ void DirectionalSequencerAlgorithm::BuildParameters() {
 	ParameterDefs[kParamQuantReturn] = { .name = "Quant Return", .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
 	numPages++;
 
-	// param target A page
-	uint8_t numCells = GridSizeX * GridSizeY;
-
-	PageDefs[numPages] = { .name = "Mod A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
-	ParameterDefs[kParamModATarget] = { .name = "Mod A Target", .min = 0, .max = ARRAY_SIZE(CellNames) - 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = CellNames };
-	auto cd = CellDefs[ParameterDefs[kParamModATarget].def];
-	auto enums = ParameterDefs[kParamModATarget].def == 0 ? CellDirectionNames : NULL;
-	uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
-	for (int i = 0; i < numCells; i++) {
-		int16_t min = cd.Min * pow(10, cd.Precision);
-		int16_t max = cd.Max * pow(10, cd.Precision);
-		// we want to default the cell parameters to the values already specified in the cell data
-    auto val = StepData.GetBaseCellValue(i % GridSizeX, i / GridSizeX, static_cast<CellDataType>(ParameterDefs[kParamModATarget].def));
-		int16_t def = val * pow(10, cd.Precision);
-		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellNamesDef[i], .min = min, .max = max, .def = def, .unit = unit, .scaling = cd.Scaling, .enumStrings = enums };
-	}
-	numPages++;
-
-
 	PagesDefs.numPages = numPages;
 	PagesDefs.pages = PageDefs;
 
 	parameters = ParameterDefs;
 	parameterPages = &PagesDefs;
-}
-
-
-void DirectionalSequencerAlgorithm::MapModParameters(int modTargetParamIndex) {
-	auto algIndex = NT_algorithmIndex(this);
-	int16_t modTarget = v[modTargetParamIndex];
-
-	uint8_t numCells = GridSizeX * GridSizeY;
-
-	// TODO:  combine this with loop below once it's working as I expect
-	auto cd = CellDefs[modTarget];
-	auto enums = modTarget == 0 ? CellDirectionNames : NULL;
-	uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
-	for (int i = 0; i < numCells; i++) {
-		int16_t min = cd.Min * pow(10, cd.Precision);
-		int16_t max = cd.Max * pow(10, cd.Precision);
-		int16_t def = cd.Default * pow(10, cd.Precision);
-		ParameterDefs[modTargetParamIndex + 1 + i].min = min;
-		ParameterDefs[modTargetParamIndex + 1 + i].max = max;
-		ParameterDefs[modTargetParamIndex + 1 + i].def = def;
-		ParameterDefs[modTargetParamIndex + 1 + i].unit = unit;
-		ParameterDefs[modTargetParamIndex + 1 + i].scaling = cd.Scaling;
-		ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = enums;
-		NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
-	}
-
-
-	int multiplier = pow(10, CellDefs[modTarget].Precision);
-	for (size_t x = 0; x < GridSizeX; x++) {
-		for (size_t y = 0; y < GridSizeY; y++) {
-			auto cellIndex = y * GridSizeX + x;
-			auto fval = StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget), false);
-			int16_t val = fval * multiplier;
-			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + cellIndex + NT_parameterOffset(), val);
-		}
-	}
 }
 
 
@@ -196,9 +114,9 @@ void DirectionalSequencerAlgorithm::ParameterChanged(_NT_algorithm* self, int p)
 		NT_setParameterGrayedOut(algIndex, kParamMaxGateLength + NT_parameterOffset(), alg.v[kParamGateLengthSource] != 0);
 	}
 
-	if (p == kParamModATarget) {
-//		alg.MapModParameters(p);
-	}
+// 	if (p == kParamModATarget) {
+// //		alg.MapModParameters(p);
+// 	}
 
 	// notify every view of the parameter change
 	alg.Grid.ParameterChanged(p);
@@ -311,6 +229,7 @@ uint32_t DirectionalSequencerAlgorithm::HasCustomUI(_NT_algorithm* self) {
 void DirectionalSequencerAlgorithm::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	alg.Grid.FixupPotValues(pots);
+	alg.Grid.LoadParamForEditing();
 }
 
 
@@ -355,12 +274,26 @@ void DirectionalSequencerAlgorithm::Serialise(_NT_algorithm* self, _NT_jsonStrea
 	}
 	stream.closeObject();
 
+	stream.addMemberName("SelectedCell");
+	stream.openObject();
+	{
+		stream.addMemberName("x");
+		stream.addNumber(alg.Grid.SelectedCell.x);
+		stream.addMemberName("y");
+		stream.addNumber(alg.Grid.SelectedCell.y);
+	}
+	stream.closeObject();
+
+	stream.addMemberName("SelectedParameterIndex");
+	stream.addNumber(static_cast<int>(alg.Grid.SelectedParameterIndex));
+
+	stream.addMemberName("Editable");
+	stream.addBoolean(alg.Grid.Editable);
+
 }
 
 
-bool DirectionalSequencerAlgorithm::DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse) {
-	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
-
+bool DirectionalSequencerAlgorithm::DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords) {
 	int numMembers;
 	if (!parse.numberOfObjectMembers(numMembers)) {
 		return false;
@@ -372,12 +305,12 @@ bool DirectionalSequencerAlgorithm::DeserialiseInitialStep(_NT_algorithm* self, 
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Head.InitialStep.x = val;
+			coords.x = val;
 		} else if (parse.matchName("y")) {
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Head.InitialStep.y = val;
+			coords.y = val;
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -428,12 +361,12 @@ bool DirectionalSequencerAlgorithm::DeserialiseGridCellData(_NT_algorithm* self,
 						if (!parse.number(fval)) {
 							return false;
 						}
-						alg.StepData.SetBaseCellValue(x, y, cdt, fval);
+						alg.StepData.SetBaseCellValue(x, y, cdt, fval, true);
 					} else {
 						if (!parse.number(ival)) {
 							return false;
 						}
-						alg.StepData.SetBaseCellValue(x, y, cdt, ival);
+						alg.StepData.SetBaseCellValue(x, y, cdt, ival, true);
 					}
 					found = true;
 					break;
@@ -454,6 +387,7 @@ bool DirectionalSequencerAlgorithm::DeserialiseGridCellData(_NT_algorithm* self,
 
 
 bool DirectionalSequencerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
+	auto& alg = *static_cast<DirectionalSequencerAlgorithm*>(self);
 	int num;
 	if (!parse.numberOfObjectMembers(num)) {
 		return false;
@@ -465,9 +399,26 @@ bool DirectionalSequencerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonPar
 				return false;
 			}
 		} else if (parse.matchName("InitialStep")) {
-			if (!DeserialiseInitialStep(self, parse)) {
+			if (!DeserialiseCellCoords(self, parse, alg.Head.InitialStep)) {
 				return false;
 			}
+		} else if (parse.matchName("SelectedCell")) {
+			if (!DeserialiseCellCoords(self, parse, alg.Grid.SelectedCell)) {
+				return false;
+			}
+		} else if (parse.matchName("SelectedParameterIndex")) {
+			int val;
+			if (!parse.number(val)) {
+				return false;
+			}
+			alg.Grid.SelectedParameterIndex = static_cast<CellDataType>(val);
+			alg.Grid.SelectedParameterIndexRaw = val + 0.5f;
+		} else if (parse.matchName("Editable")) {
+			bool val;
+			if (!parse.boolean(val)) {
+				return false;
+			}
+			alg.Grid.Editable = val;
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -482,9 +433,9 @@ bool DirectionalSequencerAlgorithm::Deserialise(_NT_algorithm* self, _NT_jsonPar
 const _NT_factory DirectionalSequencerAlgorithm::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'd', 's' ),
-	.name = "Directional Sequencer",
+	.name = "Dir. Sequencer",
 	// TODO:  flesh this out
-	.description = "Does Stuff",
+	.description = "A 2-D Directional Sequencer",
 	.numSpecifications = 0,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,

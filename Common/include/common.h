@@ -282,3 +282,6 @@ public:
 	}
 
 };
+
+
+void StringConcat(char* dest, int maxLen, ...);

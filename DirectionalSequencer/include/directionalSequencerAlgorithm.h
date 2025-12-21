@@ -34,61 +34,25 @@ enum {
 	kParamResetAfterNSteps,
 	kParamResetWhenInactive,
 
-	kParamModATarget,
-	kParamModATargetCell1,
-	kParamModATargetCell2,
-	kParamModATargetCell3,
-	kParamModATargetCell4,
-	kParamModATargetCell5,
-	kParamModATargetCell6,
-	kParamModATargetCell7,
-	kParamModATargetCell8,
-	kParamModATargetCell9,
-	kParamModATargetCell10,
-	kParamModATargetCell11,
-	kParamModATargetCell12,
-	kParamModATargetCell13,
-	kParamModATargetCell14,
-	kParamModATargetCell15,
-	kParamModATargetCell16,
-	kParamModATargetCell17,
-	kParamModATargetCell18,
-	kParamModATargetCell19,
-	kParamModATargetCell20,
-	kParamModATargetCell21,
-	kParamModATargetCell22,
-	kParamModATargetCell23,
-	kParamModATargetCell24,
-	kParamModATargetCell25,
-	kParamModATargetCell26,
-	kParamModATargetCell27,
-	kParamModATargetCell28,
-	kParamModATargetCell29,
-	kParamModATargetCell30,
-	kParamModATargetCell31,
-	kParamModATargetCell32,
-
 	kNumCommonParameters,
 };
 
 
 struct DirectionalSequencerAlgorithm : public _NT_algorithm{
 private:
+
+	friend class DirectionalSequencerModulatorAlgorithm;
+
 	// NT Parameter Data
 	static const char* const EnumStringsMaxGateFrom[];
 	static const char* const EnumStringsResetWhenInactive[];
-	static const char* const CellNamesDef[];
-	static const char* const CellDirectionNames[];
 	static const uint8_t RoutingPageDef[];
 	static const uint8_t SequencerPageDef[];
-	static const uint8_t ModATargetPageDef[];
 	_NT_parameter ParameterDefs[kNumCommonParameters];
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage	PageDefs[3];
 
 	void BuildParameters();
-
-	void MapModParameters(int modTargetParamIndex);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
@@ -100,7 +64,7 @@ private:
 	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
 	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
-	static bool DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse);
+	static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
 	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 

@@ -15,6 +15,9 @@ struct DirectionalSequencerAlgorithm;
 
 struct GridView : ViewBase {
 private:
+
+	friend DirectionalSequencerAlgorithm;
+
 	static constexpr int CellSize = 12;
 	static constexpr int CellBorderColor = 5;
 	static constexpr int CellBrightColor = 15;
