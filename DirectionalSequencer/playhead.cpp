@@ -2,7 +2,7 @@
 #include <distingnt/api.h>
 #include <distingnt/slot.h>
 #include "playhead.h"
-#include "directionalSequencerAlgorithm.h"
+#include "dirSeqAlg.h"
 
 
 Playhead::Playhead(_NT_algorithm* alg, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData) {

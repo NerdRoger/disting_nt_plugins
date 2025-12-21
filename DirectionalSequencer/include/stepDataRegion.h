@@ -2,9 +2,9 @@
 
 #include "gridInfo.h"
 #include "cellDefinition.h"
-#include "directionalSequencerModMatrixAlgorithm.h"
+#include "dirSeqModMatrixAlg.h"
 
-struct DirectionalSequencerAlgorithm;
+struct DirSeqAlg;
 
 
 // this class represents all of the steps and their values
@@ -40,7 +40,7 @@ private:
 	const CellDefinition* CellDefs = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
-	DirectionalSequencerModMatrixAlgorithm* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
+	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
 
 public:
 	StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs);

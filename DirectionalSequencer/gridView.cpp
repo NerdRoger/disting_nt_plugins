@@ -4,7 +4,7 @@
 #include "common.h"
 #include "gridView.h"
 #include "helpTextHelper.h"
-#include "directionalSequencerAlgorithm.h"
+#include "dirSeqAlg.h"
 
 
 GridView::GridView(const CellDefinition* cellDefs, TimeKeeper* timer, Playhead* playhead, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr) : ViewBase(timer) {

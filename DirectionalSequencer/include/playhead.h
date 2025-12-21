@@ -8,7 +8,7 @@
 #include "stepDataRegion.h"
 
 
-struct DirectionalSequencerAlgorithm;
+struct DirSeqAlg;
 
 
 // this class represents a single playhead moving thru the sequencer field

@@ -38,7 +38,7 @@ enum {
 };
 
 
-struct DirectionalSequencerAlgorithm : public _NT_algorithm{
+struct DirSeqAlg : public _NT_algorithm{
 private:
 
 	friend class DirectionalSequencerModulatorAlgorithm;
@@ -85,6 +85,6 @@ public:
 	Playhead Head;
 	GridView Grid;
 
-	DirectionalSequencerAlgorithm(const CellDefinition* cellDefs);
-	~DirectionalSequencerAlgorithm();
+	DirSeqAlg(const CellDefinition* cellDefs);
+	~DirSeqAlg();
 };

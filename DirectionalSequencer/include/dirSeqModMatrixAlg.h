@@ -4,7 +4,7 @@
 #include "cellDefinition.h"
 
 
-class DirectionalSequencerAlgorithm;
+class DirSeqAlg;
 
 enum {
 	kParamModATarget,
@@ -61,7 +61,7 @@ enum {
 };
 
 
-struct DirectionalSequencerModMatrixAlgorithm : public _NT_algorithm{
+struct DirSeqModMatrixAlg : public _NT_algorithm{
 private:
 
 	// stride is the number of cells + 1 (the target parameter)
@@ -90,7 +90,7 @@ private:
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static bool Draw(_NT_algorithm* self);
 
-	DirectionalSequencerAlgorithm* GetSequencerAlgorithm();
+	DirSeqAlg* GetSequencerAlgorithm();
 	void SetupParametersForTarget(int modTargetParamIndex);
 
 public:
@@ -99,7 +99,7 @@ public:
 
 	static const _NT_factory Factory;
 
-	DirectionalSequencerModMatrixAlgorithm(const CellDefinition* cellDefs);
-	~DirectionalSequencerModMatrixAlgorithm();
+	DirSeqModMatrixAlg(const CellDefinition* cellDefs);
+	~DirSeqModMatrixAlg();
 
 };

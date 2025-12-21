@@ -13,7 +13,7 @@ StepDataRegion::StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDef
 }
 
 
-DirectionalSequencerModMatrixAlgorithm* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const {
+DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const {
 	paramTargetIndex = -1;
 	auto algIndex = NT_algorithmIndex(Algorithm);
 	_NT_slot slot;
@@ -21,7 +21,7 @@ DirectionalSequencerModMatrixAlgorithm* StepDataRegion::GetModMatrixAlgorithm(Ce
 		if (!NT_getSlot(slot, idx))
 			return nullptr;
 		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 'm' )) {
-			auto matrix = static_cast<DirectionalSequencerModMatrixAlgorithm*>(slot.plugin());
+			auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
 			if (matrix->v[kParamModATarget] - 1 == static_cast<int>(ct)) {
 				paramTargetIndex = kParamModATarget;
 				return matrix;

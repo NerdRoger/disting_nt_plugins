@@ -4,17 +4,17 @@
 #include <distingnt/api.h>
 #include <distingnt/slot.h>
 #include "common.h"
-#include "directionalSequencerAlgorithm.h"
-#include "directionalSequencerModMatrixAlgorithm.h"
+#include "dirSeqAlg.h"
+#include "dirSeqModMatrixAlg.h"
 #include "cellDefinition.h"
 
 
-const char* const DirectionalSequencerModMatrixAlgorithm::CellDirectionNames[] = {
+const char* const DirSeqModMatrixAlg::CellDirectionNames[] = {
 	"", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
 };
 
 
-const uint8_t DirectionalSequencerModMatrixAlgorithm::ModATargetPageDef[] = {
+const uint8_t DirSeqModMatrixAlg::ModATargetPageDef[] = {
 	kParamModATarget,
 	kParamModATargetCell1,  kParamModATargetCell2,  kParamModATargetCell3,  kParamModATargetCell4,
 	kParamModATargetCell5,  kParamModATargetCell6,  kParamModATargetCell7,  kParamModATargetCell8,
@@ -27,7 +27,7 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModATargetPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencerModMatrixAlgorithm::ModBTargetPageDef[] = {
+const uint8_t DirSeqModMatrixAlg::ModBTargetPageDef[] = {
 	kParamModBTarget,
 	kParamModBTargetCell1,  kParamModBTargetCell2,  kParamModBTargetCell3,  kParamModBTargetCell4,
 	kParamModBTargetCell5,  kParamModBTargetCell6,  kParamModBTargetCell7,  kParamModBTargetCell8,
@@ -40,7 +40,7 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModBTargetPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencerModMatrixAlgorithm::ModCTargetPageDef[] = {
+const uint8_t DirSeqModMatrixAlg::ModCTargetPageDef[] = {
 	kParamModCTarget,
 	kParamModCTargetCell1,  kParamModCTargetCell2,  kParamModCTargetCell3,  kParamModCTargetCell4,
 	kParamModCTargetCell5,  kParamModCTargetCell6,  kParamModCTargetCell7,  kParamModCTargetCell8,
@@ -53,7 +53,7 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModCTargetPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencerModMatrixAlgorithm::ModDTargetPageDef[] = {
+const uint8_t DirSeqModMatrixAlg::ModDTargetPageDef[] = {
 	kParamModDTarget,
 	kParamModDTargetCell1,  kParamModDTargetCell2,  kParamModDTargetCell3,  kParamModDTargetCell4,
 	kParamModDTargetCell5,  kParamModDTargetCell6,  kParamModDTargetCell7,  kParamModDTargetCell8,
@@ -66,7 +66,7 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModDTargetPageDef[] = {
 };
 
 
-const uint8_t DirectionalSequencerModMatrixAlgorithm::ModETargetPageDef[] = {
+const uint8_t DirSeqModMatrixAlg::ModETargetPageDef[] = {
 	kParamModETarget,
 	kParamModETargetCell1,  kParamModETargetCell2,  kParamModETargetCell3,  kParamModETargetCell4,
 	kParamModETargetCell5,  kParamModETargetCell6,  kParamModETargetCell7,  kParamModETargetCell8,
@@ -80,7 +80,7 @@ const uint8_t DirectionalSequencerModMatrixAlgorithm::ModETargetPageDef[] = {
 
 
 const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
-const char** DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums() {
+const char** DirSeqModMatrixAlg::BuildCellTargetEnums() {
 	CellTargetEnums[0] = "None";
 	for (size_t i = 0; i < static_cast<uint16_t>(CellDataType::NumCellDataTypes); i++) {
 		CellTargetEnums[i+1] = CellDefs[i].DisplayName;
@@ -89,21 +89,21 @@ const char** DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums() {
 }
 
 
-DirectionalSequencerModMatrixAlgorithm::DirectionalSequencerModMatrixAlgorithm(const CellDefinition* cellDefs) {
+DirSeqModMatrixAlg::DirSeqModMatrixAlg(const CellDefinition* cellDefs) {
 	CellDefs = cellDefs;
 	BuildParameters();
 }
 
 
-DirectionalSequencerModMatrixAlgorithm::~DirectionalSequencerModMatrixAlgorithm() {
+DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 
 }
 
 
-void DirectionalSequencerModMatrixAlgorithm::BuildParameters() {
+void DirSeqModMatrixAlg::BuildParameters() {
 	int numPages = 0;
 
-	auto cellTargetEnums = DirectionalSequencerModMatrixAlgorithm::BuildCellTargetEnums();
+	auto cellTargetEnums = DirSeqModMatrixAlg::BuildCellTargetEnums();
 
 	PageDefs[numPages + 0] = { .name = "Matrix A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
 	PageDefs[numPages + 1] = { .name = "Matrix B", .numParams = ARRAY_SIZE(ModBTargetPageDef), .params = ModBTargetPageDef };
@@ -132,7 +132,7 @@ void DirectionalSequencerModMatrixAlgorithm::BuildParameters() {
 }
 
 
-void DirectionalSequencerModMatrixAlgorithm::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
+void DirSeqModMatrixAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = kNumModTargetParameters;
 	req.sram = 0;
 	req.dram = 0;
@@ -142,24 +142,24 @@ void DirectionalSequencerModMatrixAlgorithm::CalculateRequirements(_NT_algorithm
 	// use the memory helper instead of just a normal placement new to ensure proper alignment
 	// this becomes important when we start allocating space for other objects here dynamically, so that they are also properly aligned
 	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
-	MemoryHelper<DirectionalSequencerModMatrixAlgorithm>::AlignAndIncrementMemoryRequirement(req.sram, 1);
+	MemoryHelper<DirSeqModMatrixAlg>::AlignAndIncrementMemoryRequirement(req.sram, 1);
 }
 
 
-_NT_algorithm* DirectionalSequencerModMatrixAlgorithm::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+_NT_algorithm* DirSeqModMatrixAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto mem = ptrs.sram;
 	memset(mem, 0, req.sram);
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<DirectionalSequencerModMatrixAlgorithm>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirectionalSequencerModMatrixAlgorithm* addr, size_t){ new (addr) DirectionalSequencerModMatrixAlgorithm(CellDefinition::All); });
+	auto& alg = *MemoryHelper<DirSeqModMatrixAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirSeqModMatrixAlg* addr, size_t){ new (addr) DirSeqModMatrixAlg(CellDefinition::All); });
 
 	return &alg;
 }
 
 
-void DirectionalSequencerModMatrixAlgorithm::ParameterChanged(_NT_algorithm* self, int p) {
- 	auto& alg = *static_cast<DirectionalSequencerModMatrixAlgorithm*>(self);
-	DirectionalSequencerAlgorithm* seq = alg.GetSequencerAlgorithm();
+void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
+ 	auto& alg = *static_cast<DirSeqModMatrixAlg*>(self);
+	DirSeqAlg* seq = alg.GetSequencerAlgorithm();
 
 	// a lambda function to update the cell value in the sequencer, called a number of times further down
 	auto updateCellValue = [&](size_t modTargetParamIndex) {
@@ -200,9 +200,9 @@ void DirectionalSequencerModMatrixAlgorithm::ParameterChanged(_NT_algorithm* sel
 }
 
 
-bool DirectionalSequencerModMatrixAlgorithm::Draw(_NT_algorithm* self) {
-	auto& alg = *static_cast<DirectionalSequencerModMatrixAlgorithm*>(self);
-	DirectionalSequencerAlgorithm* seq = alg.GetSequencerAlgorithm();
+bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
+	auto& alg = *static_cast<DirSeqModMatrixAlg*>(self);
+	DirSeqAlg* seq = alg.GetSequencerAlgorithm();
 
 	if (seq == nullptr) {
 		NT_drawText( 20, 10, "This algorithm is a mod matrix expander", 15);
@@ -236,7 +236,7 @@ bool DirectionalSequencerModMatrixAlgorithm::Draw(_NT_algorithm* self) {
 }
 
 
-DirectionalSequencerAlgorithm* DirectionalSequencerModMatrixAlgorithm::GetSequencerAlgorithm() {
+DirSeqAlg* DirSeqModMatrixAlg::GetSequencerAlgorithm() {
 	auto algIndex = NT_algorithmIndex(this);
 
 	_NT_slot slot;
@@ -247,7 +247,7 @@ DirectionalSequencerAlgorithm* DirectionalSequencerModMatrixAlgorithm::GetSequen
 		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 'm' ))
 			continue;
 		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 's' )) {
-			return static_cast<DirectionalSequencerAlgorithm*>(slot.plugin());
+			return static_cast<DirSeqAlg*>(slot.plugin());
 		}
 		return nullptr;
 	}
@@ -255,12 +255,12 @@ DirectionalSequencerAlgorithm* DirectionalSequencerModMatrixAlgorithm::GetSequen
 }
 
 
-void DirectionalSequencerModMatrixAlgorithm::SetupParametersForTarget(int modTargetParamIndex) {
+void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 	auto algIndex = NT_algorithmIndex(this);
 	int16_t modTarget = v[modTargetParamIndex];
 
 	// find the "linked" sequencer algorithm
-	DirectionalSequencerAlgorithm* seq = GetSequencerAlgorithm();
+	DirSeqAlg* seq = GetSequencerAlgorithm();
 
 	// if "None" target is selected, or we don't have a linked sequencer, just make all the parameters "zeroes"
 	// otherwise, configure them to match the cell definition of the target
@@ -313,7 +313,7 @@ void DirectionalSequencerModMatrixAlgorithm::SetupParametersForTarget(int modTar
 }
 
 
-const _NT_factory DirectionalSequencerModMatrixAlgorithm::Factory =
+const _NT_factory DirSeqModMatrixAlg::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'd', 'm' ),
 	.name = "Dir. Seq. Mod Matrix",

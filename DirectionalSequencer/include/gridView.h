@@ -10,13 +10,13 @@
 #include "potManager.h"
 
 
-struct DirectionalSequencerAlgorithm;
+struct DirSeqAlg;
 
 
 struct GridView : ViewBase {
 private:
 
-	friend DirectionalSequencerAlgorithm;
+	friend DirSeqAlg;
 
 	static constexpr int CellSize = 12;
 	static constexpr int CellBorderColor = 5;
