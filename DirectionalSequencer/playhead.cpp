@@ -181,7 +181,7 @@ void Playhead::ResetIfNecessary() {
 
 	uint32_t resetAfter = Algorithm->v[kParamResetAfterNSteps];
 	if (resetAfter > 0) {
-		if (AdvanceCount > resetAfter) {
+		if (AdvanceCount >= resetAfter) {
 			Reset();
 		}
 	}
