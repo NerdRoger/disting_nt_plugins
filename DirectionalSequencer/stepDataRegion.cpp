@@ -6,7 +6,12 @@
 #include "cellDefinition.h"
 
 
-StepDataRegion::StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs) {
+StepDataRegion::StepDataRegion() {
+	
+}
+
+
+void StepDataRegion::InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs) {
 	Algorithm = alg;
 	CellDefs = cellDefs;
 	SetDefaultCellValues();

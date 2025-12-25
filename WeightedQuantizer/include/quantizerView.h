@@ -31,7 +31,7 @@ private:
 	static constexpr float MaxSliderValue = 10.0f;
 	
 	_NT_algorithm* Algorithm = nullptr;
-	Quantizer::QuantResult*& QuantResults;
+	Quantizer::QuantResult* QuantResults;
 	uint16_t NumChannels;
 	HelpTextHelper* HelpText = nullptr;
 	PotManager* PotMgr = nullptr;
@@ -59,7 +59,8 @@ private:
 	void LoadKeyControlForEditing();
 
 public:
-	QuantizerView(_NT_algorithm* alg, TimeKeeper* timer, uint16_t numChannels, HelpTextHelper* helpText, PotManager* potMgr, NoteBanks* banks, Quantizer::QuantResult*& quantResults);
+	QuantizerView();
+	void InjectDependencies(_NT_algorithm* alg, TimeKeeper* timer, uint16_t numChannels, HelpTextHelper* helpText, PotManager* potMgr, NoteBanks* banks, Quantizer::QuantResult*& quantResults);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

@@ -4,8 +4,7 @@
 #include "weightedQuantizerAlg.h"
 
 
-NoteBanks::NoteBanks(_NT_algorithm* alg) {
-	Algorithm = alg;
+NoteBanks::NoteBanks() {
 	ScanningLocked = true;
 
 	// lets give the banks some defaults
@@ -100,6 +99,11 @@ NoteBanks::NoteBanks(_NT_algorithm* alg) {
 	Banks[9].NoteValues[9] = 1000;
 	Banks[9].NoteValues[10] = 1000;
 	Banks[9].NoteValues[11] = 1000;
+}
+
+
+void NoteBanks::InjectDependencies(_NT_algorithm* alg) {
+	Algorithm = alg;
 }
 
 

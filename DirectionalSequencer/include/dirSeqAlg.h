@@ -10,6 +10,11 @@
 #include "gridView.h"
 #include "timeKeeper.h"
 
+enum {
+	// no common parameters as of now, but still define it this way so calcs work out if some are added later
+	kNumCommonParameters,
+};
+
 
 enum {	
 	kParamClock,
@@ -19,9 +24,9 @@ enum {
 	kParamGate,
 	kParamVelocity,
 	kParamQuantSend,
+
 	kParamAttenValue,
 	kParamOffsetValue,
-
 	kParamGateLengthSource,
 	kParamMaxGateLength,
 	kParamGateLengthAttenuate,
@@ -34,7 +39,10 @@ enum {
 	kParamResetAfterNSteps,
 	kParamResetWhenInactive,
 
-	kNumCommonParameters,
+	kNumPerPlayheadParameters,
+
+	kNumIOPlayheadParameters = kParamQuantSend + 1,
+	kNumGeneralPlayheadParameters = kParamResetWhenInactive - kNumIOPlayheadParameters + 1
 };
 
 
@@ -46,13 +54,17 @@ private:
 	// NT Parameter Data
 	static const char* const EnumStringsMaxGateFrom[];
 	static const char* const EnumStringsResetWhenInactive[];
-	static const uint8_t RoutingPageDef[];
-	static const uint8_t SequencerPageDef[];
-	_NT_parameter ParameterDefs[kNumCommonParameters];
-	_NT_parameterPages PagesDefs;
-	_NT_parameterPage	PageDefs[3];
+	static const char* const HeadOptionsPageNamesDef[];
+	static const char* const HeadRoutingPageNamesDef[];
+	static const _NT_specification SpecificationsDef[];
 
+	_NT_parameter* ParameterDefs;
+	_NT_parameterPages PagesDefs;
+	_NT_parameterPage* PageDefs;
+	uint8_t* PageParams;
 	void BuildParameters();
+
+	void InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
@@ -74,7 +86,6 @@ public:
 
 	static const _NT_factory Factory;
 
-
 	// TODO:  Maybe find a better naming scheme for types/members
 	// order is important here, as some classes depend on others being constructed first
 	TimeKeeper Timer;
@@ -82,9 +93,10 @@ public:
 	PotManager PotMgr;
 	HelpTextHelper HelpText;
 	StepDataRegion StepData;
-	Playhead Head;
 	GridView Grid;
 
-	DirSeqAlg(const CellDefinition* cellDefs);
+	PlayheadList Playheads;
+
+	DirSeqAlg();
 	~DirSeqAlg();
 };

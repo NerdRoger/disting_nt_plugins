@@ -10,15 +10,18 @@
 
 
 
-const uint8_t DirSeqAlg::SequencerPageDef[] = {
-	kParamGateLengthSource, kParamMaxGateLength, kParamGateLengthAttenuate, kParamHumanizeValue,
-	kParamAttenValue, kParamOffsetValue, kParamVelocityAttenuate, kParamVelocityOffset,
-	kParamMoveNCells, kParamRestAfterNSteps,kParamSkipAfterNSteps, kParamResetAfterNSteps, kParamResetWhenInactive
+const char* const DirSeqAlg::HeadOptionsPageNamesDef[] = {
+	"Head A Options", "Head B Options", "Head C Options", "Head D Options", "Head E Options", "Head F Options", "Head G Options", "Head H Options",
 };
 
 
-const uint8_t DirSeqAlg::RoutingPageDef[] = {
-	kParamClock, kParamReset, kParamValue, kParamGate, kParamVelocity, kParamQuantSend, kParamQuantReturn
+const char* const DirSeqAlg::HeadRoutingPageNamesDef[] = {
+	"Head A Routing", "Head B Routing", "Head C Routing", "Head D Routing", "Head E Routing", "Head F Routing", "Head G Routing", "Head H Routing",
+};
+
+
+const _NT_specification DirSeqAlg::SpecificationsDef[] = {
+	{ .name = "Playheads", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
 };
 
 
@@ -28,11 +31,8 @@ const char* const DirSeqAlg::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock
 const char* const DirSeqAlg::EnumStringsResetWhenInactive[] = { "No", "Yes" };
 
 
-DirSeqAlg::DirSeqAlg(const CellDefinition* cellDefs) : Timer(NT_globals.sampleRate), StepData(this, cellDefs), Head(this, &Timer, &Random, &StepData), Grid(cellDefs, &Timer, &Head, &StepData, &HelpText, &PotMgr) {
-	CellDefs = cellDefs;
-	BuildParameters();
-	Grid.Activate();
-	Random.Seed(NT_getCpuCycleCount());
+DirSeqAlg::DirSeqAlg() {
+
 }
 
 
@@ -41,37 +41,60 @@ DirSeqAlg::~DirSeqAlg() {
 }
 
 
+void DirSeqAlg::InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate) {
+	CellDefs = cellDefs;
+	Timer.InjectDependencies(sampleRate);
+	StepData.InjectDependencies(this, cellDefs);
+	Grid.InjectDependencies(cellDefs, &Timer, &StepData, &HelpText, &PotMgr, &Playheads);
+}
+
 void DirSeqAlg::BuildParameters() {
 	int numPages = 0;
 
-	// sequencer page
-	PageDefs[numPages] = { .name = "Sequencer", .numParams = ARRAY_SIZE(SequencerPageDef), .params = SequencerPageDef };
-	ParameterDefs[kParamGateLengthSource]    = { .name = "Gate Len From",       .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom };
-	ParameterDefs[kParamMaxGateLength]       = { .name = "Max Gate Len",        .min =     0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamGateLengthAttenuate] = { .name = "Gate Atten. %",       .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
-	ParameterDefs[kParamHumanizeValue]       = { .name = "Humanize %",          .min =     0, .max =  250, .def =    0, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
-	ParameterDefs[kParamAttenValue]          = { .name = "Atten. Value",        .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
-	ParameterDefs[kParamOffsetValue]         = { .name = "Offset Value",        .min = -5000, .max = 5000, .def =    0, .unit = kNT_unitVolts,   .scaling = kNT_scaling1000, .enumStrings = NULL };
-	ParameterDefs[kParamVelocityAttenuate]   = { .name = "Atten. Velocity",     .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL };
-	ParameterDefs[kParamVelocityOffset]      = { .name = "Offset Velocity",     .min =  -127, .max =  127, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamMoveNCells]          = { .name = "Move N Cells",        .min =     1, .max =    7, .def =    1, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamRestAfterNSteps]     = { .name = "Rest after N steps",  .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamSkipAfterNSteps]     = { .name = "Skip after N steps",  .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamResetAfterNSteps]    = { .name = "Reset after N steps", .min =     0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
-	ParameterDefs[kParamResetWhenInactive]   = { .name = "Reset when Inactive", .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsResetWhenInactive };
-	numPages++;
+	// any plugin-level parameters would go here
 
-	// routing page
-	// TODO:  change I/O defaults to final....  these are for ease of development
-	PageDefs[numPages] = { .name = "Routing",   .numParams = ARRAY_SIZE(RoutingPageDef), .params = RoutingPageDef };
-	ParameterDefs[kParamClock]       = { .name = "Clock",        .min = 1, .max = 28, .def = 1,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamReset]       = { .name = "Reset",        .min = 0, .max = 28, .def = 2,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamValue]       = { .name = "Value",        .min = 0, .max = 28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamGate]        = { .name = "Gate",         .min = 0, .max = 28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamVelocity]    = { .name = "Velocity",     .min = 0, .max = 28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamQuantSend]   = { .name = "Quant Send",   .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
-	ParameterDefs[kParamQuantReturn] = { .name = "Quant Return", .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL };
-	numPages++;
+
+	// start the per-playhead parameters after any common parameters
+	uint8_t* pagePtr = PageParams;
+	for (int h = 0; h < Playheads.Count; h++) {
+
+		size_t idx = kNumCommonParameters + (kNumPerPlayheadParameters * h);
+
+		auto defineParamAndAddToPage = [this, idx, &pagePtr](size_t offset, const _NT_parameter &param) {
+			ParameterDefs[idx + offset] = param;
+			pagePtr[0] = idx + offset;
+			pagePtr++;
+		};
+
+		// define the general parameters for this playhead
+		PageDefs[numPages] = { .name = HeadOptionsPageNamesDef[h], .numParams = kNumGeneralPlayheadParameters, .params = pagePtr };
+		defineParamAndAddToPage(kParamGateLengthSource,    { .name = "Gate Len From",  .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom });
+		defineParamAndAddToPage(kParamMaxGateLength,       { .name = "Max Gate Len",   .min =     0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamGateLengthAttenuate, { .name = "Gate Atten. %",  .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL });
+		defineParamAndAddToPage(kParamHumanizeValue,       { .name = "Humanize %",     .min =     0, .max =  250, .def =    0, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL });
+		defineParamAndAddToPage(kParamAttenValue,          { .name = "Atten. Value",   .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL });
+		defineParamAndAddToPage(kParamOffsetValue,         { .name = "Offset Value",   .min = -5000, .max = 5000, .def =    0, .unit = kNT_unitVolts,   .scaling = kNT_scaling1000, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocityAttenuate,   { .name = "Atten. Velo.",   .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocityOffset,      { .name = "Offset Velo.",   .min =  -127, .max =  127, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamMoveNCells,          { .name = "Move N ",        .min =     1, .max =    7, .def =    1, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamRestAfterNSteps,     { .name = "Rest after N",   .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamSkipAfterNSteps,     { .name = "Skip after N",   .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamResetAfterNSteps,    { .name = "Reset after N",  .min =     0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamResetWhenInactive,   { .name = "Inactive Reset", .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsResetWhenInactive });
+		numPages++;
+
+		// define the routing (I/O) parameters for this playhead
+		PageDefs[numPages] = { .name = HeadRoutingPageNamesDef[h], .numParams = kNumIOPlayheadParameters, .params = pagePtr };
+		// TODO:  user better defaults once develpmnet is done
+		defineParamAndAddToPage(kParamClock,       { .name = "Clock",        .min = 1, .max = 28, .def = 1,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamReset,       { .name = "Reset",        .min = 0, .max = 28, .def = 2,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamValue,       { .name = "Value",        .min = 0, .max = 28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamGate,        { .name = "Gate",         .min = 0, .max = 28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocity,    { .name = "Velocity",     .min = 0, .max = 28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantSend,   { .name = "Quant Send",   .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantReturn, { .name = "Quant Return", .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		numPages++;
+	}
 
 	PagesDefs.numPages = numPages;
 	PagesDefs.pages = PageDefs;
@@ -82,7 +105,8 @@ void DirSeqAlg::BuildParameters() {
 
 
 void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-	req.numParameters = kNumCommonParameters;
+	int32_t numPlayheads = specifications[0];
+	req.numParameters = kNumCommonParameters + numPlayheads * kNumPerPlayheadParameters;
 	req.sram = 0;
 	req.dram = 0;
 	req.dtc = 0;
@@ -92,14 +116,33 @@ void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int3
 	// this becomes important when we start allocating space for other objects here dynamically, so that they are also properly aligned
 	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
 	MemoryHelper<DirSeqAlg>::AlignAndIncrementMemoryRequirement(req.sram, 1);
+	MemoryHelper<Playhead>::AlignAndIncrementMemoryRequirement(req.sram, numPlayheads);
+	MemoryHelper<_NT_parameter>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters);
+	MemoryHelper<_NT_parameterPage>::AlignAndIncrementMemoryRequirement(req.sram, numPlayheads * 2);
+	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, numPlayheads * kNumPerPlayheadParameters);
 }
 
 
 _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+	auto numPlayheads = specifications[0];
 	auto mem = ptrs.sram;
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirSeqAlg* addr, size_t){ new (addr) DirSeqAlg(CellDefinition::All); });
+	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
+	alg.InjectDependencies(CellDefinition::All, NT_globals.sampleRate);
+	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
+	alg.Playheads.Init(numPlayheads, heads);
+	for (int h = 0; h < alg.Playheads.Count; h++) {
+		alg.Playheads[h].InjectDependencies(&alg, h, &alg.Timer, &alg.Random, &alg.StepData);
+	}
+
+	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
+	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads * 2);
+	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads * kNumPerPlayheadParameters);
+
+	alg.BuildParameters();
+	alg.Grid.Activate();
+	alg.Random.Seed(NT_getCpuCycleCount());
 
 	return &alg;
 }
@@ -110,13 +153,13 @@ void DirSeqAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	auto algIndex = NT_algorithmIndex(self);
 
 	// Max Gate Length is only relevant if we are using it to source the gate length
-	if (p == kParamGateLengthSource) {
-		NT_setParameterGrayedOut(algIndex, kParamMaxGateLength + NT_parameterOffset(), alg.v[kParamGateLengthSource] != 0);
+	for (int h = 0; h < alg.Playheads.Count; h++) {
+		int idx = kNumCommonParameters + (kNumPerPlayheadParameters * h);
+		if (p == idx + kParamGateLengthSource) {
+			NT_setParameterGrayedOut(algIndex, idx + kParamMaxGateLength + NT_parameterOffset(), alg.v[idx + kParamGateLengthSource] != 0);
+			NT_setParameterGrayedOut(algIndex, idx + kParamGateLengthAttenuate + NT_parameterOffset(), alg.v[idx + kParamGateLengthSource] == 0);
+		}
 	}
-
-// 	if (p == kParamModATarget) {
-// //		alg.MapModParameters(p);
-// 	}
 
 	// notify every view of the parameter change
 	alg.Grid.ParameterChanged(p);
@@ -127,59 +170,67 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	auto numFrames = numFramesBy4 * 4;
 
-	// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
-	// this will make the ones makred "None" in the NT a -1 index
-	auto clockBusIndex    = alg.v[kParamClock]    - 1; 
-	auto resetBusIndex    = alg.v[kParamReset]    - 1; 
-	auto valueBusIndex    = alg.v[kParamValue]    - 1; 
-	auto gateBusIndex     = alg.v[kParamGate]     - 1; 
-	auto velocityBusIndex = alg.v[kParamVelocity] - 1; 
 
-	auto quantSendBusIndex   = alg.v[kParamQuantSend]   - 1; 
-	auto quantReturnBusIndex = alg.v[kParamQuantReturn] - 1; 
 
-	// check to see if we are using a return for quant values
-	alg.Head.QuantReturnSupplied = (quantReturnBusIndex >= 0);
 
-	for (int i = 0; i < numFrames; i++) {
+	// a lambda to get the value of a parameter for a particular playhead
+	auto getPlayheadParamVal = [&alg](size_t headIdx, size_t offset) {
+		return alg.v[kNumCommonParameters + (kNumPerPlayheadParameters * headIdx) + offset];
+	};
 
-		// only send/receive values from legit bus numbers.  If it's marked "None" in NT, we don't want to send/receive
 
-		// process triggers
-		if (resetBusIndex >= 0) {
-			auto reset = alg.Head.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
-			if (reset == Trigger::Edge::Rising) {
-				alg.Head.ProcessResetTrigger();
+
+	for (int h = 0; h < alg.Playheads.Count; h++) {
+		// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
+		// this will make the ones marked "None" in the NT a -1 index
+		auto clockBusIndex    = getPlayheadParamVal(h, kParamClock)    - 1; 
+		auto resetBusIndex    = getPlayheadParamVal(h, kParamReset)    - 1; 
+		auto valueBusIndex    = getPlayheadParamVal(h, kParamValue)    - 1; 
+		auto gateBusIndex     = getPlayheadParamVal(h, kParamGate)     - 1; 
+		auto velocityBusIndex = getPlayheadParamVal(h, kParamVelocity) - 1; 
+
+		auto quantSendBusIndex   = getPlayheadParamVal(h, kParamQuantSend)   - 1; 
+		auto quantReturnBusIndex = getPlayheadParamVal(h, kParamQuantReturn) - 1; 
+
+		// check to see if we are using a return for quant values
+		alg.Playheads[h].QuantReturnSupplied = (quantReturnBusIndex >= 0);
+
+		for (int i = 0; i < numFrames; i++) {
+			
+			// only send/receive values from legit bus numbers.  If it's marked "None" in NT, we don't want to send/receive
+
+			// process triggers
+			if (resetBusIndex >= 0) {
+				auto reset = alg.Playheads[h].ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
+				if (reset == Trigger::Edge::Rising) {
+					alg.Playheads[h].ProcessResetTrigger();
+				}
 			}
-		}
-
-		if (clockBusIndex >= 0) {
-			auto clock = alg.Head.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
-			if (clock == Trigger::Edge::Rising) {
-				alg.Head.ProcessClockTrigger();
+			if (clockBusIndex >= 0) {
+				auto clock = alg.Playheads[h].ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
+				if (clock == Trigger::Edge::Rising) {
+					alg.Playheads[h].ProcessClockTrigger();
+				}
 			}
-		}
 
-		// process other inputs
-		if (alg.Head.QuantReturnSupplied) {
-			alg.Head.QuantReturn = busFrames[quantReturnBusIndex * numFrames + i];
-		}
+			// process other inputs
+			if (alg.Playheads[h].QuantReturnSupplied) {
+				alg.Playheads[h].QuantReturn = busFrames[quantReturnBusIndex * numFrames + i];
+			}
 
-		// process outputs
-		if (valueBusIndex >= 0) {
-			busFrames[valueBusIndex * numFrames + i] = alg.Head.Outputs.Value;
-		}
-
-		if (gateBusIndex >= 0) {
-			busFrames[gateBusIndex * numFrames + i] = alg.Head.Outputs.Gate;
-		}
-
-		if (velocityBusIndex >= 0) {
-			busFrames[velocityBusIndex * numFrames + i] = alg.Head.Outputs.Velocity;
-		}
-		
-		if (quantSendBusIndex >= 0) {
-			busFrames[quantSendBusIndex * numFrames + i] = alg.Head.Outputs.PreQuantStepVal;
+			// process outputs
+			if (valueBusIndex >= 0) {
+				busFrames[valueBusIndex * numFrames + i] = alg.Playheads[h].Outputs.Value;
+			}
+			if (gateBusIndex >= 0) {
+				busFrames[gateBusIndex * numFrames + i] = alg.Playheads[h].Outputs.Gate;
+			}
+			if (velocityBusIndex >= 0) {
+				busFrames[velocityBusIndex * numFrames + i] = alg.Playheads[h].Outputs.Velocity;
+			}
+			if (quantSendBusIndex >= 0) {
+				busFrames[quantSendBusIndex * numFrames + i] = alg.Playheads[h].Outputs.PreQuantStepVal;
+			}
 		}
 	}
 
@@ -189,7 +240,9 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 
 	// process the sequencer once per millisecond, we don't need sample-accurate changes
 	if (deltaMs > 0) {
-		alg.Head.Process();
+		for (int h = 0; h < alg.Playheads.Count; h++) {
+			alg.Playheads[h].Process();
+		}
 	}
 
 }
@@ -264,15 +317,17 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	}
 	stream.closeArray();
 
-	stream.addMemberName("InitialStep");
-	stream.openObject();
-	{
+	stream.addMemberName("InitialSteps");
+	stream.openArray();
+	for (int h = 0; h < alg.Playheads.Count; h++) {
+		stream.openObject();
 		stream.addMemberName("x");
-		stream.addNumber(alg.Head.InitialStep.x);
+		stream.addNumber(alg.Playheads[h].InitialStep.x);
 		stream.addMemberName("y");
-		stream.addNumber(alg.Head.InitialStep.y);
+		stream.addNumber(alg.Playheads[h].InitialStep.y);
+		stream.closeObject();
 	}
-	stream.closeObject();
+	stream.closeArray();
 
 	stream.addMemberName("SelectedCell");
 	stream.openObject();
@@ -398,10 +453,27 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 			if (!DeserialiseGridCellData(self, parse)) {
 				return false;
 			}
-		} else if (parse.matchName("InitialStep")) {
-			if (!DeserialiseCellCoords(self, parse, alg.Head.InitialStep)) {
+		} else if (parse.matchName("InitialSteps")) {
+
+
+			int numElements;
+			if (!parse.numberOfArrayElements(numElements)) {
 				return false;
 			}
+			for (int i = 0; i < numElements; i++)	{
+				if (i < alg.Playheads.Count) {
+					if (!DeserialiseCellCoords(self, parse, alg.Playheads[i].InitialStep)) {
+						return false;
+					}
+				} else {
+					// this can happen when we are respecifying downward...
+					// the previous version has more entries than we now need, but we still need to parse them to progress the stream
+					CellCoords throwaway;
+					DeserialiseCellCoords(self, parse, throwaway);
+				}
+			}
+
+
 		} else if (parse.matchName("SelectedCell")) {
 			if (!DeserialiseCellCoords(self, parse, alg.Grid.SelectedCell)) {
 				return false;
@@ -436,7 +508,8 @@ const _NT_factory DirSeqAlg::Factory =
 	.name = "Dir. Sequencer",
 	// TODO:  flesh this out
 	.description = "A 2-D Directional Sequencer",
-	.numSpecifications = 0,
+	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
+	.specifications = SpecificationsDef,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.parameterChanged = ParameterChanged,

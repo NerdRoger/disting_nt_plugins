@@ -7,15 +7,19 @@
 #include "dirSeqAlg.h"
 
 
-GridView::GridView(const CellDefinition* cellDefs, TimeKeeper* timer, Playhead* playhead, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr) : ViewBase(timer) {
+GridView::GridView() {
+	SelectedCell = { .x = 0, .y = 0};
+	SelectedParameterIndex = CellDataType::Direction;
+}
+
+
+void GridView::InjectDependencies(const CellDefinition* cellDefs, TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads) {
+	ViewBase::InjectDependencies(timer);
 	CellDefs = cellDefs;
-	DisplayedPlayhead = playhead;
 	StepData = stepData;
 	HelpText = helpText;
 	PotMgr = potMgr;
-	// TODO:  make these sensible
-	SelectedCell = { .x = 0, .y = 0};
-	SelectedParameterIndex = CellDataType::Direction;
+	Playheads = playheads;
 }
 
 
@@ -33,6 +37,7 @@ void GridView::Draw() const {
 	DrawCells();
 	DrawInitialCellBorder();
 	DrawSelectedCellBorder();
+	DrawPlayheadList();
 	DrawParams();
 	DrawHelpSection();
 
@@ -58,7 +63,7 @@ void GridView::DrawCells() const {
 			// is this cell selected?
 			bool selected = (x == SelectedCell.x) && (y == SelectedCell.y);
 			// is this the current step?
-			bool current = (x == DisplayedPlayhead->CurrentStep.x) && (y == DisplayedPlayhead->CurrentStep.y);
+			bool current = (x == (*Playheads)[SelectedPlayheadIndex].CurrentStep.x) && (y == (*Playheads)[SelectedPlayheadIndex].CurrentStep.y);
 
 			CellCoords coords { static_cast<int8_t>(x), static_cast<int8_t>(y) };
 			auto cb = CellCoordsToBounds(coords);
@@ -78,7 +83,7 @@ void GridView::DrawCells() const {
 
 
 void GridView::DrawInitialCellBorder() const {
-	auto cb = CellCoordsToBounds(DisplayedPlayhead->InitialStep);
+	auto cb = CellCoordsToBounds((*Playheads)[SelectedPlayheadIndex].InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + 5;
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
@@ -97,7 +102,7 @@ void GridView::DrawSelectedCellBorder() const {
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
 	NT_drawShapeI(kNT_box, cb.x1 - 1, cb.y1 - 1, cb.x2 + 1, cb.y2 + 1, color);
-	auto& initial = DisplayedPlayhead->InitialStep;
+	auto& initial = (*Playheads)[SelectedPlayheadIndex].InitialStep;
 	if (SelectedCell.x != initial.x || SelectedCell.y != initial.y) {
 		NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, 0);
 	}
@@ -116,9 +121,8 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 	auto paramNameX = paramListX + 5;
 	auto paramValueX = paramListX + 5 + 68;
 
-	auto lineHeight = 10;  // TODO:  look for variables like this one that can become constants
-	auto yoffset = (top) * lineHeight + 2;
-	auto y = lineHeight * (paramIndex + 1) - yoffset;
+	auto yoffset = (top) * TextLineHeight + 2;
+	auto y = TextLineHeight * (paramIndex + 1) - yoffset;
 
 	auto selected = paramIndex == static_cast<int>(SelectedParameterIndex);
 	auto color = (selected && Editable) ? SelectedParameterColor : UnselectedParameterColor;
@@ -129,14 +133,18 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 	auto idx = static_cast<CellDataType>(paramIndex);
 	const auto& cd = CellDefs[paramIndex];
 	NT_drawText(paramNameX, y, cd.DisplayName, color);
-	DrawParamLineValue(paramValueX, y, color, idx, cd);
+
+	float base = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, idx);
+	float adjusted = StepData->GetAdjustedCellValue(SelectedCell.x, SelectedCell.y, idx);
+	DrawParamLineValue(paramValueX, y, color, idx, cd, base);
+	if (base != adjusted) {
+		DrawParamLineValue(paramValueX + 35, y, color, idx, cd, adjusted);
+	}
 }
 
 
-void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
-	float fval = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, ct);
-
-	// if the value is negativem keep it lined up with the others
+void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd, float fval) const {
+	// if the value is negative, keep it lined up with the others
 	if (fval < 0) {
 		x -= 6;
 	}
@@ -145,9 +153,8 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 	switch (ct)
 	{
 		using enum CellDataType;
-		// TODO:  consolidate cases once this is working
 		case Direction:
-			DrawDirectionArrow(ival, x - 3, y - 10, color);
+			DrawDirectionArrow(ival, x - 3, y - TextLineHeight, color);
 			break;
 		case Value:
 			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
@@ -214,6 +221,47 @@ void GridView::DrawParams() const {
 }
 
 
+void GridView::DrawPlayheadIcon(int x, int y, int color) const {
+	NT_drawShapeI(kNT_rectangle, x,      y - TextLineHeight + 2, x + 6,  y,     color);
+	NT_drawShapeI(kNT_rectangle, x +  7, y - TextLineHeight + 3, x + 7,  y - 1, color);
+	NT_drawShapeI(kNT_rectangle, x +  8, y - TextLineHeight + 4, x + 8,  y - 2, color);
+	NT_drawShapeI(kNT_rectangle, x +  9, y - TextLineHeight + 5, x + 9,  y - 3, color);
+	NT_drawShapeI(kNT_rectangle, x + 10, y - TextLineHeight + 6, x + 10, y - 4, color);
+}
+
+
+void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
+	if (playheadIndex >= Playheads->Count)
+		return;
+
+	auto x = 0;
+
+	auto yoffset = (top) * TextLineHeight + 2;
+	auto y = TextLineHeight * (playheadIndex + 1) - yoffset;
+
+	auto selected = playheadIndex == SelectedPlayheadIndex;
+	auto color = (selected && Editable) ? SelectedParameterColor : UnselectedParameterColor;
+	if (selected) {
+		DrawPlayheadIcon(x, y, 2);
+	}
+
+	char buf[2];
+	buf[0] = 'A' + playheadIndex;
+	buf[1] = 0;
+	NT_drawText(x + 1, y, buf, color);
+}
+
+
+void GridView::DrawPlayheadList() const {
+	auto top = max(SelectedPlayheadIndex - 2, 0);
+	top = min(top, Playheads->Count - 5);
+	top = max(top, 0);
+	for (int i = top; i < top + 5; i++) {
+		DrawPlayheadLine(i, top);
+	}
+}
+
+
 void GridView::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
 	if (!HelpText->Draw()) {
@@ -224,7 +272,7 @@ void GridView::DrawHelpSection() const {
 		}
 		NT_drawText(55, 64, "Move X", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(175, 64, "Move Y", 15, kNT_textLeft, kNT_textTiny);
-		NT_drawText(2, 64, "Select Mode", 15, kNT_textLeft, kNT_textTiny);
+		NT_drawText(2, 64, "Select Head", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(107, 64, "Select Opt.", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(226, 64, "Set Opt.", 15, kNT_textLeft, kNT_textTiny);
 	}
@@ -444,13 +492,24 @@ void GridView::Encoder2ShortPress() {
 
 
 void GridView::Encoder2LongPress() {
-	DisplayedPlayhead->InitialStep = SelectedCell;
+	(*Playheads)[SelectedPlayheadIndex].InitialStep = SelectedCell;
+}
+
+
+void GridView::Pot1Turn(float val) {
+	auto old = SelectedPlayheadIndex;
+	PotMgr->UpdateValueWithPot(0, val, SelectedPlayheadIndexRaw, 0, Playheads->Count);
+	SelectedPlayheadIndexRaw = clamp(SelectedPlayheadIndexRaw, 0.0f, static_cast<float>(Playheads->Count) - 0.001f);
+	SelectedPlayheadIndex = SelectedPlayheadIndexRaw;
+	if (SelectedPlayheadIndex != old) {
+		StringConcat(PlayheadHelpText, 20, "Playhead X Selected");
+		PlayheadHelpText[9] = 'A' + SelectedPlayheadIndex;
+		HelpText->DisplayHelpText(70, PlayheadHelpText);
+	}
 }
 
 
 void GridView::Pot2Turn(float val) {
-//	p2 = val;
-
 	auto old = SelectedParameterIndex;
 	PotMgr->UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, static_cast<float>(CellDataType::NumCellDataTypes));
 	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, static_cast<float>(CellDataType::NumCellDataTypes) - 0.001f);
@@ -458,18 +517,17 @@ void GridView::Pot2Turn(float val) {
 	if (SelectedParameterIndex != old) {
 		LoadParamForEditing();
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		HelpText->DisplayHelpText(cd.HelpText);
+		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
 
 
 void GridView::Pot3Turn(float val) {
-//	p3 = val;
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 		PotMgr->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
 		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		HelpText->DisplayHelpText(cd.HelpText);
+		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
 
@@ -482,11 +540,11 @@ void GridView::Pot3ShortPress() {
 		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			if (DisplayedPlayhead->InitialStep == SelectedCell) {
+			if ((*Playheads)[SelectedPlayheadIndex].InitialStep == SelectedCell) {
 				StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3, true);
 			}
 		}
-		HelpText->DisplayHelpText(cd.HelpText);
+		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
 	}
 }
@@ -503,9 +561,9 @@ void GridView::Pot3LongPress() {
 		}
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			StepData->SetBaseCellValue(DisplayedPlayhead->InitialStep.x, DisplayedPlayhead->InitialStep.y, SelectedParameterIndex, 3, true);
+			StepData->SetBaseCellValue((*Playheads)[SelectedPlayheadIndex].InitialStep.x, (*Playheads)[SelectedPlayheadIndex].InitialStep.y, SelectedParameterIndex, 3, true);
 		}
-		HelpText->DisplayHelpText(cd.HelpText);
+		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
 	}
 }

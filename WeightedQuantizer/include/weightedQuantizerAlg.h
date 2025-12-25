@@ -52,6 +52,8 @@ private:
 	uint8_t* PageParams;
 	void BuildParameters();
 
+	void InjectDependencies(uint16_t numChannels, uint32_t sampleRate);
+
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
 	static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
@@ -82,7 +84,7 @@ public:
 	Trigger* Triggers;
 	Quantizer::QuantResult *QuantResults;
 
-	WeightedQuantizerAlg(uint16_t numChannels);
+	WeightedQuantizerAlg();
 	~WeightedQuantizerAlg();
 
 

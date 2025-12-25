@@ -27,10 +27,9 @@ protected:
 	mutable char NumToStrBuf[20]; // for storing conversion results
 
 	void DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const;
+	void InjectDependencies(TimeKeeper* timer);
 
 public:
-
-	ViewBase(TimeKeeper* timer);
 
 	void ProcessControlInput(const _NT_uiData& data);
 	void ProcessLongPresses();

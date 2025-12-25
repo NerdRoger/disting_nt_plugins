@@ -19,7 +19,9 @@ public:
 
 	bool ScanningLocked;
 
-	NoteBanks(_NT_algorithm* alg);
+	NoteBanks();
+	void InjectDependencies(_NT_algorithm* alg);
+
 	Bank& operator[](size_t index);
 	const Bank& operator[](size_t index) const;
 	void DoBankScan(int16_t val);

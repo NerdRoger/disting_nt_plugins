@@ -33,6 +33,7 @@ struct CellDefinition {
 	int Precision;
 	uint8_t Unit;
 	uint8_t Scaling;
+	int HelpTextX;
 	const char* HelpText;
 
 	__attribute__((always_inline))

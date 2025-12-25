@@ -3,7 +3,7 @@
 #include "viewBase.h"
 
 
-ViewBase::ViewBase(TimeKeeper* timer) {
+void ViewBase::InjectDependencies(TimeKeeper* timer) {
 	Timer = timer;
 }
 

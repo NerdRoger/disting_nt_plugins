@@ -10,7 +10,8 @@ struct TimeKeeper {
 	public:
 		uint32_t TotalMs;
 
-		TimeKeeper(uint32_t sampleRate);
+		TimeKeeper();
+		void InjectDependencies(uint32_t sampleRate);
 		uint32_t CountMilliseconds(int numFrames);
 	};
 	

@@ -6,7 +6,8 @@ struct HelpTextHelper {
 
 	const char* HelpText = NULL;
 	int RemainingDuration = 0;
+	int xPosition = 0;
 
-	void DisplayHelpText(const char* text);
+	void DisplayHelpText(int xPos, const char* text);
 	bool Draw();
 };

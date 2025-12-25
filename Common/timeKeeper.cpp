@@ -2,10 +2,15 @@
 #include "timeKeeper.h"
 
 
-TimeKeeper::TimeKeeper(uint32_t sampleRate) : SamplesPerMs(sampleRate / 1000) {
+TimeKeeper::TimeKeeper() {
 	InternalFrameCount = 0;
 	TotalMs = 0;
-}		
+}
+
+
+void TimeKeeper::InjectDependencies(uint32_t sampleRate) {
+	SamplesPerMs = sampleRate / 1000;
+}
 
 
 uint32_t TimeKeeper::CountMilliseconds(int numFrames) {

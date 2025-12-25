@@ -247,12 +247,9 @@ public:
 	}
 
 	static T* AlignMemoryPointer(uint8_t*& ptr) {
-		// advance the pointer to the next alignment boundary for the type
 		uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
-		uintptr_t remainder = addr % alignment;
-		if (remainder != 0) {
-				addr += (alignment - remainder);
-		}
+		// align the memory address to the next alignment boundary for the type
+		addr = (addr + alignment - 1) & ~(alignment - 1);
 		ptr = reinterpret_cast<uint8_t*>(addr);
 		return reinterpret_cast<T*>(ptr);
 	}

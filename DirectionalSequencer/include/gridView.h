@@ -26,19 +26,24 @@ private:
 	static constexpr int NonEditableCellBorderColor = 7;
 	static constexpr int SelectedParameterColor = 15;
 	static constexpr int UnselectedParameterColor = 5;
+	static constexpr int TextLineHeight = 10;
 
 	const CellDefinition* CellDefs = nullptr;
 	
-	Playhead* DisplayedPlayhead = nullptr;
+	PlayheadList* Playheads = nullptr;
 	StepDataRegion* StepData = nullptr;
 	HelpTextHelper* HelpText = nullptr;
 	PotManager* PotMgr = nullptr;
 
-	Point GridPosition { 50, 2 };
+	char PlayheadHelpText[20];
+
+	Point GridPosition { 15, 2 };
 	CellDataType SelectedParameterIndex = CellDataType::Direction;
 	float ParamEditRaw = 0;
 	float SelectedParameterIndexRaw = 0;
 	bool Editable = true;
+	float SelectedPlayheadIndexRaw = 0;
+	uint8_t SelectedPlayheadIndex = 0;
 
 	Bounds CellCoordsToBounds(const CellCoords& coords) const;
 
@@ -54,8 +59,11 @@ private:
 	void DrawSelectedCellBorder() const;
 	void DrawBullet(int x, int y, int color) const;
 	void DrawParamLine(int paramIndex, int top) const;
-	void DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const;
+	void DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd, float fval) const;
 	void DrawParams() const;
+	void DrawPlayheadIcon(int x, int y, int color) const;
+	void DrawPlayheadLine(int playheadIndex, int top) const;
+	void DrawPlayheadList() const;
 	void DrawHelpSection() const;
 	void DrawDirectionArrow(unsigned int dir, int x, int y, int color) const;
 	float CalculateEpsilon(const CellDefinition& cd) const;
@@ -64,12 +72,14 @@ public:
 
 	CellCoords SelectedCell;
 
-	GridView(const CellDefinition* cellDefs, TimeKeeper* timer, Playhead* playhead, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr);
+	GridView();
+	void InjectDependencies(const CellDefinition* cellDefs, TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;
 	void Encoder2ShortPress() override;
 	void Encoder2LongPress() override;
+	void Pot1Turn(float val) override;
 	void Pot2Turn(float val) override;
 	void Pot3Turn(float val) override;
 	void Pot3ShortPress() override;

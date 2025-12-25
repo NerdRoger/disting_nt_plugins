@@ -34,13 +34,21 @@ const _NT_specification WeightedQuantizerAlg::SpecificationsDef[] = {
 };
 
 
-WeightedQuantizerAlg::WeightedQuantizerAlg(uint16_t numChannels) : NumChannels(numChannels), Timer(NT_globals.sampleRate), Banks(this), QuantView(this, &Timer, numChannels, &HelpText, &PotMgr, &Banks, QuantResults) {
+WeightedQuantizerAlg::WeightedQuantizerAlg() {
 
 }
 
 
 WeightedQuantizerAlg::~WeightedQuantizerAlg() {
 
+}
+
+
+void WeightedQuantizerAlg::InjectDependencies(uint16_t numChannels, uint32_t sampleRate) {
+	NumChannels = numChannels;
+	Timer.InjectDependencies(sampleRate);
+	Banks.InjectDependencies(this);
+	QuantView.InjectDependencies(this, &Timer, numChannels, &HelpText, &PotMgr, &Banks, QuantResults);
 }
 
 
@@ -127,13 +135,14 @@ _NT_algorithm* WeightedQuantizerAlg::Construct(const _NT_algorithmMemoryPtrs& pt
 
 	// initialize arrays that depend on number of channels
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<WeightedQuantizerAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [numChannels](WeightedQuantizerAlg* addr, size_t){ new (addr) WeightedQuantizerAlg(numChannels); });
+	auto& alg = *MemoryHelper<WeightedQuantizerAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
 	alg.Triggers = MemoryHelper<Trigger>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.QuantResults = MemoryHelper<Quantizer::QuantResult>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.DelayedTriggers = MemoryHelper<uint32_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
 	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 2);
 	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels * kWQNumPerChannelParameters);
+	alg.InjectDependencies(numChannels, NT_globals.sampleRate);
 
 	alg.BuildParameters();
 	alg.QuantView.Activate();

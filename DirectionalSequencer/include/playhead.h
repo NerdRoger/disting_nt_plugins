@@ -8,9 +8,6 @@
 #include "stepDataRegion.h"
 
 
-struct DirSeqAlg;
-
-
 // this class represents a single playhead moving thru the sequencer field
 struct Playhead {
 private:
@@ -45,6 +42,7 @@ private:
 	StepDataRegion* StepData = nullptr;
 	TimeKeeper* Timer = nullptr;
 	RandomGenerator* Random = nullptr;
+	int ParamOffset;
 
 	uint32_t LastClock;
 	uint32_t ClockRate = 500; // 500ms = 120BPM
@@ -111,9 +109,21 @@ public:
 	Trigger ResetTrigger;
 	Trigger ClockTrigger;
 
-	Playhead(_NT_algorithm* alg, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData);
+	Playhead();
+	void InjectDependencies(_NT_algorithm* alg, size_t idx, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData);
 
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();
 	void Process();
+};
+
+
+struct PlayheadList {
+private:
+	Playhead* Playheads;
+public:
+	int Count;
+
+	void Init(int cnt, Playhead* arr);
+	Playhead& operator[](size_t index) const;
 };

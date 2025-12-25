@@ -5,11 +5,17 @@
 #include "dirSeqAlg.h"
 
 
-Playhead::Playhead(_NT_algorithm* alg, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData) {
+Playhead::Playhead() {
+
+}
+
+
+void Playhead::InjectDependencies(_NT_algorithm* alg, size_t idx, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData) {
 	Algorithm = alg;
 	Timer = timer;
 	Random = rnd;
 	StepData = stepData;
+	ParamOffset = idx * kNumPerPlayheadParameters;
 }
 
 
@@ -72,7 +78,7 @@ void Playhead::ProcessResetTrigger() {
 
 void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
-	bool resetWhenInactive = (Algorithm->v[kParamResetWhenInactive] == 1);
+	bool resetWhenInactive = (Algorithm->v[ParamOffset + kParamResetWhenInactive] == 1);
 	if (resetWhenInactive) {
 		auto inactiveFor = Timer->TotalMs - LastAdvanceTime;
 		if (inactiveFor > InactiveTime) {
@@ -179,7 +185,7 @@ void Playhead::ResetIfNecessary() {
 		return;
 	}
 
-	uint32_t resetAfter = Algorithm->v[kParamResetAfterNSteps];
+	uint32_t resetAfter = Algorithm->v[ParamOffset + kParamResetAfterNSteps];
 	if (resetAfter > 0) {
 		if (AdvanceCount >= resetAfter) {
 			Reset();
@@ -205,10 +211,10 @@ void Playhead::MoveToNextCell() {
 		}
 
 		// we want to move forward in the given direction this many times
-		auto nSteps = Algorithm->v[kParamMoveNCells];
+		auto nSteps = Algorithm->v[ParamOffset + kParamMoveNCells];
 
 		// also we want to skip forward in the sequence, in the direction of travel, by one step every so often, but only counting non-repeated steps
-		auto skipEveryN = Algorithm->v[kParamSkipAfterNSteps];
+		auto skipEveryN = Algorithm->v[ParamOffset + kParamSkipAfterNSteps];
 
 		uint8_t skip = 0;
 		if (skipEveryN > 0) {
@@ -271,17 +277,17 @@ void Playhead::ProcessDrift() {
 
 
 void Playhead::AttenuateValue() {
-	auto& param = Algorithm->parameters[kParamAttenValue];
+	auto& param = Algorithm->parameters[ParamOffset + kParamAttenValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[kParamAttenValue] / scaling;
+	auto atten = Algorithm->v[ParamOffset + kParamAttenValue] / scaling;
 	StepVal *= (atten / 100.0f);
 }
 
 
 void Playhead::OffsetValue() {
-	auto& param = Algorithm->parameters[kParamOffsetValue];
+	auto& param = Algorithm->parameters[ParamOffset + kParamOffsetValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto offset = Algorithm->v[kParamOffsetValue] / scaling;
+	auto offset = Algorithm->v[ParamOffset + kParamOffsetValue] / scaling;
 	StepVal += offset;
 }
 
@@ -304,7 +310,7 @@ void Playhead::ProcessRest() {
 	}
 
 	// calculate if we should apply the global rest
-	auto restEvery = Algorithm->v[kParamRestAfterNSteps];
+	auto restEvery = Algorithm->v[ParamOffset + kParamRestAfterNSteps];
 	if (restEvery > 0) {
 		if (AdvanceCount % (restEvery + 1) == static_cast<uint32_t>(restEvery)) {
 			EmitGate = false;
@@ -349,9 +355,9 @@ void Playhead::CalculateGateLength() {
 	}
 
 	// calculate the gate length for the step
-	auto gateLengthSource = Algorithm->v[kParamGateLengthSource];
+	auto gateLengthSource = Algorithm->v[ParamOffset + kParamGateLengthSource];
 	if (gateLengthSource == 0) {
-		auto maxLen = Algorithm->v[kParamMaxGateLength];
+		auto maxLen = Algorithm->v[ParamOffset + kParamMaxGateLength];
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == 1) {
 		GateLen = ClockRate * GatePct / 100;
@@ -416,14 +422,14 @@ void Playhead::ProcessRatchets() {
 
 void Playhead::AttenuateGateLength() {
 	// if we are using a defined max gate length, we change that to attenuate.  We don't want to double attenuate here
-	auto gateLengthSource = Algorithm->v[kParamGateLengthSource];
+	auto gateLengthSource = Algorithm->v[ParamOffset + kParamGateLengthSource];
 	if (gateLengthSource == 0) {
 		return;
 	}
 
-	auto& param = Algorithm->parameters[kParamGateLengthAttenuate];
+	auto& param = Algorithm->parameters[ParamOffset + kParamGateLengthAttenuate];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[kParamGateLengthAttenuate] / scaling;
+	auto atten = Algorithm->v[ParamOffset + kParamGateLengthAttenuate] / scaling;
 
 	// if we've attenuated down to zero, don't even calculate
 	if (atten == 0) {
@@ -459,9 +465,9 @@ void Playhead::CalculateGate() {
 void Playhead::HumanizeGate() {
 	// only humanize non-legato gates
 	if (GatePct < 100) {
-		auto& param = Algorithm->parameters[kParamHumanizeValue];
+		auto& param = Algorithm->parameters[ParamOffset + kParamHumanizeValue];
 		float scaling = CalculateScaling(param.scaling);
-		auto human = Algorithm->v[kParamHumanizeValue] / scaling;
+		auto human = Algorithm->v[ParamOffset + kParamHumanizeValue] / scaling;
 		human *= 1000;
 		float pct1 = Random->Next(0, human) / 1000.0f;
 		float pct2 = Random->Next(0, human) / 1000.0f;
@@ -477,10 +483,10 @@ void Playhead::HumanizeGate() {
 
 
 void Playhead::CalculateVelocity() {
-	auto& param = Algorithm->parameters[kParamVelocityAttenuate];
+	auto& param = Algorithm->parameters[ParamOffset + kParamVelocityAttenuate];
 	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[kParamVelocityAttenuate] / scaling;
-	auto offset = Algorithm->v[kParamVelocityOffset];
+	auto atten = Algorithm->v[ParamOffset + kParamVelocityAttenuate] / scaling;
+	auto offset = Algorithm->v[ParamOffset + kParamVelocityOffset];
 	auto velo = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
 	velo = velo * atten / 100.0f;
 	velo += offset;
@@ -489,9 +495,9 @@ void Playhead::CalculateVelocity() {
 
 
 void Playhead::HumanizeVelocity() {
-	auto& param = Algorithm->parameters[kParamHumanizeValue];
+	auto& param = Algorithm->parameters[ParamOffset + kParamHumanizeValue];
 	float scaling = CalculateScaling(param.scaling);
-	auto human = Algorithm->v[kParamHumanizeValue] / scaling;
+	auto human = Algorithm->v[ParamOffset + kParamHumanizeValue] / scaling;
 	human *= 1000;
 	float pct = Random->Next(0, human) / 1000.0f;
 	auto off = Velocity * pct / 100.0f;
@@ -506,4 +512,16 @@ void Playhead::HumanizeVelocity() {
 float Playhead::NormalizeVelocityForOutput() {
 	// scale the velocity to a 0-10V range
 	return static_cast<float>(Velocity) * 10.0 / 127.0f;
+}
+
+
+
+void PlayheadList::Init(int cnt, Playhead* arr) {
+	Playheads = arr;
+	Count = cnt;
+}
+
+
+Playhead& PlayheadList::operator[](size_t index) const {
+	return Playheads[index];
 }

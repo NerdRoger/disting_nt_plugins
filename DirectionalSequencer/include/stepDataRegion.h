@@ -43,7 +43,8 @@ private:
 	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
 
 public:
-	StepDataRegion(_NT_algorithm* alg, const CellDefinition* cellDefs);
+	StepDataRegion();
+	void InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs);
 
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
