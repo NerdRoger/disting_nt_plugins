@@ -81,18 +81,21 @@ void DirSeqAlg::BuildParameters() {
 		defineParamAndAddToPage(kParamSkipAfterNSteps,     { .name = "Skip after N",   .min =     0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamResetAfterNSteps,    { .name = "Reset after N",  .min =     0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamResetWhenInactive,   { .name = "Inactive Reset", .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsResetWhenInactive });
+		
 		numPages++;
 
 		// define the routing (I/O) parameters for this playhead
 		PageDefs[numPages] = { .name = HeadRoutingPageNamesDef[h], .numParams = kNumIOPlayheadParameters, .params = pagePtr };
 		// TODO:  user better defaults once develpmnet is done
-		defineParamAndAddToPage(kParamClock,       { .name = "Clock",        .min = 1, .max = 28, .def = 1,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamReset,       { .name = "Reset",        .min = 0, .max = 28, .def = 2,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamValue,       { .name = "Value",        .min = 0, .max = 28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamGate,        { .name = "Gate",         .min = 0, .max = 28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamVelocity,    { .name = "Velocity",     .min = 0, .max = 28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamQuantSend,   { .name = "Quant Send",   .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamQuantReturn, { .name = "Quant Return", .min = 0, .max = 28, .def = 0,  .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClock,        { .name = "Clock",         .min = 1, .max =  28, .def =  1, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClockDivisor, { .name = "Clock Divisor", .min = 1, .max = 128, .def =  1, .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClockOffset,  { .name = "Clock Offset",  .min = 0, .max =   0, .def =  0, .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamReset,        { .name = "Reset",         .min = 0, .max =  28, .def =  2, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamValue,        { .name = "Value",         .min = 0, .max =  28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamGate,         { .name = "Gate",          .min = 0, .max =  28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocity,     { .name = "Velocity",      .min = 0, .max =  28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantSend,    { .name = "Quant Send",    .min = 0, .max =  28, .def =  0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantReturn,  { .name = "Quant Return",  .min = 0, .max =  28, .def =  0, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
 		numPages++;
 	}
 
@@ -152,12 +155,23 @@ void DirSeqAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	auto algIndex = NT_algorithmIndex(self);
 
-	// Max Gate Length is only relevant if we are using it to source the gate length
 	for (int h = 0; h < alg.Playheads.Count; h++) {
 		int idx = kNumCommonParameters + (kNumPerPlayheadParameters * h);
+		
+		// Max Gate Length is only relevant if we are using it to source the gate length
 		if (p == idx + kParamGateLengthSource) {
-			NT_setParameterGrayedOut(algIndex, idx + kParamMaxGateLength + NT_parameterOffset(), alg.v[idx + kParamGateLengthSource] != 0);
-			NT_setParameterGrayedOut(algIndex, idx + kParamGateLengthAttenuate + NT_parameterOffset(), alg.v[idx + kParamGateLengthSource] == 0);
+			NT_setParameterGrayedOut(algIndex, idx + kParamMaxGateLength + NT_parameterOffset(), alg.v[p] != 0);
+			NT_setParameterGrayedOut(algIndex, idx + kParamGateLengthAttenuate + NT_parameterOffset(), alg.v[p] == 0);
+		}
+
+		// Clock Offset Max should never equal or exceed Clock Divisor
+		if (p == idx + kParamClockDivisor) {
+			NT_setParameterGrayedOut(algIndex, idx + kParamClockOffset + NT_parameterOffset(), alg.v[p] == 1);
+			auto newMax = alg.v[p] - 1;
+			alg.ParameterDefs[idx + kParamClockOffset].max = newMax;
+			NT_updateParameterDefinition(algIndex, idx + kParamClockOffset);
+			auto newVal = clamp(alg.v[idx + kParamClockOffset], static_cast<int16_t>(0), static_cast<int16_t>(newMax));
+			NT_setParameterFromAudio(algIndex, idx + kParamClockOffset + NT_parameterOffset(), newVal);
 		}
 	}
 
@@ -170,15 +184,10 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	auto numFrames = numFramesBy4 * 4;
 
-
-
-
 	// a lambda to get the value of a parameter for a particular playhead
 	auto getPlayheadParamVal = [&alg](size_t headIdx, size_t offset) {
 		return alg.v[kNumCommonParameters + (kNumPerPlayheadParameters * headIdx) + offset];
 	};
-
-
 
 	for (int h = 0; h < alg.Playheads.Count; h++) {
 		// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
@@ -342,6 +351,9 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	stream.addMemberName("SelectedParameterIndex");
 	stream.addNumber(static_cast<int>(alg.Grid.SelectedParameterIndex));
 
+	stream.addMemberName("SelectedPlayheadIndex");
+	stream.addNumber(static_cast<int>(alg.Grid.SelectedPlayheadIndex));
+
 	stream.addMemberName("Editable");
 	stream.addBoolean(alg.Grid.Editable);
 
@@ -485,6 +497,13 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 			}
 			alg.Grid.SelectedParameterIndex = static_cast<CellDataType>(val);
 			alg.Grid.SelectedParameterIndexRaw = val + 0.5f;
+		} else if (parse.matchName("SelectedPlayheadIndex")) {
+			int val;
+			if (!parse.number(val)) {
+				return false;
+			}
+			alg.Grid.SelectedPlayheadIndex = val;
+			alg.Grid.SelectedPlayheadIndexRaw = val + 0.5f;
 		} else if (parse.matchName("Editable")) {
 			bool val;
 			if (!parse.boolean(val)) {

@@ -21,6 +21,7 @@ void Playhead::InjectDependencies(_NT_algorithm* alg, size_t idx, TimeKeeper* ti
 
 void Playhead::Reset() {
 	CurrentStep = { -1, -1 };
+	ClockCount = 0;
 	AdvanceCount = 0;
 	UniqueAdvanceCount = 0;
 	// if there is no direction on the initial step, set us moving to the right
@@ -45,6 +46,9 @@ void Playhead::InitVisitCounts() {
 
 
 void Playhead::ProcessClockTrigger() {
+
+	LastClockTriggerTime = Timer->TotalMs;
+
 	// we can't calculate the clock rate without knowing the time of the last clock
 	if (LastClock > 0) {
 		// if the clock rate has been stable, but we are now longer by more than 10x, assume this is because the clock was stopped,
@@ -58,7 +62,11 @@ void Playhead::ProcessClockTrigger() {
 		}
 	}
 
-	Advance();
+	ClockCount++;
+	
+	if (ShouldAdvance()) {
+		Advance();
+	}
 
 	// calculate if the clock rate is stable...  only then can we ratchet
 	// we define stable to mean within 5% of the previous rate
@@ -80,7 +88,7 @@ void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
 	bool resetWhenInactive = (Algorithm->v[ParamOffset + kParamResetWhenInactive] == 1);
 	if (resetWhenInactive) {
-		auto inactiveFor = Timer->TotalMs - LastAdvanceTime;
+		auto inactiveFor = Timer->TotalMs - LastClockTriggerTime;
 		if (inactiveFor > InactiveTime) {
 			Reset();
 		}
@@ -132,10 +140,16 @@ void Playhead::Process() {
 }
 
 
+uint32_t Playhead::EffectiveClockRate(){
+	uint32_t divisor = Algorithm->v[ParamOffset + kParamClockDivisor];
+	return ClockRate * divisor;
+}
+
+
 void Playhead::Advance() {
+
 	ResetIfNecessary();
 
-	LastAdvanceTime = Timer->TotalMs;
 	AdvanceCount++;
 	if (RepeatCount <= 0) {
 		UniqueAdvanceCount++;
@@ -178,6 +192,13 @@ void Playhead::Advance() {
 }
 
 
+bool Playhead::ShouldAdvance() {
+	uint32_t divisor = Algorithm->v[ParamOffset + kParamClockDivisor];
+	uint32_t offset = Algorithm->v[ParamOffset + kParamClockOffset];
+	return (((ClockCount - 1) % divisor) == offset);
+}
+
+
 void Playhead::ResetIfNecessary() {
 	if (ResetQueued) {
 		Reset();
@@ -204,10 +225,12 @@ void Playhead::MoveToNextCell() {
 		IsRepeat = true;
 		RepeatCount--;
 	} else {
-		// if we have a new direction, change to that, otherwise keep going in the direction we had
+		// if we have a new direction, change to that, otherwise keep going in the direction we had, or right if we have no initial direction
 		uint8_t dir = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
 		if (dir > 0) {
 			Direction = dir;
+		} else if (Direction == 0) {
+			Direction = 3;
 		}
 
 		// we want to move forward in the given direction this many times
@@ -360,7 +383,7 @@ void Playhead::CalculateGateLength() {
 		auto maxLen = Algorithm->v[ParamOffset + kParamMaxGateLength];
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == 1) {
-		GateLen = ClockRate * GatePct / 100;
+		GateLen = EffectiveClockRate() * GatePct / 100;
 		// this cheat helps ensure that the gate will play legato if the gatelen is 100%
 		// floating point math and/or slight clock fluctuations could make it not work out that way otherwise
 		if (GateLen > 0) {
@@ -406,7 +429,7 @@ void Playhead::ProcessRatchets() {
 	// only ratchet when our clock is stable, otherwise it will sound weird
 	if (ratchets > 0 && StableClock) {
 		auto divisions = ratchets + 1;
-		auto substep = ClockRate / divisions;
+		auto substep = EffectiveClockRate() / divisions;
 		GateLen /= divisions;
 
 		// schedule the ratchets to occur with accumulated timing

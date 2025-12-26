@@ -18,19 +18,21 @@ enum {
 
 enum {	
 	kParamClock,
+	kParamClockDivisor,
+	kParamClockOffset,
 	kParamReset,
-	kParamQuantReturn,
 	kParamValue,
 	kParamGate,
 	kParamVelocity,
 	kParamQuantSend,
+	kParamQuantReturn,
 
-	kParamAttenValue,
-	kParamOffsetValue,
 	kParamGateLengthSource,
 	kParamMaxGateLength,
 	kParamGateLengthAttenuate,
 	kParamHumanizeValue,
+	kParamAttenValue,
+	kParamOffsetValue,
 	kParamVelocityAttenuate,
 	kParamVelocityOffset,
 	kParamMoveNCells,
@@ -38,10 +40,11 @@ enum {
 	kParamSkipAfterNSteps,
 	kParamResetAfterNSteps,
 	kParamResetWhenInactive,
+	
 
 	kNumPerPlayheadParameters,
 
-	kNumIOPlayheadParameters = kParamQuantSend + 1,
+	kNumIOPlayheadParameters = kParamQuantReturn + 1,
 	kNumGeneralPlayheadParameters = kParamResetWhenInactive - kNumIOPlayheadParameters + 1
 };
 

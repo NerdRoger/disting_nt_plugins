@@ -49,6 +49,7 @@ private:
 	uint32_t PrevClockRate = 500; // 500ms = 120BPM
 	bool StableClock = true;
 
+	uint32_t ClockCount;
 	uint32_t AdvanceCount;
 	uint32_t UniqueAdvanceCount;
 	uint8_t Direction;
@@ -56,7 +57,7 @@ private:
 	bool IsRepeat;
 	RatchetInfo Ratchets;
 	bool ResetQueued;
-	uint32_t LastAdvanceTime;
+	uint32_t LastClockTriggerTime;
 	uint32_t GateStart;
 	uint32_t GateEnd;
 	GlideInfo Glide;
@@ -70,9 +71,11 @@ private:
 	uint32_t GateLen;
 	uint8_t Velocity = 127;
 
+	uint32_t EffectiveClockRate();
 	void Advance();
 	void Reset();
 	void InitVisitCounts();
+	bool ShouldAdvance();
 	void ResetIfNecessary();
 	void MoveToNextCell();
 	void CalculateStepValue();
