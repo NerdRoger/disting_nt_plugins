@@ -168,7 +168,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			if (target >= 0) {
 				auto cellNum = (p - 1) % MatrixStride;
 				auto cd = alg.CellDefs[target];
-				int multiplier = pow(10, cd.Precision);
+				int multiplier = pow(10, cd.Scaling);
 				auto algIndex = NT_algorithmIndex(&alg);
 				_NT_slot slot;
 				NT_getSlot(slot, algIndex);
@@ -284,11 +284,11 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		auto cd = CellDefs[modTarget];
 		auto enums = modTarget == 0 ? CellDirectionNames : NULL;
 		uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
-		int multiplier = pow(10, cd.Precision);
+		int multiplier = pow(10, cd.Scaling);
 		for (int i = 0; i < 32; i++) {
-			int16_t min = cd.Min * pow(10, cd.Precision);
-			int16_t max = cd.Max * pow(10, cd.Precision);
-			int16_t def = cd.Default * pow(10, cd.Precision);
+			int16_t min = cd.Min * pow(10, cd.Scaling);
+			int16_t max = cd.Max * pow(10, cd.Scaling);
+			int16_t def = cd.Default * pow(10, cd.Scaling);
 			char numbuf[3];
 			NT_intToString(numbuf, i + 1);
 			StringConcat(CellParamNames[modTargetParamIndex / MatrixStride][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);

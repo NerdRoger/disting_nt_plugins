@@ -29,8 +29,6 @@ struct CellDefinition {
 	float Min;
 	float Max;
 	float Default;
-	// TODO:  eliminate precision, it's the same as Scaling
-	int Precision;
 	uint8_t Unit;
 	uint8_t Scaling;
 	int HelpTextX;

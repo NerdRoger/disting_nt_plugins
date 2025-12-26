@@ -69,7 +69,7 @@ void StepDataRegion::SetDefaultCellValues() {
 
 float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	int16_t multiplier = pow(10, cd.Precision);
+	int16_t multiplier = pow(10, cd.Scaling);
 
 	// our internal cell data should always reflect the base value, because we keep it in sync even if it's updated from a mod matrix parameter
 	int result;
@@ -98,7 +98,7 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 
 float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	int16_t multiplier = pow(10, cd.Precision);
+	int16_t multiplier = pow(10, cd.Scaling);
 
 	// if we have a mod matrix assigned to this cell type, get the value from there...
 	int paramTargetIndex;
@@ -122,7 +122,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.Min, cd.Max);
-	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Precision));
+	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Scaling));
 
 	// always update our internal cell data...
 	switch (ct)

@@ -157,7 +157,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			DrawDirectionArrow(ival, x - 3, y - TextLineHeight, color);
 			break;
 		case Value:
-			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Scaling);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Velocity:
@@ -186,7 +186,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case MaxDrift:
-			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Scaling);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Repeats:
@@ -198,7 +198,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case AccumAdd:
-			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Scaling);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case AccumTimes:
@@ -464,7 +464,7 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 
 // calculate an epsilon for a given cell parameter that we can add to our value to put it exactly in between pot "ticks"
 float GridView::CalculateEpsilon(const CellDefinition& cd) const {
-	return 0.5 * static_cast<int16_t>(pow(10, -cd.Precision));
+	return 0.5 * static_cast<int16_t>(pow(10, -cd.Scaling));
 }
 
 

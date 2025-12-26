@@ -315,7 +315,7 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 				auto cdt = static_cast<CellDataType>(i);
 				auto fval = alg.StepData.GetBaseCellValue(x, y, cdt);
 				stream.addMemberName(alg.CellDefs[i].FieldName);
-				if (alg.CellDefs[i].Precision > 0) {
+				if (alg.CellDefs[i].Scaling > 0) {
 					stream.addNumber(fval);
 				} else {
 					stream.addNumber(static_cast<int>(fval));
@@ -424,7 +424,7 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
 				if (parse.matchName(alg.CellDefs[i].FieldName)) {
-					if (alg.CellDefs[i].Precision > 0) {
+					if (alg.CellDefs[i].Scaling > 0) {
 						if (!parse.number(fval)) {
 							return false;
 						}
