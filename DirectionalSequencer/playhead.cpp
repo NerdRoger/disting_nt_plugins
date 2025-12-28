@@ -126,7 +126,18 @@ void Playhead::Process() {
 		Glide.Duration -= 1;
 	}
 
-	float gate = ((Timer->TotalMs >= GateStart) && (Timer->TotalMs < GateEnd)) ? GateHigh : GateLow;
+
+	auto velocity = NormalizeVelocityForOutput();
+
+
+	// velocity range is 0-10, velo gate range is x-5
+	auto& param = Algorithm->parameters[ParamOffset + kParamVelocityGateMin];
+	float scaling = CalculateScaling(param.scaling);
+	auto veloGateMin = Algorithm->v[ParamOffset + kParamVelocityGateMin] / scaling;
+	auto veloGate = veloGateMin + (velocity * (GateHigh - veloGateMin) / 10.0f);
+
+
+	float gate = ((Timer->TotalMs >= GateStart) && (Timer->TotalMs < GateEnd)) ? veloGate : GateLow;
 
 	if (Dip > 0) {
 		Dip -= 1;
@@ -135,7 +146,7 @@ void Playhead::Process() {
 
 	Outputs.Value = val;
 	Outputs.Gate = gate;
-	Outputs.Velocity = NormalizeVelocityForOutput();
+	Outputs.Velocity = velocity;
 	Outputs.PreQuantStepVal = PreQuantStepVal;
 }
 
@@ -203,6 +214,7 @@ void Playhead::ResetIfNecessary() {
 	if (ResetQueued) {
 		Reset();
 		ResetQueued = false;
+		ClockCount++;
 		return;
 	}
 
@@ -210,6 +222,7 @@ void Playhead::ResetIfNecessary() {
 	if (resetAfter > 0) {
 		if (AdvanceCount >= resetAfter) {
 			Reset();
+			ClockCount++;
 		}
 	}
 }
@@ -536,7 +549,6 @@ float Playhead::NormalizeVelocityForOutput() {
 	// scale the velocity to a 0-10V range
 	return static_cast<float>(Velocity) * 10.0 / 127.0f;
 }
-
 
 
 void PlayheadList::Init(int cnt, Playhead* arr) {

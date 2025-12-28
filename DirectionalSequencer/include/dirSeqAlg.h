@@ -23,6 +23,7 @@ enum {
 	kParamReset,
 	kParamValue,
 	kParamGate,
+	kParamVelocityGateMin,
 	kParamVelocity,
 	kParamQuantSend,
 	kParamQuantReturn,

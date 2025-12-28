@@ -87,15 +87,16 @@ void DirSeqAlg::BuildParameters() {
 		// define the routing (I/O) parameters for this playhead
 		PageDefs[numPages] = { .name = HeadRoutingPageNamesDef[h], .numParams = kNumIOPlayheadParameters, .params = pagePtr };
 		// TODO:  user better defaults once develpmnet is done
-		defineParamAndAddToPage(kParamClock,        { .name = "Clock",         .min = 1, .max =  28, .def =  1, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamClockDivisor, { .name = "Clock Divisor", .min = 1, .max = 128, .def =  1, .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamClockOffset,  { .name = "Clock Offset",  .min = 0, .max =   0, .def =  0, .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamReset,        { .name = "Reset",         .min = 0, .max =  28, .def =  2, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamValue,        { .name = "Value",         .min = 0, .max =  28, .def = 13, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamGate,         { .name = "Gate",          .min = 0, .max =  28, .def = 14, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamVelocity,     { .name = "Velocity",      .min = 0, .max =  28, .def = 15, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamQuantSend,    { .name = "Quant Send",    .min = 0, .max =  28, .def =  0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamQuantReturn,  { .name = "Quant Return",  .min = 0, .max =  28, .def =  0, .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClock,           { .name = "Clock",          .min = 1, .max =  28,   .def =  1,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClockDivisor,    { .name = "Clock Divisor",  .min = 1, .max = 128,   .def =  1,   .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamClockOffset,     { .name = "Clock Offset",   .min = 0, .max =   0,   .def =  0,   .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamReset,           { .name = "Reset",          .min = 0, .max =  28,   .def =  2,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamValue,           { .name = "Value",          .min = 0, .max =  28,   .def = 13,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamGate,            { .name = "Gate",           .min = 0, .max =  28,   .def = 14,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocityGateMin, { .name = "Velo. Gate Min", .min = 0, .max =  5000, .def = 1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocity,        { .name = "Velocity",       .min = 0, .max =  28,   .def = 15,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantSend,       { .name = "Quant Send",     .min = 0, .max =  28,   .def =  0,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamQuantReturn,     { .name = "Quant Return",   .min = 0, .max =  28,   .def =  0,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
 		numPages++;
 	}
 
