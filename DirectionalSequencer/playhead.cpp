@@ -250,11 +250,11 @@ void Playhead::MoveToNextCell() {
 		auto nSteps = Algorithm->v[ParamOffset + kParamMoveNCells];
 
 		// also we want to skip forward in the sequence, in the direction of travel, by one step every so often, but only counting non-repeated steps
-		auto skipEveryN = Algorithm->v[ParamOffset + kParamSkipAfterNSteps];
+		auto skipAfterN = Algorithm->v[ParamOffset + kParamSkipAfterNSteps];
 
 		uint8_t skip = 0;
-		if (skipEveryN > 0) {
-			if (static_cast<uint16_t>((UniqueAdvanceCount - 1) % skipEveryN) == 0) {
+		if (skipAfterN > 0) {
+			if (static_cast<uint16_t>((UniqueAdvanceCount - 1) % skipAfterN) == 0) {
 				skip = 1;
 			}
 		}
@@ -346,9 +346,9 @@ void Playhead::ProcessRest() {
 	}
 
 	// calculate if we should apply the global rest
-	auto restEvery = Algorithm->v[ParamOffset + kParamRestAfterNSteps];
-	if (restEvery > 0) {
-		if (AdvanceCount % (restEvery + 1) == 0) {
+	auto restAfterN = Algorithm->v[ParamOffset + kParamRestAfterNSteps];
+	if (restAfterN > 0) {
+		if (AdvanceCount % (restAfterN + 1) == 0) {
 			EmitGate = false;
 		}
 	}
