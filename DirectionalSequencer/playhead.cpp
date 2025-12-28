@@ -254,7 +254,7 @@ void Playhead::MoveToNextCell() {
 
 		uint8_t skip = 0;
 		if (skipEveryN > 0) {
-			if (static_cast<uint16_t>(UniqueAdvanceCount % skipEveryN) == (skipEveryN - 1)) {
+			if (static_cast<uint16_t>((UniqueAdvanceCount - 1) % skipEveryN) == 0) {
 				skip = 1;
 			}
 		}
