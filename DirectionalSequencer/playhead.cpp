@@ -348,7 +348,7 @@ void Playhead::ProcessRest() {
 	// calculate if we should apply the global rest
 	auto restEvery = Algorithm->v[ParamOffset + kParamRestAfterNSteps];
 	if (restEvery > 0) {
-		if (AdvanceCount % (restEvery + 1) == static_cast<uint32_t>(restEvery)) {
+		if (AdvanceCount % (restEvery + 1) == 0) {
 			EmitGate = false;
 		}
 	}
