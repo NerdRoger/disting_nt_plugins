@@ -67,6 +67,13 @@ void StepDataRegion::SetDefaultCellValues() {
 }
 
 
+bool StepDataRegion::CellTypeHasMapping(CellDataType ct) const {
+	int paramTargetIndex;
+	auto matrix = GetModMatrixAlgorithm(ct, paramTargetIndex);
+	return (matrix != nullptr);
+}
+
+
 float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	int16_t multiplier = pow(10, cd.Scaling);

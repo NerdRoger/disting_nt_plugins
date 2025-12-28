@@ -46,6 +46,7 @@ public:
 	StepDataRegion();
 	void InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs);
 
+	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix);
