@@ -52,9 +52,6 @@ enum {
 
 struct DirSeqAlg : public _NT_algorithm{
 private:
-
-	friend class DirectionalSequencerModulatorAlgorithm;
-
 	// NT Parameter Data
 	static const char* const EnumStringsMaxGateFrom[];
 	static const char* const EnumStringsResetWhenInactive[];
@@ -67,6 +64,7 @@ private:
 	_NT_parameterPage* PageDefs;
 	uint8_t* PageParams;
 	void BuildParameters();
+	static void StepDataChanged(_NT_algorithm* self);
 
 	void InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate);
 
@@ -83,8 +81,11 @@ private:
 	static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
 	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
+	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
 public:
+
+	bool Loaded;
 
 	const CellDefinition* CellDefs = nullptr;
 

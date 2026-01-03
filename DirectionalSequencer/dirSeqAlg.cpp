@@ -41,12 +41,21 @@ DirSeqAlg::~DirSeqAlg() {
 }
 
 
+void DirSeqAlg::StepDataChanged(_NT_algorithm* self) {
+	if (self) {
+		auto& alg = *static_cast<DirSeqAlg*>(self);
+		alg.Grid.LoadParamForEditing();
+	}
+}
+
+
 void DirSeqAlg::InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate) {
 	CellDefs = cellDefs;
 	Timer.InjectDependencies(sampleRate);
-	StepData.InjectDependencies(this, cellDefs);
+	StepData.InjectDependencies(this, cellDefs, &Random, StepDataChanged);
 	Grid.InjectDependencies(cellDefs, &Timer, &StepData, &HelpText, &PotMgr, &Playheads);
 }
+
 
 void DirSeqAlg::BuildParameters() {
 	int numPages = 0;
@@ -145,6 +154,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads * kNumPerPlayheadParameters);
 
 	alg.BuildParameters();
+	alg.StepData.SetDefaultCellValues();
 	alg.Grid.Activate();
 	alg.Random.Seed(NT_getCpuCycleCount());
 
@@ -183,6 +193,7 @@ void DirSeqAlg::ParameterChanged(_NT_algorithm* self, int p) {
 
 void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
+	alg.Loaded = true;
 	auto numFrames = numFramesBy4 * 4;
 
 	// a lambda to get the value of a parameter for a particular playhead
@@ -522,6 +533,17 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 }
 
 
+int DirSeqAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
+	if (p >= kNumCommonParameters) {
+		auto h = (p - kNumCommonParameters) / kNumPerPlayheadParameters;
+		buff[0] = 'A' + h;
+		buff[1] = ':';
+		buff[2] = 0;
+	}
+	return 3;
+}
+
+
 const _NT_factory DirSeqAlg::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'd', 's' ),
@@ -540,5 +562,6 @@ const _NT_factory DirSeqAlg::Factory =
 	.customUi = CustomUI,
 	.setupUi = SetupUI,
 	.serialise = Serialise,
-	.deserialise = Deserialise
+	.deserialise = Deserialise,
+	.parameterUiPrefix = ParameterUiPrefix,
 };

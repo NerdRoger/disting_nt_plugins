@@ -137,8 +137,8 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 	float base = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, idx);
 	float adjusted = StepData->GetAdjustedCellValue(SelectedCell.x, SelectedCell.y, idx);
 	DrawParamLineValue(paramValueX, y, color, idx, cd, base);
-	if (StepData->CellTypeHasMapping(idx)) {
-//	if (base != adjusted) {
+//	if (StepData->CellTypeHasMapping(idx)) {
+	if (base != adjusted) {
 		DrawParamLineValue(paramValueX + 37, y, color, idx, cd, adjusted);
 	}
 }

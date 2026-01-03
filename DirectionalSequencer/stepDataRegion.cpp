@@ -11,10 +11,18 @@ StepDataRegion::StepDataRegion() {
 }
 
 
-void StepDataRegion::InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs) {
+void StepDataRegion::InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm* alg)) {
 	Algorithm = alg;
 	CellDefs = cellDefs;
-	SetDefaultCellValues();
+	Random = random;
+	OnDataChangedCallback = onDataChanged;
+}
+
+
+void StepDataRegion::DoDataChanged() {
+	if (OnDataChangedCallback) {
+		OnDataChangedCallback(Algorithm);
+	}
 }
 
 
@@ -27,21 +35,12 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 			return nullptr;
 		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 'm' )) {
 			auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
-			if (matrix->v[kParamModATarget] - 1 == static_cast<int>(ct)) {
-				paramTargetIndex = kParamModATarget;
-				return matrix;
-			} else if (matrix->v[kParamModBTarget] - 1 == static_cast<int>(ct)) {
-				paramTargetIndex = kParamModBTarget;
-				return matrix;
-			} else if (matrix->v[kParamModCTarget] - 1 == static_cast<int>(ct)) {
-				paramTargetIndex = kParamModCTarget;
-				return matrix;
-			} else if (matrix->v[kParamModDTarget] - 1 == static_cast<int>(ct)) {
-				paramTargetIndex = kParamModDTarget;
-				return matrix;
-			} else if (matrix->v[kParamModETarget] - 1 == static_cast<int>(ct)) {
-				paramTargetIndex = kParamModETarget;
-				return matrix;
+
+			for (int m = 0; m < DirSeqModMatrixAlg::NumMatrices; m++) {
+				if (matrix->v[m * kParamModTargetStride + kParamModTarget] - 1 == static_cast<int>(ct)) {
+					paramTargetIndex = m * kParamModTargetStride + kParamModTarget;
+					return matrix;
+				}
 			}
 		} else {
 			// the first non-matrix algorithm we encounter, bail out, as we need them to be contiguous
@@ -159,6 +158,142 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 			auto cellIndex = y * GridSizeX + x;
 			auto idx = paramTargetIndex + 1 + cellIndex + NT_parameterOffset();
 			NT_setParameterFromAudio(matrixIndex, idx, ival);
+		}
+	}
+}
+
+
+void StepDataRegion::ScrambleAllCellValues(CellDataType ct) {
+	const int totalCells = GridSizeX * GridSizeY;
+	for (int i = totalCells - 1; i > 0; --i) {
+		int j = Random->Next(0, i);
+		
+		if (i == j) {
+			continue;
+		}
+
+		uint8_t x1 = i % GridSizeX;
+		uint8_t y1 = i / GridSizeX;
+		uint8_t x2 = j % GridSizeX;
+		uint8_t y2 = j / GridSizeX;
+
+		float valI = GetBaseCellValue(x1, y1, ct);
+		float valJ = GetBaseCellValue(x2, y2, ct);
+		SetBaseCellValue(x1, y1, ct, valJ, true);
+		SetBaseCellValue(x2, y2, ct, valI, true);
+	}
+	DoDataChanged();
+}
+
+
+void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct) {
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	float val = GetBaseCellValue(x, y, ct);
+
+	// direction is a special case, we want to invert the cardinal direction, not the index number representing it
+	if (ct == CellDataType::Direction) {
+		auto ival = static_cast<uint8_t>(val);
+		if (ival > 0) {
+			val = wrap(ival + 4, 1, 8);
+		}
+	} else {
+		auto delta = val - cd.Min;
+		val = cd.Max - delta;
+	}
+
+	SetBaseCellValue(x, y, ct, val, true);
+	DoDataChanged();
+}
+
+
+void StepDataRegion::InvertAllCellValues(CellDataType ct) {
+	for (int x = 0; x < GridSizeX; x++) {
+		for (int y = 0; y < GridSizeY; y++) {
+			InvertCellValue(x, y, ct);
+		}
+	}
+}
+
+
+void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellDataType ct) {
+	int8_t xOff = Random->Next(0, 2) - 1;
+	int8_t yOff = Random->Next(0, 2) - 1;
+	uint8_t x2 = wrap(x + xOff, 0, GridSizeX - 1);
+	uint8_t y2 = wrap(y + yOff, 0, GridSizeY - 1);
+	float v = GetBaseCellValue(x, y, ct);
+	float v2 = GetBaseCellValue(x2, y2, ct);
+	SetBaseCellValue(x, y, ct, v2, true);
+	SetBaseCellValue(x2, y2, ct, v, true);
+	DoDataChanged();
+}
+
+
+void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto scale = pow(10, cd.Scaling);
+	auto rval = Random->Next(min * scale, max * scale);
+	auto val = rval / scale;
+	SetBaseCellValue(x, y, ct, val, true);
+	DoDataChanged();
+}
+
+
+void StepDataRegion::RandomizeAllCellValues(CellDataType ct, float min, float max) {
+	for (int x = 0; x < GridSizeX; x++) {
+		for (int y = 0; y < GridSizeY; y++) {
+			RandomizeCellValue(x, y, ct, min, max);
+		}
+	}
+}
+
+
+void StepDataRegion::RotateCellValuesInRow(uint8_t row, CellDataType ct, int8_t rotateBy) {
+	// buffer to store rotated values
+	float buf[GridSizeX];
+	for (int x = 0; x < GridSizeX; x++) {
+		float val = GetBaseCellValue(x, row, ct);
+		auto newX = wrap(x + rotateBy, 0, static_cast<int>(GridSizeX) - 1);
+		buf[newX] = val;
+	}
+	// move values from rotated buffer into cells
+	for (int x = 0; x < GridSizeX; x++) {
+		SetBaseCellValue(x, row, ct, buf[x], true);
+	}
+	DoDataChanged();
+}
+
+
+void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8_t rotateBy) {
+	// buffer to store rotated values
+	float buf[GridSizeY];
+	for (int y = 0; y < GridSizeY; y++) {
+		float val = GetBaseCellValue(col, y, ct);
+		auto newY = wrap(y + rotateBy, 0, static_cast<int>(GridSizeY) - 1);
+		buf[newY] = val;
+	}
+	// move values from rotated buffer into cells
+	for (int y = 0; y < GridSizeY; y++) {
+		SetBaseCellValue(col, y, ct, buf[y], true);
+	}
+	DoDataChanged();
+}
+
+
+void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent) {
+	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto rnd = static_cast<float>(Random->Next(0, deltaPercent * 100.0f) / 100.0f) * (Random->Next(0, 1) == 1 ? -1.0f : 1.0f);
+	float delta = (cd.Max - cd.Min) * rnd / 100.0f;
+	float oldVal = GetBaseCellValue(x, y, ct);
+	float newVal = oldVal + delta;
+	SetBaseCellValue(x, y, ct, newVal, true);
+	DoDataChanged();
+}
+
+
+void StepDataRegion::RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent) {
+	for (int x = 0; x < GridSizeX; x++) {
+		for (int y = 0; y < GridSizeY; y++) {
+			RandomlyChangeCellValue(x, y, ct, deltaPercent);
 		}
 	}
 }

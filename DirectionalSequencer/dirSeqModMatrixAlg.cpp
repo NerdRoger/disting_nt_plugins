@@ -14,69 +14,14 @@ const char* const DirSeqModMatrixAlg::CellDirectionNames[] = {
 };
 
 
-const uint8_t DirSeqModMatrixAlg::ModATargetPageDef[] = {
-	kParamModATarget,
-	kParamModATargetCell1,  kParamModATargetCell2,  kParamModATargetCell3,  kParamModATargetCell4,
-	kParamModATargetCell5,  kParamModATargetCell6,  kParamModATargetCell7,  kParamModATargetCell8,
-	kParamModATargetCell9,  kParamModATargetCell10, kParamModATargetCell11, kParamModATargetCell12,
-	kParamModATargetCell13, kParamModATargetCell14, kParamModATargetCell15, kParamModATargetCell16,
-	kParamModATargetCell17, kParamModATargetCell18, kParamModATargetCell19, kParamModATargetCell20,
-	kParamModATargetCell21, kParamModATargetCell22, kParamModATargetCell23, kParamModATargetCell24,
-	kParamModATargetCell25, kParamModATargetCell26, kParamModATargetCell27, kParamModATargetCell28,
-	kParamModATargetCell29, kParamModATargetCell30, kParamModATargetCell31, kParamModATargetCell32,
-};
-
-
-const uint8_t DirSeqModMatrixAlg::ModBTargetPageDef[] = {
-	kParamModBTarget,
-	kParamModBTargetCell1,  kParamModBTargetCell2,  kParamModBTargetCell3,  kParamModBTargetCell4,
-	kParamModBTargetCell5,  kParamModBTargetCell6,  kParamModBTargetCell7,  kParamModBTargetCell8,
-	kParamModBTargetCell9,  kParamModBTargetCell10, kParamModBTargetCell11, kParamModBTargetCell12,
-	kParamModBTargetCell13, kParamModBTargetCell14, kParamModBTargetCell15, kParamModBTargetCell16,
-	kParamModBTargetCell17, kParamModBTargetCell18, kParamModBTargetCell19, kParamModBTargetCell20,
-	kParamModBTargetCell21, kParamModBTargetCell22, kParamModBTargetCell23, kParamModBTargetCell24,
-	kParamModBTargetCell25, kParamModBTargetCell26, kParamModBTargetCell27, kParamModBTargetCell28,
-	kParamModBTargetCell29, kParamModBTargetCell30, kParamModBTargetCell31, kParamModBTargetCell32,
-};
-
-
-const uint8_t DirSeqModMatrixAlg::ModCTargetPageDef[] = {
-	kParamModCTarget,
-	kParamModCTargetCell1,  kParamModCTargetCell2,  kParamModCTargetCell3,  kParamModCTargetCell4,
-	kParamModCTargetCell5,  kParamModCTargetCell6,  kParamModCTargetCell7,  kParamModCTargetCell8,
-	kParamModCTargetCell9,  kParamModCTargetCell10, kParamModCTargetCell11, kParamModCTargetCell12,
-	kParamModCTargetCell13, kParamModCTargetCell14, kParamModCTargetCell15, kParamModCTargetCell16,
-	kParamModCTargetCell17, kParamModCTargetCell18, kParamModCTargetCell19, kParamModCTargetCell20,
-	kParamModCTargetCell21, kParamModCTargetCell22, kParamModCTargetCell23, kParamModCTargetCell24,
-	kParamModCTargetCell25, kParamModCTargetCell26, kParamModCTargetCell27, kParamModCTargetCell28,
-	kParamModCTargetCell29, kParamModCTargetCell30, kParamModCTargetCell31, kParamModCTargetCell32,
-};
-
-
-const uint8_t DirSeqModMatrixAlg::ModDTargetPageDef[] = {
-	kParamModDTarget,
-	kParamModDTargetCell1,  kParamModDTargetCell2,  kParamModDTargetCell3,  kParamModDTargetCell4,
-	kParamModDTargetCell5,  kParamModDTargetCell6,  kParamModDTargetCell7,  kParamModDTargetCell8,
-	kParamModDTargetCell9,  kParamModDTargetCell10, kParamModDTargetCell11, kParamModDTargetCell12,
-	kParamModDTargetCell13, kParamModDTargetCell14, kParamModDTargetCell15, kParamModDTargetCell16,
-	kParamModDTargetCell17, kParamModDTargetCell18, kParamModDTargetCell19, kParamModDTargetCell20,
-	kParamModDTargetCell21, kParamModDTargetCell22, kParamModDTargetCell23, kParamModDTargetCell24,
-	kParamModDTargetCell25, kParamModDTargetCell26, kParamModDTargetCell27, kParamModDTargetCell28,
-	kParamModDTargetCell29, kParamModDTargetCell30, kParamModDTargetCell31, kParamModDTargetCell32,
-};
-
-
-const uint8_t DirSeqModMatrixAlg::ModETargetPageDef[] = {
-	kParamModETarget,
-	kParamModETargetCell1,  kParamModETargetCell2,  kParamModETargetCell3,  kParamModETargetCell4,
-	kParamModETargetCell5,  kParamModETargetCell6,  kParamModETargetCell7,  kParamModETargetCell8,
-	kParamModETargetCell9,  kParamModETargetCell10, kParamModETargetCell11, kParamModETargetCell12,
-	kParamModETargetCell13, kParamModETargetCell14, kParamModETargetCell15, kParamModETargetCell16,
-	kParamModETargetCell17, kParamModETargetCell18, kParamModETargetCell19, kParamModETargetCell20,
-	kParamModETargetCell21, kParamModETargetCell22, kParamModETargetCell23, kParamModETargetCell24,
-	kParamModETargetCell25, kParamModETargetCell26, kParamModETargetCell27, kParamModETargetCell28,
-	kParamModETargetCell29, kParamModETargetCell30, kParamModETargetCell31, kParamModETargetCell32,
-};
+uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
+void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
+	for (int m = 0; m < NumMatrices; m++) {
+		for (int i = 0; i < kParamModTargetStride; i++) {
+			ModTargetPageDefs[m][i] = m * kParamModTargetStride + i;
+		}
+	}
+}
 
 
 const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
@@ -100,29 +45,52 @@ DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 }
 
 
+const char* const TriggerValues[] = {	"Low", "High" };
+char pageNames[DirSeqModMatrixAlg::NumMatrices][9];
+char targetNames[DirSeqModMatrixAlg::NumMatrices][9];
+
 void DirSeqModMatrixAlg::BuildParameters() {
 	int numPages = 0;
 
 	auto cellTargetEnums = DirSeqModMatrixAlg::BuildCellTargetEnums();
 
-	PageDefs[numPages + 0] = { .name = "Matrix A", .numParams = ARRAY_SIZE(ModATargetPageDef), .params = ModATargetPageDef };
-	PageDefs[numPages + 1] = { .name = "Matrix B", .numParams = ARRAY_SIZE(ModBTargetPageDef), .params = ModBTargetPageDef };
-	PageDefs[numPages + 2] = { .name = "Matrix C", .numParams = ARRAY_SIZE(ModCTargetPageDef), .params = ModCTargetPageDef };
-	PageDefs[numPages + 3] = { .name = "Matrix D", .numParams = ARRAY_SIZE(ModDTargetPageDef), .params = ModDTargetPageDef };
-	PageDefs[numPages + 4] = { .name = "Matrix E", .numParams = ARRAY_SIZE(ModETargetPageDef), .params = ModETargetPageDef };
-	ParameterDefs[kParamModATarget] = { .name = "Target A", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
-	ParameterDefs[kParamModBTarget] = { .name = "Target B", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
-	ParameterDefs[kParamModCTarget] = { .name = "Target C", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
-	ParameterDefs[kParamModDTarget] = { .name = "Target D", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
-	ParameterDefs[kParamModETarget] = { .name = "Target E", .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
-	for (int i = 0; i < 32; i++) {
-		ParameterDefs[kParamModATargetCell1 + i] = { .name = CellParamNames[0][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[kParamModBTargetCell1 + i] = { .name = CellParamNames[1][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[kParamModCTargetCell1 + i] = { .name = CellParamNames[2][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[kParamModDTargetCell1 + i] = { .name = CellParamNames[3][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[kParamModETargetCell1 + i] = { .name = CellParamNames[4][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
+	for (int m = 0; m < NumMatrices; m++) {
+		strncpy(pageNames[m], "Matrix ", 8);
+		pageNames[m][7] = 'A' + m;
+		pageNames[m][8] = 0;
+		PageDefs[m] = { .name = pageNames[m], .numParams = kParamModTargetStride, .params = ModTargetPageDefs[m] };
+
+		strncpy(targetNames[m], "Target ", 8);
+		targetNames[m][7] = 'A' + m;
+		targetNames[m][8] = 0;
+
+		auto matrixIndex = m * kParamModTargetStride;
+
+		ParameterDefs[matrixIndex] = { .name = targetNames[m], .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+
+		for (int i = 0; i < 32; i++) {
+			ParameterDefs[matrixIndex + kParamModTargetCell1 + i] = { .name = CellParamNames[0][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		}
+
+		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeA]    = { .name = "Randomize Range A", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeB]    = { .name = "Randomize Range B", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[matrixIndex + kParamModTargetChangeByPercentMax] = { .name = "Change By Max",     .min = 0, .max = 100, .def = 0, .unit = kNT_unitPercent, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[matrixIndex + kParamModTargetActionCellIndex]    = { .name = "Action Cell #",     .min = 1, .max =  32, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+
+		ParameterDefs[matrixIndex + kParamModTargetScrambleAllValuesTrigger]       = { .name = "Scramble All",        .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetInvertAllValuesTrigger]         = { .name = "Invert All",          .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomizeAllValuesTrigger]      = { .name = "Randomize All",       .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomlyChangeAllValuesTrigger] = { .name = "Randomly Change All", .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+
+		ParameterDefs[matrixIndex + kParamModTargetInvertCellValueTrigger]               = { .name = "Invert",                .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomizeCellValueTrigger]            = { .name = "Randomize",             .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomlyChangeCellValueTrigger]       = { .name = "Randomly Change",       .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetSwapWithSurroundingCellValueTrigger]  = { .name = "Swap With Surrounding", .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInRowAboutCellTrigger]    = { .name = "Rotate Row",            .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInColumnAboutCellTrigger] = { .name = "Rotate Column",         .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 	}
-	numPages+=5;
+
+	numPages += NumMatrices;
 
 	PagesDefs.numPages = numPages;
 	PagesDefs.pages = PageDefs;
@@ -133,7 +101,7 @@ void DirSeqModMatrixAlg::BuildParameters() {
 
 
 void DirSeqModMatrixAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-	req.numParameters = kNumModTargetParameters;
+	req.numParameters = NumMatrices * kParamModTargetStride;
 	req.sram = 0;
 	req.dram = 0;
 	req.dtc = 0;
@@ -150,6 +118,8 @@ _NT_algorithm* DirSeqModMatrixAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs
 	auto mem = ptrs.sram;
 	memset(mem, 0, req.sram);
 
+	BuildModTargetPageDefs();
+
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqModMatrixAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirSeqModMatrixAlg* addr, size_t){ new (addr) DirSeqModMatrixAlg(CellDefinition::All); });
 
@@ -161,42 +131,64 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
  	auto& alg = *static_cast<DirSeqModMatrixAlg*>(self);
 	DirSeqAlg* seq = alg.GetSequencerAlgorithm();
 
-	// a lambda function to update the cell value in the sequencer, called a number of times further down
-	auto updateCellValue = [&](size_t modTargetParamIndex) {
+	auto idx = p % kParamModTargetStride;
+	if (idx == kParamModTarget) {
+		alg.SetupParametersForTarget(p);
+	} else {
+		// "quantize" the param number to the stride, which gives us the targeting index
+		auto modTargetParamIndex = (p / kParamModTargetStride) * kParamModTargetStride;
 		if (seq != nullptr) {
+			// subtract 1 from the target to strip out the "None" (0)
 			auto target = alg.v[modTargetParamIndex] - 1;
 			if (target >= 0) {
-				auto cellNum = (p - 1) % MatrixStride;
+				auto ct = static_cast<CellDataType>(target);
 				auto cd = alg.CellDefs[target];
 				int multiplier = pow(10, cd.Scaling);
-				auto algIndex = NT_algorithmIndex(&alg);
-				_NT_slot slot;
-				NT_getSlot(slot, algIndex);
-				auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / multiplier;
-				seq->StepData.SetBaseCellValue(cellNum % 8, cellNum / 8, static_cast<CellDataType>(target), val, false);
+				if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
+					auto cellNum = idx - 1;
+					auto algIndex = NT_algorithmIndex(&alg);
+					_NT_slot slot;
+					NT_getSlot(slot, algIndex);
+					auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / multiplier;
+					seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
+				// always check to see if the sequencer is loaded before running triggers.
+				// this prevents them from firing when a preset is loading if the value was left High	
+				} else if (idx == kParamModTargetScrambleAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
+					seq->StepData.ScrambleAllCellValues(ct);
+				} else if (idx == kParamModTargetInvertAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
+					seq->StepData.InvertAllCellValues(ct);
+				} else if (idx == kParamModTargetRandomizeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / multiplier;
+					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / multiplier;
+					seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b));
+				} else if (idx == kParamModTargetRandomlyChangeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
+					seq->StepData.RandomlyChangeAllCellValues(ct, changeBy);
+				} else if (idx == kParamModTargetInvertCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+				} else if (idx == kParamModTargetRandomizeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / multiplier;
+					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / multiplier;
+					seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b));
+				} else if (idx == kParamModTargetRandomlyChangeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
+					seq->StepData.RandomlyChangeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, changeBy);
+				} else if (idx == kParamModTargetSwapWithSurroundingCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					seq->StepData.SwapWithSurroundingCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+				} else if (idx == kParamModTargetRotateValuesInRowAboutCellTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					seq->StepData.RotateCellValuesInRow(cellIndex / GridSizeX, ct, 1);
+				} else if (idx == kParamModTargetRotateValuesInColumnAboutCellTrigger && alg.v[p] == 1 && seq->Loaded) {
+					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+					seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1);
+				}
 			}
 		}
-	};
-
- 	if (p == kParamModATarget || p == kParamModBTarget || p == kParamModCTarget || p == kParamModDTarget || p == kParamModETarget) {
-		alg.SetupParametersForTarget(p);
- 	}
-	else if (p >= kParamModATargetCell1 && p <= kParamModATargetCell32) {
-		updateCellValue(kParamModATarget);
 	}
-	else if (p >= kParamModBTargetCell1 && p <= kParamModBTargetCell32) {
-		updateCellValue(kParamModBTarget);
-	}
-	else if (p >= kParamModCTargetCell1 && p <= kParamModCTargetCell32) {
-		updateCellValue(kParamModCTarget);
-	}
-	else if (p >= kParamModDTargetCell1 && p <= kParamModDTargetCell32) {
-		updateCellValue(kParamModDTarget);
-	}
-	else if (p >= kParamModETargetCell1 && p <= kParamModETargetCell32) {
-		updateCellValue(kParamModETarget);
-	}
-
 }
 
 
@@ -211,26 +203,15 @@ bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 		return true;
 	}
 
-	auto modTargetA = alg.v[kParamModATarget];
-	auto modTargetB = alg.v[kParamModBTarget];
-	auto modTargetC = alg.v[kParamModCTarget];
-	auto modTargetD = alg.v[kParamModDTarget];
-	auto modTargetE = alg.v[kParamModETarget];
-
-	NT_drawText( 40, 10, "Matrix A Target:  ", 15);
-	NT_drawText(140, 10, modTargetA == 0 ? "None" : alg.CellDefs[modTargetA - 1].DisplayName, 15);
-	
-	NT_drawText( 40, 20, "Matrix B Target:  ", 15);
-	NT_drawText(140, 20, modTargetB == 0 ? "None" : alg.CellDefs[modTargetB - 1].DisplayName, 15);
-
-	NT_drawText( 40, 30, "Matrix C Target:  ", 15);
-	NT_drawText(140, 30, modTargetC == 0 ? "None" : alg.CellDefs[modTargetC - 1].DisplayName, 15);
-
-	NT_drawText( 40, 40, "Matrix D Target:  ", 15);
-	NT_drawText(140, 40, modTargetD == 0 ? "None" : alg.CellDefs[modTargetD - 1].DisplayName, 15);
-
-	NT_drawText( 40, 50, "Matrix E Target:  ", 15);
-	NT_drawText(140, 50, modTargetE == 0 ? "None" : alg.CellDefs[modTargetE - 1].DisplayName, 15);
+	for (int m = 0; m < NumMatrices; m++) {
+		auto modTarget = alg.v[m * kParamModTargetStride + kParamModTarget];
+		char buf[17];
+		strncpy(buf, "Matrix X Target:", 17);
+		buf[7] = 'A' + m;
+		buf[16] = 0;
+		NT_drawText( 40, 10 * m + 10, buf, 15);
+		NT_drawText(140, 10 * m + 10, modTarget == 0 ? "None" : alg.CellDefs[modTarget - 1].DisplayName, 15);
+	}
 
 	return true;
 }
@@ -266,7 +247,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 	// otherwise, configure them to match the cell definition of the target
 	if (modTarget == 0 || seq == nullptr) {
 		for (int i = 0; i < 32; i++) {
-			// pad with spaces do the NT UI will leave enough room for when we change the parameter names later
+			// pad with spaces so the NT UI will leave enough room for when we change the parameter names later
 			ParameterDefs[modTargetParamIndex + 1 + i].name = "Unassigned          ";
 			ParameterDefs[modTargetParamIndex + 1 + i].min = 0;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = 0;
@@ -278,21 +259,25 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), 0);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), true);
 		}
+		for (int i = kParamModTargetRandomizeRangeA; i < kParamModTargetStride; i++) {
+			NT_setParameterFromAudio(algIndex, modTargetParamIndex + i + NT_parameterOffset(), 0);
+			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + i + NT_parameterOffset(), true);
+		}
 	} else {
 		// reduce modTarget by 1, since "None" == 0, but everything else is offset by 1
 		modTarget--;
 		auto cd = CellDefs[modTarget];
+		int16_t min = cd.Min * pow(10, cd.Scaling);
+		int16_t max = cd.Max * pow(10, cd.Scaling);
+		int16_t def = cd.Default * pow(10, cd.Scaling);
 		auto enums = modTarget == 0 ? CellDirectionNames : NULL;
 		uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
 		int multiplier = pow(10, cd.Scaling);
 		for (int i = 0; i < 32; i++) {
-			int16_t min = cd.Min * pow(10, cd.Scaling);
-			int16_t max = cd.Max * pow(10, cd.Scaling);
-			int16_t def = cd.Default * pow(10, cd.Scaling);
 			char numbuf[3];
 			NT_intToString(numbuf, i + 1);
-			StringConcat(CellParamNames[modTargetParamIndex / MatrixStride][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);
-			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / MatrixStride][i];
+			StringConcat(CellParamNames[modTargetParamIndex / kParamModTargetStride][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);
+			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / kParamModTargetStride][i];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = def;
@@ -309,6 +294,29 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), false);
 		}
+
+		for (int i = kParamModTargetRandomizeRangeA; i < kParamModTargetStride; i++) {
+			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + i + NT_parameterOffset(), false);
+		}
+
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].min = min;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].max = max;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].def = min;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].unit = unit;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].scaling = cd.Scaling;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].enumStrings = enums;
+		NT_updateParameterDefinition(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeA);
+		NT_setParameterFromAudio(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeA + NT_parameterOffset(), min);
+
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].min = min;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].max = max;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].def = max;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].unit = unit;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].scaling = cd.Scaling;
+		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].enumStrings = enums;
+		NT_updateParameterDefinition(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeB);
+		NT_setParameterFromAudio(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeB + NT_parameterOffset(), max);
+
 	}
 }
 

@@ -38,17 +38,33 @@ private:
 
 	_NT_algorithm* Algorithm = nullptr;
 	const CellDefinition* CellDefs = nullptr;
+	RandomGenerator* Random = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
 	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
+	void DoDataChanged();
 
 public:
+
+	void (*OnDataChangedCallback)(_NT_algorithm* alg) = nullptr;
+
+
 	StepDataRegion();
-	void InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs);
+	void InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm*));
 
 	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix);
 	void  SetDefaultCellValues();
+	void  ScrambleAllCellValues(CellDataType ct);
+	void  InvertCellValue(uint8_t x, uint8_t y, CellDataType ct);
+	void  InvertAllCellValues(CellDataType ct);
+	void  SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellDataType ct);
+	void  RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max);
+	void  RandomizeAllCellValues(CellDataType ct, float min, float max);
+	void  RotateCellValuesInRow(uint8_t row, CellDataType ct, int8_t rotateBy);
+	void  RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8_t rotateBy);
+	void  RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent);
+	void  RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent);
 };
