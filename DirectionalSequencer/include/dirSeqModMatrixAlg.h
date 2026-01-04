@@ -48,7 +48,7 @@ private:
 	const char** BuildCellTargetEnums();
 	static const char* const CellDirectionNames[];
 
-	char CellParamNames[NumMatrices][32][20];
+	char CellParamNames[NumMatrices][32][23];
 
 	static void BuildModTargetPageDefs();
 

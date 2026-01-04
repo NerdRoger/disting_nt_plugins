@@ -34,6 +34,15 @@ const char** DirSeqModMatrixAlg::BuildCellTargetEnums() {
 }
 
 
+const char* const CellCoordStrings[] = {
+	"", // dummy entry for index 0 since param goes from 1-32, not 0-31
+	"(1,1)", "(2,1)", "(3,1)", "(4,1)", "(5,1)", "(6,1)", "(7,1)", "(8,1)", 
+	"(1,2)", "(2,2)", "(3,2)", "(4,2)", "(5,2)", "(6,2)", "(7,2)", "(8,2)", 
+	"(1,3)", "(2,3)", "(3,3)", "(4,3)", "(5,3)", "(6,3)", "(7,3)", "(8,3)", 
+	"(1,4)", "(2,4)", "(3,4)", "(4,4)", "(5,4)", "(6,4)", "(7,4)", "(8,4)", 
+};
+
+
 DirSeqModMatrixAlg::DirSeqModMatrixAlg(const CellDefinition* cellDefs) {
 	CellDefs = cellDefs;
 	BuildParameters();
@@ -45,7 +54,7 @@ DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 }
 
 
-const char* const TriggerValues[] = {	"Low", "High" };
+const char* const TriggerValues[] = { "Low", "High" };
 char pageNames[DirSeqModMatrixAlg::NumMatrices][9];
 char targetNames[DirSeqModMatrixAlg::NumMatrices][9];
 
@@ -75,7 +84,7 @@ void DirSeqModMatrixAlg::BuildParameters() {
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeA]    = { .name = "Randomize Range A", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeB]    = { .name = "Randomize Range B", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[matrixIndex + kParamModTargetChangeByPercentMax] = { .name = "Change By Max",     .min = 0, .max = 100, .def = 0, .unit = kNT_unitPercent, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[matrixIndex + kParamModTargetActionCellIndex]    = { .name = "Action Cell #",     .min = 1, .max =  32, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[matrixIndex + kParamModTargetActionCellIndex]    = { .name = "Action Cell",       .min = 1, .max =  32, .def = 0, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = CellCoordStrings };
 
 		ParameterDefs[matrixIndex + kParamModTargetScrambleAllValuesTrigger]       = { .name = "Scramble All",        .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 		ParameterDefs[matrixIndex + kParamModTargetInvertAllValuesTrigger]         = { .name = "Invert All",          .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
@@ -274,9 +283,14 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
 		int multiplier = pow(10, cd.Scaling);
 		for (int i = 0; i < 32; i++) {
-			char numbuf[3];
-			NT_intToString(numbuf, i + 1);
-			StringConcat(CellParamNames[modTargetParamIndex / kParamModTargetStride][i], 20, cd.DisplayName, " Cell ", numbuf, nullptr);
+			auto x = i % 8;
+			auto y = i / 8;
+
+			char xbuf[2];
+			char ybuf[2];
+			NT_intToString(xbuf, x + 1);
+			NT_intToString(ybuf, y + 1);
+			StringConcat(CellParamNames[modTargetParamIndex / kParamModTargetStride][i], 23, cd.DisplayName, " Cell (", xbuf, ",", ybuf, ")", nullptr);
 			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / kParamModTargetStride][i];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
@@ -287,8 +301,6 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
 			
 			// set the parameter value to match the cell's current value
-			auto x = i % 8;
-			auto y = i / 8;
 			auto fval = seq->StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget));
 			int16_t val = fval * multiplier;
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val);
