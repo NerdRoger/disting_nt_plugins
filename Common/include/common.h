@@ -179,7 +179,6 @@ struct Trigger {
 private:
 	static constexpr float LowThreshold = 0.1f;
 	static constexpr float HighThreshold = 1.0f;
-	static constexpr float TriggerVoltage = 10.0f;
 
 	bool State;
 public:

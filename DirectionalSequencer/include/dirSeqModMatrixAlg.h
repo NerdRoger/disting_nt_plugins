@@ -45,10 +45,14 @@ public:
 
 private:
 	// NT Parameter Data
+	static size_t constexpr MaxPageNameLen = 13;
+  char PageNames[DirSeqModMatrixAlg::NumMatrices][MaxPageNameLen];
+
 	const char** BuildCellTargetEnums();
 	static const char* const CellDirectionNames[];
 
-	char CellParamNames[NumMatrices][32][23];
+	static size_t constexpr MaxCellParamNameLen = 11;
+	char CellParamNames[NumMatrices][32][MaxCellParamNameLen];
 
 	static void BuildModTargetPageDefs();
 

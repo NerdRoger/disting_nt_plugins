@@ -61,7 +61,6 @@ DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 
 
 const char* const TriggerValues[] = { "Low", "High" };
-char pageNames[DirSeqModMatrixAlg::NumMatrices][9];
 char targetNames[DirSeqModMatrixAlg::NumMatrices][9];
 
 void DirSeqModMatrixAlg::BuildParameters() {
@@ -70,10 +69,10 @@ void DirSeqModMatrixAlg::BuildParameters() {
 	auto cellTargetEnums = DirSeqModMatrixAlg::BuildCellTargetEnums();
 
 	for (int m = 0; m < NumMatrices; m++) {
-		strncpy(pageNames[m], "Matrix ", 8);
-		pageNames[m][7] = 'A' + m;
-		pageNames[m][8] = 0;
-		PageDefs[m] = { .name = pageNames[m], .numParams = kParamModTargetStride, .params = ModTargetPageDefs[m] };
+		// just fill with spaces for now....  this will actually be set when the target parameter changes down below
+		memset(PageNames[m], ' ', MaxPageNameLen);
+		PageNames[m][MaxPageNameLen - 1] = 0;
+		PageDefs[m] = { .name = PageNames[m], .numParams = kParamModTargetStride, .params = ModTargetPageDefs[m] };
 
 		strncpy(targetNames[m], "Target ", 8);
 		targetNames[m][7] = 'A' + m;
@@ -97,12 +96,12 @@ void DirSeqModMatrixAlg::BuildParameters() {
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeAllValuesTrigger]      = { .name = "Randomize All",       .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 		ParameterDefs[matrixIndex + kParamModTargetRandomlyChangeAllValuesTrigger] = { .name = "Randomly Change All", .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 
-		ParameterDefs[matrixIndex + kParamModTargetInvertCellValueTrigger]               = { .name = "Invert",                .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
-		ParameterDefs[matrixIndex + kParamModTargetRandomizeCellValueTrigger]            = { .name = "Randomize",             .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
-		ParameterDefs[matrixIndex + kParamModTargetRandomlyChangeCellValueTrigger]       = { .name = "Randomly Change",       .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
-		ParameterDefs[matrixIndex + kParamModTargetSwapWithSurroundingCellValueTrigger]  = { .name = "Swap With Surrounding", .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
-		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInRowAboutCellTrigger]    = { .name = "Rotate Row",            .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
-		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInColumnAboutCellTrigger] = { .name = "Rotate Column",         .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetInvertCellValueTrigger]               = { .name = "Invert",             .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomizeCellValueTrigger]            = { .name = "Randomize",          .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRandomlyChangeCellValueTrigger]       = { .name = "Randomly Change",    .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetSwapWithSurroundingCellValueTrigger]  = { .name = "Swap With Neighbor", .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInRowAboutCellTrigger]    = { .name = "Rotate Row",         .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
+		ParameterDefs[matrixIndex + kParamModTargetRotateValuesInColumnAboutCellTrigger] = { .name = "Rotate Column",      .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 	}
 
 	numPages += NumMatrices;
@@ -258,9 +257,17 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 	// find the "linked" sequencer algorithm
 	DirSeqAlg* seq = GetSequencerAlgorithm();
 
+	size_t pageIndex = modTargetParamIndex / kParamModTargetStride;
+
 	// if "None" target is selected, or we don't have a linked sequencer, just make all the parameters "zeroes"
 	// otherwise, configure them to match the cell definition of the target
 	if (modTarget == 0 || seq == nullptr) {
+
+		memset(PageNames[pageIndex], ' ', MaxPageNameLen);
+		PageNames[pageIndex][MaxPageNameLen - 1] = 0;
+		strncpy(PageNames[pageIndex], "* Matrix X *", MaxPageNameLen);
+		PageNames[pageIndex][9] = 'A' + pageIndex;
+
 		for (int i = 0; i < 32; i++) {
 			// pad with spaces so the NT UI will leave enough room for when we change the parameter names later
 			ParameterDefs[modTargetParamIndex + 1 + i].name = "Unassigned          ";
@@ -286,6 +293,8 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		int16_t max = cd.Max * pow(10, cd.Scaling);
 		int16_t def = cd.Default * pow(10, cd.Scaling);
 
+		strncpy(PageNames[pageIndex], cd.DisplayName, MaxPageNameLen);
+
 		const char* const *enums;
 		switch(static_cast<CellDataType>(modTarget)) {
 			using enum CellDataType;
@@ -310,8 +319,8 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			char ybuf[2];
 			NT_intToString(xbuf, x + 1);
 			NT_intToString(ybuf, y + 1);
-			StringConcat(CellParamNames[modTargetParamIndex / kParamModTargetStride][i], 23, cd.DisplayName, " Cell (", xbuf, ",", ybuf, ")", nullptr);
-			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[modTargetParamIndex / kParamModTargetStride][i];
+			StringConcat(CellParamNames[pageIndex][i], MaxCellParamNameLen, "Cell (", xbuf, ",", ybuf, ")", nullptr);
+			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[pageIndex][i];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = def;
