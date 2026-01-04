@@ -225,9 +225,9 @@ DirSeqAlg* DirSeqModMatrixAlg::GetSequencerAlgorithm() {
 		if (!NT_getSlot(slot, idx))
 			return nullptr;
 		// if we encounter another modulator, keep going, as we can have multiple
-		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 'm' ))
+		if (slot.guid() == DirSeqModMatrixAlg::Factory.guid)
 			continue;
-		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 's' )) {
+		if (slot.guid() == DirSeqAlg::Factory.guid) {
 			return static_cast<DirSeqAlg*>(slot.plugin());
 		}
 		return nullptr;

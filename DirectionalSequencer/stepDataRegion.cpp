@@ -33,7 +33,7 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 	for (uint32_t idx = algIndex + 1; idx < NT_algorithmCount(); idx++) {
 		if (!NT_getSlot(slot, idx))
 			return nullptr;
-		if (slot.guid() == NT_MULTICHAR( 'A', 'T', 'd', 'm' )) {
+		if (slot.guid() == DirSeqModMatrixAlg::Factory.guid) {
 			auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
 
 			for (int m = 0; m < DirSeqModMatrixAlg::NumMatrices; m++) {
