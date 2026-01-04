@@ -14,6 +14,12 @@ const char* const DirSeqModMatrixAlg::CellDirectionNames[] = {
 };
 
 
+// we use enum strings for these because the values are off-by-one
+const char* const RatchetNames[] = {
+	"--", "2", "3", "4", "5", "6", "7", "8", 
+};
+
+
 uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
 void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
 	for (int m = 0; m < NumMatrices; m++) {
@@ -279,7 +285,21 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		int16_t min = cd.Min * pow(10, cd.Scaling);
 		int16_t max = cd.Max * pow(10, cd.Scaling);
 		int16_t def = cd.Default * pow(10, cd.Scaling);
-		auto enums = modTarget == 0 ? CellDirectionNames : NULL;
+
+		const char* const *enums;
+		switch(static_cast<CellDataType>(modTarget)) {
+			using enum CellDataType;
+			case Direction:
+				enums = CellDirectionNames;
+				break;
+			case Ratchets:
+				enums = RatchetNames;
+				break;
+			default:
+				enums = NULL;
+				break;
+		}
+
 		uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
 		int multiplier = pow(10, cd.Scaling);
 		for (int i = 0; i < 32; i++) {
