@@ -6,14 +6,19 @@
 #include "cellDefinition.h"
 
 
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	auto CellDefs = CellDefinition::All;
+}
+
+
 StepDataRegion::StepDataRegion() {
 	
 }
 
 
-void StepDataRegion::InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm* alg)) {
+void StepDataRegion::InjectDependencies(_NT_algorithm* alg, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm* alg)) {
 	Algorithm = alg;
-	CellDefs = cellDefs;
 	Random = random;
 	OnDataChangedCallback = onDataChanged;
 }
@@ -33,7 +38,7 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 	for (uint32_t idx = algIndex + 1; idx < NT_algorithmCount(); idx++) {
 		if (!NT_getSlot(slot, idx))
 			return nullptr;
-		if (slot.guid() == DirSeqModMatrixAlg::Factory.guid) {
+		if (slot.guid() == DirSeqModMatrixAlg::Guid) {
 			auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
 
 			for (int m = 0; m < DirSeqModMatrixAlg::NumMatrices; m++) {

@@ -9,26 +9,32 @@
 #include "playhead.h"
 
 
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	static const char* const HeadOptionsPageNamesDef[] = {
+		"Head A Options", "Head B Options", "Head C Options", "Head D Options", "Head E Options", "Head F Options", "Head G Options", "Head H Options",
+	};
 
-const char* const DirSeqAlg::HeadOptionsPageNamesDef[] = {
-	"Head A Options", "Head B Options", "Head C Options", "Head D Options", "Head E Options", "Head F Options", "Head G Options", "Head H Options",
-};
+	static const char* HeadRoutingPageNamesDef[] = {
+		"Head A Routing", "Head B Routing", "Head C Routing", "Head D Routing", "Head E Routing", "Head F Routing", "Head G Routing", "Head H Routing",
+	};
 
+	static const char* const EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+  static const char* const EnumStringsResetWhenInactive[] = { "No", "Yes" };
 
-const char* const DirSeqAlg::HeadRoutingPageNamesDef[] = {
-	"Head A Routing", "Head B Routing", "Head C Routing", "Head D Routing", "Head E Routing", "Head F Routing", "Head G Routing", "Head H Routing",
-};
+	static const _NT_specification SpecificationsDef[] = {
+		{ .name = "Playheads", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
+	};
 
+	auto CellDefs = CellDefinition::All;
 
-const _NT_specification DirSeqAlg::SpecificationsDef[] = {
-	{ .name = "Playheads", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
-};
-
-
-const char* const DirSeqAlg::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
-
-
-const char* const DirSeqAlg::EnumStringsResetWhenInactive[] = { "No", "Yes" };
+	void StepDataChanged(_NT_algorithm* self) {
+		if (self) {
+			auto& alg = *static_cast<DirSeqAlg*>(self);
+			alg.Grid.LoadParamForEditing();
+		}
+	}
+}
 
 
 DirSeqAlg::DirSeqAlg() {
@@ -41,19 +47,10 @@ DirSeqAlg::~DirSeqAlg() {
 }
 
 
-void DirSeqAlg::StepDataChanged(_NT_algorithm* self) {
-	if (self) {
-		auto& alg = *static_cast<DirSeqAlg*>(self);
-		alg.Grid.LoadParamForEditing();
-	}
-}
-
-
-void DirSeqAlg::InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate) {
-	CellDefs = cellDefs;
+void DirSeqAlg::InjectDependencies(uint32_t sampleRate) {
 	Timer.InjectDependencies(sampleRate);
-	StepData.InjectDependencies(this, cellDefs, &Random, StepDataChanged);
-	Grid.InjectDependencies(cellDefs, &Timer, &StepData, &HelpText, &PotMgr, &Playheads);
+	StepData.InjectDependencies(this, &Random, StepDataChanged);
+	Grid.InjectDependencies(&Timer, &StepData, &HelpText, &PotMgr, &Playheads);
 }
 
 
@@ -142,7 +139,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
-	alg.InjectDependencies(CellDefinition::All, NT_globals.sampleRate);
+	alg.InjectDependencies(NT_globals.sampleRate);
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
 	for (int h = 0; h < alg.Playheads.Count; h++) {
@@ -326,8 +323,8 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
 				auto fval = alg.StepData.GetBaseCellValue(x, y, cdt);
-				stream.addMemberName(alg.CellDefs[i].FieldName);
-				if (alg.CellDefs[i].Scaling > 0) {
+				stream.addMemberName(CellDefs[i].FieldName);
+				if (CellDefs[i].Scaling > 0) {
 					stream.addNumber(fval);
 				} else {
 					stream.addNumber(static_cast<int>(fval));
@@ -435,8 +432,8 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 			bool found = false;
 			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				if (parse.matchName(alg.CellDefs[i].FieldName)) {
-					if (alg.CellDefs[i].Scaling > 0) {
+				if (parse.matchName(CellDefs[i].FieldName)) {
+					if (CellDefs[i].Scaling > 0) {
 						if (!parse.number(fval)) {
 							return false;
 						}
@@ -546,9 +543,8 @@ int DirSeqAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
 
 const _NT_factory DirSeqAlg::Factory =
 {
-	.guid = NT_MULTICHAR( 'A', 'T', 'd', 's' ),
+	.guid = DirSeqAlg::Guid,
 	.name = "Dir. Sequencer",
-	// TODO:  flesh this out
 	.description = "A 2-D Directional Sequencer",
 	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
 	.specifications = SpecificationsDef,

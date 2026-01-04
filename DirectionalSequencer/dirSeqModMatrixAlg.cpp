@@ -9,18 +9,26 @@
 #include "cellDefinition.h"
 
 
-const char* const DirSeqModMatrixAlg::CellDirectionNames[] = {
-	"", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
-};
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	static uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
+
+	static size_t constexpr MaxTargetNameLen = 9;
+	static char TargetNames[DirSeqModMatrixAlg::NumMatrices][MaxTargetNameLen];
+
+	static const char* const CellDirectionNames[] = {
+		"", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
+	};
+
+	// we use enum strings for these because the values are off-by-one
+	static const char* const RatchetNames[] = {
+		"--", "2", "3", "4", "5", "6", "7", "8", 
+	};
+
+	auto CellDefs = CellDefinition::All;
+}
 
 
-// we use enum strings for these because the values are off-by-one
-const char* const RatchetNames[] = {
-	"--", "2", "3", "4", "5", "6", "7", "8", 
-};
-
-
-uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
 void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
 	for (int m = 0; m < NumMatrices; m++) {
 		for (int i = 0; i < kParamModTargetStride; i++) {
@@ -30,7 +38,6 @@ void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
 }
 
 
-const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
 const char** DirSeqModMatrixAlg::BuildCellTargetEnums() {
 	CellTargetEnums[0] = "None";
 	for (size_t i = 0; i < static_cast<uint16_t>(CellDataType::NumCellDataTypes); i++) {
@@ -42,16 +49,15 @@ const char** DirSeqModMatrixAlg::BuildCellTargetEnums() {
 
 const char* const CellCoordStrings[] = {
 	"", // dummy entry for index 0 since param goes from 1-32, not 0-31
-	"(1,1)", "(2,1)", "(3,1)", "(4,1)", "(5,1)", "(6,1)", "(7,1)", "(8,1)", 
-	"(1,2)", "(2,2)", "(3,2)", "(4,2)", "(5,2)", "(6,2)", "(7,2)", "(8,2)", 
-	"(1,3)", "(2,3)", "(3,3)", "(4,3)", "(5,3)", "(6,3)", "(7,3)", "(8,3)", 
-	"(1,4)", "(2,4)", "(3,4)", "(4,4)", "(5,4)", "(6,4)", "(7,4)", "(8,4)", 
+	"Cell (1,1)", "Cell (2,1)", "Cell (3,1)", "Cell (4,1)", "Cell (5,1)", "Cell (6,1)", "Cell (7,1)", "Cell (8,1)", 
+	"Cell (1,2)", "Cell (2,2)", "Cell (3,2)", "Cell (4,2)", "Cell (5,2)", "Cell (6,2)", "Cell (7,2)", "Cell (8,2)", 
+	"Cell (1,3)", "Cell (2,3)", "Cell (3,3)", "Cell (4,3)", "Cell (5,3)", "Cell (6,3)", "Cell (7,3)", "Cell (8,3)", 
+	"Cell (1,4)", "Cell (2,4)", "Cell (3,4)", "Cell (4,4)", "Cell (5,4)", "Cell (6,4)", "Cell (7,4)", "Cell (8,4)", 
 };
 
 
-DirSeqModMatrixAlg::DirSeqModMatrixAlg(const CellDefinition* cellDefs) {
-	CellDefs = cellDefs;
-	BuildParameters();
+DirSeqModMatrixAlg::DirSeqModMatrixAlg() {
+
 }
 
 
@@ -61,7 +67,7 @@ DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 
 
 const char* const TriggerValues[] = { "Low", "High" };
-char targetNames[DirSeqModMatrixAlg::NumMatrices][9];
+
 
 void DirSeqModMatrixAlg::BuildParameters() {
 	int numPages = 0;
@@ -74,16 +80,16 @@ void DirSeqModMatrixAlg::BuildParameters() {
 		PageNames[m][MaxPageNameLen - 1] = 0;
 		PageDefs[m] = { .name = PageNames[m], .numParams = kParamModTargetStride, .params = ModTargetPageDefs[m] };
 
-		strncpy(targetNames[m], "Target ", 8);
-		targetNames[m][7] = 'A' + m;
-		targetNames[m][8] = 0;
+		strncpy(TargetNames[m], "Target ", 8);
+		TargetNames[m][7] = 'A' + m;
+		TargetNames[m][8] = 0;
 
 		auto matrixIndex = m * kParamModTargetStride;
 
-		ParameterDefs[matrixIndex] = { .name = targetNames[m], .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+		ParameterDefs[matrixIndex] = { .name = TargetNames[m], .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
 
 		for (int i = 0; i < 32; i++) {
-			ParameterDefs[matrixIndex + kParamModTargetCell1 + i] = { .name = CellParamNames[0][i], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
+			ParameterDefs[matrixIndex + kParamModTargetCell1 + i] = { .name = CellCoordStrings[i+1], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
 		}
 
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeA]    = { .name = "Randomize Range A", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
@@ -135,7 +141,8 @@ _NT_algorithm* DirSeqModMatrixAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs
 	BuildModTargetPageDefs();
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
-	auto& alg = *MemoryHelper<DirSeqModMatrixAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1, [](DirSeqModMatrixAlg* addr, size_t){ new (addr) DirSeqModMatrixAlg(CellDefinition::All); });
+	auto& alg = *MemoryHelper<DirSeqModMatrixAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
+	alg.BuildParameters();
 
 	return &alg;
 }
@@ -156,7 +163,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			auto target = alg.v[modTargetParamIndex] - 1;
 			if (target >= 0) {
 				auto ct = static_cast<CellDataType>(target);
-				auto cd = alg.CellDefs[target];
+				auto cd = CellDefs[target];
 				int multiplier = pow(10, cd.Scaling);
 				if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
 					auto cellNum = idx - 1;
@@ -224,7 +231,7 @@ bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 		buf[7] = 'A' + m;
 		buf[16] = 0;
 		NT_drawText( 40, 10 * m + 10, buf, 15);
-		NT_drawText(140, 10 * m + 10, modTarget == 0 ? "None" : alg.CellDefs[modTarget - 1].DisplayName, 15);
+		NT_drawText(140, 10 * m + 10, modTarget == 0 ? "None" : CellDefs[modTarget - 1].DisplayName, 15);
 	}
 
 	return true;
@@ -239,9 +246,9 @@ DirSeqAlg* DirSeqModMatrixAlg::GetSequencerAlgorithm() {
 		if (!NT_getSlot(slot, idx))
 			return nullptr;
 		// if we encounter another modulator, keep going, as we can have multiple
-		if (slot.guid() == DirSeqModMatrixAlg::Factory.guid)
+		if (slot.guid() == DirSeqModMatrixAlg::Guid)
 			continue;
-		if (slot.guid() == DirSeqAlg::Factory.guid) {
+		if (slot.guid() == DirSeqAlg::Guid) {
 			return static_cast<DirSeqAlg*>(slot.plugin());
 		}
 		return nullptr;
@@ -269,8 +276,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		PageNames[pageIndex][9] = 'A' + pageIndex;
 
 		for (int i = 0; i < 32; i++) {
-			// pad with spaces so the NT UI will leave enough room for when we change the parameter names later
-			ParameterDefs[modTargetParamIndex + 1 + i].name = "Unassigned          ";
+			ParameterDefs[modTargetParamIndex + 1 + i].name = CellCoordStrings[i + 1];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = 0;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = 0;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = 0;
@@ -315,12 +321,6 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			auto x = i % 8;
 			auto y = i / 8;
 
-			char xbuf[2];
-			char ybuf[2];
-			NT_intToString(xbuf, x + 1);
-			NT_intToString(ybuf, y + 1);
-			StringConcat(CellParamNames[pageIndex][i], MaxCellParamNameLen, "Cell (", xbuf, ",", ybuf, ")", nullptr);
-			ParameterDefs[modTargetParamIndex + 1 + i].name = CellParamNames[pageIndex][i];
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = def;
@@ -364,7 +364,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 
 const _NT_factory DirSeqModMatrixAlg::Factory =
 {
-	.guid = NT_MULTICHAR( 'A', 'T', 'd', 'm' ),
+	.guid = DirSeqModMatrixAlg::Guid,
 	.name = "Dir. Seq. Mod Matrix",
 	// TODO:  flesh this out
 	.description = "Mod Matrix for Directional Sequencer",

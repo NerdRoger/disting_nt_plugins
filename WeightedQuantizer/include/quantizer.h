@@ -2,17 +2,6 @@
 
 
 struct Quantizer {
-private:
-
-	static constexpr uint16_t NumberOfNotes = 12;
-
-	struct NoteDef {
-		const char* Name;
-		float       Fractional;
-	};
-
-	static const NoteDef Notes[NumberOfNotes];
-	
 public:
 
 	struct QuantRequest {

@@ -37,7 +37,6 @@ private:
 	};
 
 	_NT_algorithm* Algorithm = nullptr;
-	const CellDefinition* CellDefs = nullptr;
 	RandomGenerator* Random = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
@@ -50,7 +49,7 @@ public:
 
 
 	StepDataRegion();
-	void InjectDependencies(_NT_algorithm* alg, const CellDefinition* cellDefs, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm*));
+	void InjectDependencies(_NT_algorithm* alg, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm*));
 
 	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;

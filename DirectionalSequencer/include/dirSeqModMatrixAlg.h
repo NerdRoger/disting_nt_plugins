@@ -41,18 +41,16 @@ enum {
 
 struct DirSeqModMatrixAlg : public _NT_algorithm{
 public:
-	static const uint16_t NumMatrices = 4;
+	static constexpr uint32_t Guid = NT_MULTICHAR( 'A', 'T', 'd', 'm' );
+	static constexpr uint16_t NumMatrices = 4;
 
 private:
 	// NT Parameter Data
 	static size_t constexpr MaxPageNameLen = 13;
   char PageNames[DirSeqModMatrixAlg::NumMatrices][MaxPageNameLen];
-
+	
+	const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
 	const char** BuildCellTargetEnums();
-	static const char* const CellDirectionNames[];
-
-	static size_t constexpr MaxCellParamNameLen = 11;
-	char CellParamNames[NumMatrices][32][MaxCellParamNameLen];
 
 	static void BuildModTargetPageDefs();
 
@@ -72,12 +70,9 @@ private:
 	void SetupParametersForTarget(int modTargetParamIndex);
 
 public:
-
-	const CellDefinition* CellDefs = nullptr;
-
 	static const _NT_factory Factory;
 
-	DirSeqModMatrixAlg(const CellDefinition* cellDefs);
+	DirSeqModMatrixAlg();
 	~DirSeqModMatrixAlg();
 
 };

@@ -6,32 +6,32 @@
 #include "quantizer.h"
 
 
-const uint8_t WeightedQuantizerAlg::GeneralPageDef[] = {
-	kWQParamTransposeAll,
-	kWQParamBankScanPosition,
-	kWQParamTriggerSampleDelay,
-};
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	const uint8_t GeneralPageDef[] = {
+		kWQParamTransposeAll,
+		kWQParamBankScanPosition,
+		kWQParamTriggerSampleDelay,
+	};
 
+	const uint8_t NoteWeightsPageDef[] = {
+		kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
+		kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
+		kWQParamQuantWeightE,
+		kWQParamQuantWeightF,	kWQParamQuantWeightFSharp,
+		kWQParamQuantWeightG,	kWQParamQuantWeightGSharp,
+		kWQParamQuantWeightA,	kWQParamQuantWeightASharp,
+		kWQParamQuantWeightB,
+	};
 
-const uint8_t WeightedQuantizerAlg::NoteWeightsPageDef[] = {
-	kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
-	kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
-	kWQParamQuantWeightE,
-	kWQParamQuantWeightF,	kWQParamQuantWeightFSharp,
-	kWQParamQuantWeightG,	kWQParamQuantWeightGSharp,
-	kWQParamQuantWeightA,	kWQParamQuantWeightASharp,
-	kWQParamQuantWeightB,
-};
+	const char* const PageNamesDef[] = {
+		"Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8",
+	};
 
-
-const char* const WeightedQuantizerAlg::PageNamesDef[] = {
-	"Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8",
-};
-
-
-const _NT_specification WeightedQuantizerAlg::SpecificationsDef[] = {
-	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
-};
+	const _NT_specification SpecificationsDef[] = {
+		{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
+	};
+}
 
 
 WeightedQuantizerAlg::WeightedQuantizerAlg() {

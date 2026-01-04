@@ -18,18 +18,6 @@ private:
 
 	friend DirSeqAlg;
 
-	static constexpr int CellSize = 12;
-	static constexpr int CellBorderColor = 5;
-	static constexpr int CellBrightColor = 15;
-	static constexpr int CellDimColor = 2;
-	static constexpr int EditableCellBorderColor = 15;
-	static constexpr int NonEditableCellBorderColor = 7;
-	static constexpr int SelectedParameterColor = 15;
-	static constexpr int UnselectedParameterColor = 5;
-	static constexpr int TextLineHeight = 10;
-
-	const CellDefinition* CellDefs = nullptr;
-	
 	PlayheadList* Playheads = nullptr;
 	StepDataRegion* StepData = nullptr;
 	HelpTextHelper* HelpText = nullptr;
@@ -73,7 +61,7 @@ public:
 	CellCoords SelectedCell;
 
 	GridView();
-	void InjectDependencies(const CellDefinition* cellDefs, TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads);
+	void InjectDependencies(TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

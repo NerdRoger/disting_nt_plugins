@@ -34,10 +34,6 @@ private:
 		float PreQuantStepVal;
 	};
 
-	static constexpr uint16_t InactiveTime = 10000;
-	static constexpr float GateHigh = 5.0;
-	static constexpr float GateLow = 0.0;
-
 	_NT_algorithm* Algorithm = nullptr;
 	StepDataRegion* StepData = nullptr;
 	TimeKeeper* Timer = nullptr;

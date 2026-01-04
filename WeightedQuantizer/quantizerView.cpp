@@ -4,20 +4,38 @@
 #include "common.h"
 
 
-const QuantizerView::Control QuantizerView::KeyControls[] = {
-	{ kWQParamQuantWeightC,      "Adjust the attraction weighting of note C"  },
-	{ kWQParamQuantWeightCSharp, "Adjust the attraction weighting of note C#" },
-	{ kWQParamQuantWeightD,      "Adjust the attraction weighting of note D"  },
-	{ kWQParamQuantWeightDSharp, "Adjust the attraction weighting of note D#" },
-	{ kWQParamQuantWeightE,      "Adjust the attraction weighting of note E"  },
-	{ kWQParamQuantWeightF,      "Adjust the attraction weighting of note F"  },
-	{ kWQParamQuantWeightFSharp, "Adjust the attraction weighting of note F#" },
-	{ kWQParamQuantWeightG,      "Adjust the attraction weighting of note G"  },
-	{ kWQParamQuantWeightGSharp, "Adjust the attraction weighting of note G#" },
-	{ kWQParamQuantWeightA,      "Adjust the attraction weighting of note A"  },
-	{ kWQParamQuantWeightASharp, "Adjust the attraction weighting of note A#" },
-	{ kWQParamQuantWeightB,      "Adjust the attraction weighting of note B"  },
-};
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	static constexpr int KeyWidth = 13;
+	static constexpr int KeyHeight = 15;
+	static constexpr int KeySpacing = 3;
+
+	static constexpr int KeyBackgroundColor = 1;
+	static constexpr int KeyForegroundColor = 8;
+	static constexpr int SelectedKeyBorderColor = 15;
+	static constexpr float MaxSliderValue = 10.0f;
+	
+	struct Control {
+		uint8_t     ParameterIndex;
+		const char* HelpText;
+	};
+
+	const Control KeyControls[] = {
+		{ kWQParamQuantWeightC,      "Adjust the attraction weighting of note C"  },
+		{ kWQParamQuantWeightCSharp, "Adjust the attraction weighting of note C#" },
+		{ kWQParamQuantWeightD,      "Adjust the attraction weighting of note D"  },
+		{ kWQParamQuantWeightDSharp, "Adjust the attraction weighting of note D#" },
+		{ kWQParamQuantWeightE,      "Adjust the attraction weighting of note E"  },
+		{ kWQParamQuantWeightF,      "Adjust the attraction weighting of note F"  },
+		{ kWQParamQuantWeightFSharp, "Adjust the attraction weighting of note F#" },
+		{ kWQParamQuantWeightG,      "Adjust the attraction weighting of note G"  },
+		{ kWQParamQuantWeightGSharp, "Adjust the attraction weighting of note G#" },
+		{ kWQParamQuantWeightA,      "Adjust the attraction weighting of note A"  },
+		{ kWQParamQuantWeightASharp, "Adjust the attraction weighting of note A#" },
+		{ kWQParamQuantWeightB,      "Adjust the attraction weighting of note B"  },
+	};
+}
+
 
 
 QuantizerView::QuantizerView() {

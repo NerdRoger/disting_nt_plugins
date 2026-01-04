@@ -7,15 +7,30 @@
 #include "dirSeqAlg.h"
 
 
+// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
+namespace {
+	static constexpr int CellSize = 12;
+	static constexpr int CellBorderColor = 5;
+	static constexpr int CellBrightColor = 15;
+	static constexpr int CellDimColor = 2;
+	static constexpr int EditableCellBorderColor = 15;
+	static constexpr int NonEditableCellBorderColor = 7;
+	static constexpr int SelectedParameterColor = 15;
+	static constexpr int UnselectedParameterColor = 5;
+	static constexpr int TextLineHeight = 10;
+
+	auto CellDefs = CellDefinition::All;
+}
+
+
 GridView::GridView() {
 	SelectedCell = { .x = 0, .y = 0};
 	SelectedParameterIndex = CellDataType::Direction;
 }
 
 
-void GridView::InjectDependencies(const CellDefinition* cellDefs, TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads) {
+void GridView::InjectDependencies(TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads) {
 	ViewBase::InjectDependencies(timer);
-	CellDefs = cellDefs;
 	StepData = stepData;
 	HelpText = helpText;
 	PotMgr = potMgr;

@@ -42,10 +42,6 @@ enum {
 struct WeightedQuantizerAlg : public _NT_algorithm {
 private:
 	// NT Parameter Data
-	static const uint8_t GeneralPageDef[];
-	static const uint8_t NoteWeightsPageDef[];
-	static const char* const PageNamesDef[];
-	static const _NT_specification SpecificationsDef[];
 	_NT_parameter* ParameterDefs;
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage* PageDefs;

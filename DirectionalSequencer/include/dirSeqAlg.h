@@ -42,7 +42,6 @@ enum {
 	kParamResetAfterNSteps,
 	kParamResetWhenInactive,
 	
-
 	kNumPerPlayheadParameters,
 
 	kNumIOPlayheadParameters = kParamQuantReturn + 1,
@@ -53,20 +52,13 @@ enum {
 struct DirSeqAlg : public _NT_algorithm{
 private:
 	// NT Parameter Data
-	static const char* const EnumStringsMaxGateFrom[];
-	static const char* const EnumStringsResetWhenInactive[];
-	static const char* const HeadOptionsPageNamesDef[];
-	static const char* const HeadRoutingPageNamesDef[];
-	static const _NT_specification SpecificationsDef[];
-
 	_NT_parameter* ParameterDefs;
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage* PageDefs;
 	uint8_t* PageParams;
 	void BuildParameters();
-	static void StepDataChanged(_NT_algorithm* self);
 
-	void InjectDependencies(const CellDefinition* cellDefs, uint32_t sampleRate);
+	void InjectDependencies(uint32_t sampleRate);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
@@ -84,10 +76,9 @@ private:
 	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
 public:
+	static constexpr uint32_t Guid = NT_MULTICHAR( 'A', 'T', 'd', 's' );
 
 	bool Loaded;
-
-	const CellDefinition* CellDefs = nullptr;
 
 	static const _NT_factory Factory;
 
