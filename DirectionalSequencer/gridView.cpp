@@ -539,12 +539,6 @@ void GridView::Pot3ShortPress() {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
 		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		// default state for direction should give us an initial direction (east)
-		if (SelectedParameterIndex == CellDataType::Direction) {
-			if ((*Playheads)[SelectedPlayheadIndex].InitialStep == SelectedCell) {
-				StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, 3, true);
-			}
-		}
 		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
 	}
@@ -559,10 +553,6 @@ void GridView::Pot3LongPress() {
 			for (int y = 0; y < GridSizeY; y++) {
 				StepData->SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
 			}
-		}
-		// default state for direction should give us an initial direction (east)
-		if (SelectedParameterIndex == CellDataType::Direction) {
-			StepData->SetBaseCellValue((*Playheads)[SelectedPlayheadIndex].InitialStep.x, (*Playheads)[SelectedPlayheadIndex].InitialStep.y, SelectedParameterIndex, 3, true);
 		}
 		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
