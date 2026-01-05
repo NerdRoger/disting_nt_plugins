@@ -506,7 +506,9 @@ void GridView::Encoder2ShortPress() {
 
 
 void GridView::Encoder2LongPress() {
-	(*Playheads)[SelectedPlayheadIndex].InitialStep = SelectedCell;
+	if (Editable) {
+		(*Playheads)[SelectedPlayheadIndex].InitialStep = SelectedCell;
+	}
 }
 
 
