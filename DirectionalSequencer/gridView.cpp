@@ -101,7 +101,7 @@ void GridView::DrawCells() const {
 void GridView::DrawInitialCellBorder() const {
 	auto cb = CellCoordsToBounds((*Playheads)[SelectedPlayheadIndex].InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
-	auto marqueeColor = CellBorderColor + 5;
+	auto marqueeColor = CellBorderColor + (Editable ? 10 : 5);
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
 		NT_drawShapeI(kNT_line, x, cb.y1, x, cb.y1, marqueeColor);
 		NT_drawShapeI(kNT_line, x, cb.y2, x, cb.y2, marqueeColor);
