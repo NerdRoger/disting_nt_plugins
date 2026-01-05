@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include <distingnt/api.h>
 #include "common.h"
 #include "gridView.h"
@@ -149,13 +150,8 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 	const auto& cd = CellDefs[paramIndex];
 	NT_drawText(paramNameX, y, cd.DisplayName, color);
 
-	float base = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, idx);
 	float adjusted = StepData->GetAdjustedCellValue(SelectedCell.x, SelectedCell.y, idx);
-	DrawParamLineValue(paramValueX, y, color, idx, cd, base);
-//	if (StepData->CellTypeHasMapping(idx)) {
-	if (base != adjusted) {
-		DrawParamLineValue(paramValueX + 37, y, color, idx, cd, adjusted);
-	}
+	DrawParamLineValue(paramValueX, y, color, idx, cd, adjusted);
 }
 
 
@@ -237,12 +233,12 @@ void GridView::DrawParams() const {
 }
 
 
-void GridView::DrawPlayheadIcon(int x, int y, int color) const {
-	NT_drawShapeI(kNT_rectangle, x,      y - TextLineHeight + 2, x + 6,  y,     color);
-	NT_drawShapeI(kNT_rectangle, x +  7, y - TextLineHeight + 3, x + 7,  y - 1, color);
-	NT_drawShapeI(kNT_rectangle, x +  8, y - TextLineHeight + 4, x + 8,  y - 2, color);
-	NT_drawShapeI(kNT_rectangle, x +  9, y - TextLineHeight + 5, x + 9,  y - 3, color);
-	NT_drawShapeI(kNT_rectangle, x + 10, y - TextLineHeight + 6, x + 10, y - 4, color);
+void GridView::DrawPlayheadIcon(int x, int y, int width, int color) const {
+	NT_drawShapeI(kNT_rectangle, x,             y - TextLineHeight + 2, x + width,     y,     color);
+	NT_drawShapeI(kNT_rectangle, x + width + 1, y - TextLineHeight + 3, x + width + 1, y - 1, color);
+	NT_drawShapeI(kNT_rectangle, x + width + 2, y - TextLineHeight + 4, x + width + 2, y - 2, color);
+	NT_drawShapeI(kNT_rectangle, x + width + 3, y - TextLineHeight + 5, x + width + 3, y - 3, color);
+	NT_drawShapeI(kNT_rectangle, x + width + 4, y - TextLineHeight + 6, x + width + 4, y - 4, color);
 }
 
 
@@ -257,14 +253,16 @@ void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
 
 	auto selected = playheadIndex == SelectedPlayheadIndex;
 	auto color = (selected && Editable) ? SelectedParameterColor : UnselectedParameterColor;
-	if (selected) {
-		DrawPlayheadIcon(x, y, 2);
-	}
 
-	char buf[2];
-	buf[0] = 'A' + playheadIndex;
-	buf[1] = 0;
+	char buf[7];
+	strncpy(buf, "Head X", 7);
+	buf[5] = 'A' + playheadIndex;
+	buf[6] = 0;
 	NT_drawText(x + 1, y, buf, color);
+
+	if (selected) {
+		DrawPlayheadIcon(x + 37, y, 4, color);
+	}
 }
 
 

@@ -25,7 +25,7 @@ private:
 
 	char PlayheadHelpText[20];
 
-	Point GridPosition { 15, 2 };
+	Point GridPosition { 50, 2 };
 	CellDataType SelectedParameterIndex = CellDataType::Direction;
 	float ParamEditRaw = 0;
 	float SelectedParameterIndexRaw = 0;
@@ -49,7 +49,7 @@ private:
 	void DrawParamLine(int paramIndex, int top) const;
 	void DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd, float fval) const;
 	void DrawParams() const;
-	void DrawPlayheadIcon(int x, int y, int color) const;
+	void DrawPlayheadIcon(int x, int y, int width, int color) const;
 	void DrawPlayheadLine(int playheadIndex, int top) const;
 	void DrawPlayheadList() const;
 	void DrawHelpSection() const;
