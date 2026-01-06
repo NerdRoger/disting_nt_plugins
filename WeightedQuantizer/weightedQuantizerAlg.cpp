@@ -296,6 +296,10 @@ void WeightedQuantizerAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream
 		}
 	}
 	stream.closeArray();
+
+	stream.addMemberName("ScanningLocked");
+	stream.addBoolean(alg.Banks.ScanningLocked);
+
 }
 
 
@@ -328,6 +332,12 @@ bool WeightedQuantizerAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse
 					alg.Banks[b].NoteValues[n] = val;
 				}
 			}
+		} else if (parse.matchName("ScanningLocked")) {
+			bool val;
+			if (!parse.boolean(val)) {
+				return false;
+			}
+			alg.Banks.ScanningLocked = val;
 		} else {
 			if (!parse.skipMember()) {
 				return false;
