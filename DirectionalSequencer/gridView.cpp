@@ -287,8 +287,8 @@ void GridView::DrawHelpSection() const {
 		NT_drawText(55, 64, "Move X", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(175, 64, "Move Y", 15, kNT_textLeft, kNT_textTiny);
 		NT_drawText(2, 64, "Select Head", 15, kNT_textLeft, kNT_textTiny);
-		NT_drawText(107, 64, "Select Opt.", 15, kNT_textLeft, kNT_textTiny);
-		NT_drawText(226, 64, "Set Opt.", 15, kNT_textLeft, kNT_textTiny);
+		NT_drawText(105, 64, "Select Attr.", 15, kNT_textLeft, kNT_textTiny);
+		NT_drawText(220, 64, "Set Attr.", 15, kNT_textLeft, kNT_textTiny);
 	}
 	NT_drawShapeI(kNT_line, 0, 50, 255, 50, 15);
 }
