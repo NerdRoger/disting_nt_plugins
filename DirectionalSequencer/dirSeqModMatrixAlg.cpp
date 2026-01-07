@@ -1,4 +1,3 @@
-#include <math.h>
 #include <new>
 #include <string.h>
 #include <distingnt/api.h>
@@ -164,13 +163,12 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			if (target >= 0) {
 				auto ct = static_cast<CellDataType>(target);
 				auto cd = CellDefs[target];
-				int multiplier = pow(10, cd.Scaling);
 				if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
 					auto cellNum = idx - 1;
 					auto algIndex = NT_algorithmIndex(&alg);
 					_NT_slot slot;
 					NT_getSlot(slot, algIndex);
-					auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / multiplier;
+					auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / cd.ScalingFactor;
 					seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
 				// always check to see if the sequencer is loaded before running triggers.
 				// this prevents them from firing when a preset is loading if the value was left High	
@@ -179,8 +177,8 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 				} else if (idx == kParamModTargetInvertAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
 					seq->StepData.InvertAllCellValues(ct);
 				} else if (idx == kParamModTargetRandomizeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / multiplier;
-					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / multiplier;
+					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
+					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
 					seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b));
 				} else if (idx == kParamModTargetRandomlyChangeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
 					auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
@@ -190,8 +188,8 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 					seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
 				} else if (idx == kParamModTargetRandomizeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
 					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / multiplier;
-					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / multiplier;
+					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
+					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
 					seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b));
 				} else if (idx == kParamModTargetRandomlyChangeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
 					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
@@ -295,9 +293,9 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		// reduce modTarget by 1, since "None" == 0, but everything else is offset by 1
 		modTarget--;
 		auto cd = CellDefs[modTarget];
-		int16_t min = cd.Min * pow(10, cd.Scaling);
-		int16_t max = cd.Max * pow(10, cd.Scaling);
-		int16_t def = cd.Default * pow(10, cd.Scaling);
+		int16_t min = cd.Min * cd.ScalingFactor;
+		int16_t max = cd.Max * cd.ScalingFactor;
+		int16_t def = cd.Default * cd.ScalingFactor;
 
 		strncpy(PageNames[pageIndex], cd.DisplayName, MaxPageNameLen);
 
@@ -316,7 +314,6 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		}
 
 		uint8_t unit = enums == NULL ? cd.Unit : kNT_unitEnum;
-		int multiplier = pow(10, cd.Scaling);
 		for (int i = 0; i < 32; i++) {
 			auto x = i % 8;
 			auto y = i / 8;
@@ -331,7 +328,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			
 			// set the parameter value to match the cell's current value
 			auto fval = seq->StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget));
-			int16_t val = fval * multiplier;
+			int16_t val = fval * cd.ScalingFactor;
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), false);
 		}

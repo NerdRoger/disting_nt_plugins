@@ -54,7 +54,6 @@ private:
 	void DrawPlayheadList() const;
 	void DrawHelpSection() const;
 	void DrawDirectionArrow(unsigned int dir, int x, int y, int color) const;
-	float CalculateEpsilon(const CellDefinition& cd) const;
 
 public:
 

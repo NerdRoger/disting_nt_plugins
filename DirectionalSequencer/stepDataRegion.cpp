@@ -80,7 +80,6 @@ bool StepDataRegion::CellTypeHasMapping(CellDataType ct) const {
 
 float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	int16_t multiplier = pow(10, cd.Scaling);
 
 	// our internal cell data should always reflect the base value, because we keep it in sync even if it's updated from a mod matrix parameter
 	int result;
@@ -102,14 +101,13 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 		case CellDataType::AccumTimes:  result = cell.AccumulatorTimes; break;
 		default: result = 0; break;
 	}
-	float fresult = static_cast<float>(result) / multiplier;
+	float fresult = static_cast<float>(result) / cd.ScalingFactor;
 	return fresult;
 }
 
 
 float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	int16_t multiplier = pow(10, cd.Scaling);
 
 	// if we have a mod matrix assigned to this cell type, get the value from there...
 	int paramTargetIndex;
@@ -120,7 +118,7 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 		NT_getSlot(slot, matrixIndex);
 		auto cellIndex = y * GridSizeX + x;
 		auto idx = paramTargetIndex + 1 + cellIndex + NT_parameterOffset();
-		auto val = static_cast<float>(slot.parameterValue(idx)) / multiplier;
+		auto val = static_cast<float>(slot.parameterValue(idx)) / cd.ScalingFactor;
 		return val;
 	}
 
@@ -133,7 +131,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.Min, cd.Max);
-	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Scaling));
+	int16_t ival = val * static_cast<int16_t>(cd.ScalingFactor);
 
 	// always update our internal cell data...
 	switch (ct)
@@ -235,9 +233,8 @@ void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellData
 
 void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	auto scale = pow(10, cd.Scaling);
-	auto rval = Random->Next(min * scale, max * scale);
-	auto val = rval / scale;
+	auto rval = Random->Next(min * cd.ScalingFactor, max * cd.ScalingFactor);
+	auto val = rval / cd.ScalingFactor;
 	SetBaseCellValue(x, y, ct, val, true);
 	DoDataChanged();
 }

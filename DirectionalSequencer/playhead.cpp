@@ -310,7 +310,8 @@ void Playhead::ProcessDrift() {
 		// Instead use a smaller number, which gives us less resolution, but hopefully better uniformity due to modulo distribution
 		static constexpr uint32_t res = 987654;
 		auto driftScale = static_cast<float>(Random->Next(0, res)) / res;
-		driftScale = pow(driftScale, 0.5f);
+//		driftScale = pow(driftScale, 0.5f);
+		driftScale = sqrtf(driftScale);
 		// calculate the drift range from the max
 		auto driftRange = StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
 		// scale the drift range to get the actual drift, and make it negative half of the time

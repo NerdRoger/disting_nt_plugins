@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <math.h>
 #include <string.h>
 #include <distingnt/api.h>
 #include "common.h"
@@ -476,15 +475,10 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 	}
 }
 
-// calculate an epsilon for a given cell parameter that we can add to our value to put it exactly in between pot "ticks"
-float GridView::CalculateEpsilon(const CellDefinition& cd) const {
-	return 0.5 * static_cast<int16_t>(pow(10, -cd.Scaling));
-}
-
 
 void GridView::LoadParamForEditing() {
 	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-	ParamEditRaw = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + CalculateEpsilon(cd);
+	ParamEditRaw = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon;
 }
 
 
@@ -541,7 +535,7 @@ void GridView::Pot2Turn(float val) {
 void GridView::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		PotMgr->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
+		PotMgr->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + cd.Epsilon);
 		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
@@ -552,7 +546,7 @@ void GridView::Pot3ShortPress() {
 	// only change values if we are editable
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
+		ParamEditRaw = cd.Default + cd.Epsilon;
 		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
@@ -563,7 +557,7 @@ void GridView::Pot3ShortPress() {
 void GridView::Pot3LongPress() {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
+		ParamEditRaw = cd.Default + cd.Epsilon;
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
 				StepData->SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
