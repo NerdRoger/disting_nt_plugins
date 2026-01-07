@@ -42,7 +42,7 @@ So using this knowledge of the controls, in the image below, I have navigated do
 ## Cell Attributes
 Each cell carries the following attributes:
 
-| <div style="width: 150px;">Attribute</div> | Description |
+| <div style="width: 200px;">Attribute</div> | Description |
 |--------|--------|
 | `Direction` | The direction to move for the next step. If empty, play continues in the current direction. If a playhead’s initial cell has no value, it moves right (east). Directions that would move outside the grid wrap to the opposite side (Pac‑Man warp). |
 | `Value` | The step value (typically pitch), modular; range 0–10V. |
@@ -65,7 +65,7 @@ Additionally, each playhead has its own routing and option parameters:
 
 ### Playhead Routing
 
-| <div style="width: 150px;">Parameter</div> | Description |
+| <div style="width: 200px;">Parameter</div> | Description |
 |--------|--------|
 | `Clock` | Required. The disting NT input/bus to advance the playhead. |
 | `Clock Divisor` | Only advance the playhead after this many clock triggers. Handy to have multiple playheads running at different rates, all from the same clock. |
@@ -82,7 +82,7 @@ So why would you want to use a send/return for quantizing your values, rather th
 
 ### Playhead Options
 
-| <div style="width: 150px;">Parameter</div> | Description |
+| <div style="width: 200px;">Parameter</div> | Description |
 |--------|--------|
 | `Gate Length From` | This is how the playhead derives its gate length.  You can set it to `Clock`, which means the maximum gate length is taken from the period of your clock (so as your clock gets faster, your gate lengths become shorter, and vice-versa).  For when you want to be sure gates don't "bleed over" into the next step.  The other option is `Max Gate Len` which means your maximum gate length is taken from that parameter, below.  When using this option, your gate length is going to be the same, regardless of your clock speed.  So if you speed the clock up where the period is shorter than your `Max Gate Len`, your gates will bleed over into one another, if their lengths are not further attenuated by the `Gate Length` cell attribute. |
 | `Max Gate Len` | Only relevant when `Gate Length From` is set to `Max Gate Len`. This is the absolute length of your playhead's gate, in milliseconds. |
@@ -129,7 +129,7 @@ The expander has some other modulation tricks as well.  We will go over all of t
 | <div style="width: 230px;">Parameter</div> | Description |
 |--------|--------|
 | `Target` | This is the attribute you with to target with this mod matrix, as described above. |
-| `Cell (1,1)` through `Cell (8,4)` | The 32 grid cells. Use these to modulate the `Value`, `Velocity`, `Direction`, etc. for a specific cell. |
+| `Cell (1,1)` to `Cell (8,4)` | The 32 grid cells. Use these to modulate the `Value`, `Velocity`, `Direction`, etc. for a specific cell. |
 | `Randomize Range A / B` | Minimum and maximum `Target` attribute values applied when using randomize operations. |
 | `Change By Max` | Maximum percentage of the attribute range to change `Target` values by when using "randomly change" operations. |
 | `Action Cell` | Selects which cell a single-cell modulation trigger should affect. |
