@@ -408,7 +408,7 @@ void Playhead::CalculateGateLength() {
 		// this cheat helps ensure that the gate will play legato if the gatelen is 100%
 		// floating point math and/or slight clock fluctuations could make it not work out that way otherwise
 		if (GateLen > 0) {
-			GateLen++;
+			GateLen+=2;
 		}
 	}
 }
@@ -482,6 +482,11 @@ void Playhead::AttenuateGateLength() {
 			Ratchets.GateLen = 0;
 		}
 		return;
+	}
+
+	// this cheat allows us to attenuate 100% gate lengths down and ensure they are not played legato due to floating point math issues
+	if (atten > 98 && atten < 100) {
+		atten = 98;
 	}
 
 	// attenuate the gate length, but not below 2
