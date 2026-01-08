@@ -149,64 +149,82 @@ _NT_algorithm* DirSeqModMatrixAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs
 
 void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
  	auto& alg = *static_cast<DirSeqModMatrixAlg*>(self);
-	DirSeqAlg* seq = alg.GetSequencerAlgorithm();
-
 	auto idx = p % kParamModTargetStride;
+
 	if (idx == kParamModTarget) {
 		alg.SetupParametersForTarget(p);
-	} else {
-		// "quantize" the param number to the stride, which gives us the targeting index
-		auto modTargetParamIndex = (p / kParamModTargetStride) * kParamModTargetStride;
-		if (seq != nullptr) {
-			// subtract 1 from the target to strip out the "None" (0)
-			auto target = alg.v[modTargetParamIndex] - 1;
-			if (target >= 0) {
-				auto ct = static_cast<CellDataType>(target);
-				auto cd = CellDefs[target];
-				if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
-					auto cellNum = idx - 1;
-					auto algIndex = NT_algorithmIndex(&alg);
-					_NT_slot slot;
-					NT_getSlot(slot, algIndex);
-					auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / cd.ScalingFactor;
-					seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
-				// always check to see if the sequencer is loaded before running triggers.
-				// this prevents them from firing when a preset is loading if the value was left High	
-				} else if (idx == kParamModTargetScrambleAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
-					seq->StepData.ScrambleAllCellValues(ct);
-				} else if (idx == kParamModTargetInvertAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
-					seq->StepData.InvertAllCellValues(ct);
-				} else if (idx == kParamModTargetRandomizeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
-					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
-					seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b));
-				} else if (idx == kParamModTargetRandomlyChangeAllValuesTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
-					seq->StepData.RandomlyChangeAllCellValues(ct, changeBy);
-				} else if (idx == kParamModTargetInvertCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
-				} else if (idx == kParamModTargetRandomizeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
-					auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
-					seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b));
-				} else if (idx == kParamModTargetRandomlyChangeCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
-					seq->StepData.RandomlyChangeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, changeBy);
-				} else if (idx == kParamModTargetSwapWithSurroundingCellValueTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					seq->StepData.SwapWithSurroundingCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
-				} else if (idx == kParamModTargetRotateValuesInRowAboutCellTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					seq->StepData.RotateCellValuesInRow(cellIndex / GridSizeX, ct, 1);
-				} else if (idx == kParamModTargetRotateValuesInColumnAboutCellTrigger && alg.v[p] == 1 && seq->Loaded) {
-					auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
-					seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1);
-				}
-			}
-		}
+		return;
+	}
+
+	// "quantize" the param number to the stride, which gives us the targeting index
+	auto modTargetParamIndex = (p / kParamModTargetStride) * kParamModTargetStride;
+	DirSeqAlg* seq = alg.GetSequencerAlgorithm();
+	
+	// if no sequencer algorithm found, nothing left to do
+	if (seq == nullptr)
+		return;
+
+	// subtract 1 from the target to strip out the "None" (0)
+	auto target = alg.v[modTargetParamIndex] - 1;
+
+	// if we are targetting "None", we can bail out
+	if (target < 0)
+		return;
+
+	auto ct = static_cast<CellDataType>(target);
+	auto cd = CellDefs[target];
+
+	if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
+		auto cellNum = idx - 1;
+		auto algIndex = NT_algorithmIndex(&alg);
+		_NT_slot slot;
+		NT_getSlot(slot, algIndex);
+		auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / cd.ScalingFactor;
+		seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
+		return;
+	}
+
+	// always check to see if the sequencer is loaded and the parameter value is high before running triggers.
+	// this prevents them from firing when a preset is loading if the value was left High	
+	if (alg.v[p] != 1 || !seq->Loaded)
+		return;
+
+	auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
+	auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
+	auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
+	auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+
+	switch (idx) {
+		case kParamModTargetScrambleAllValuesTrigger:
+			seq->StepData.ScrambleAllCellValues(ct);
+			break;
+		case kParamModTargetInvertAllValuesTrigger:
+			seq->StepData.InvertAllCellValues(ct);
+			break;
+		case kParamModTargetRandomizeAllValuesTrigger:
+			seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b));
+			break;
+		case kParamModTargetRandomlyChangeAllValuesTrigger:
+			seq->StepData.RandomlyChangeAllCellValues(ct, changeBy);
+			break;
+		case kParamModTargetInvertCellValueTrigger:
+			seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+			break;
+		case kParamModTargetRandomizeCellValueTrigger:
+			seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b));
+			break;
+		case kParamModTargetRandomlyChangeCellValueTrigger:
+			seq->StepData.RandomlyChangeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, changeBy);
+			break;
+		case kParamModTargetSwapWithSurroundingCellValueTrigger:
+			seq->StepData.SwapWithSurroundingCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+			break;
+		case kParamModTargetRotateValuesInRowAboutCellTrigger:
+			seq->StepData.RotateCellValuesInRow(cellIndex / GridSizeX, ct, 1);
+			break;
+		case kParamModTargetRotateValuesInColumnAboutCellTrigger:
+			seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1);
+			break;
 	}
 }
 

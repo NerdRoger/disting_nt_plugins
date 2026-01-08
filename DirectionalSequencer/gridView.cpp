@@ -416,62 +416,30 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 
 
 void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) const {
-	switch (dir)
-	{
-		case 1: // North
-			NT_drawShapeI(kNT_line, x + 6, y + 2, x + 6, y + 10, color);
-			NT_drawShapeI(kNT_line, x + 5, y + 3, x + 7, y +  3, color);
-			NT_drawShapeI(kNT_line, x + 4, y + 4, x + 8, y +  4, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 5, x + 9, y +  5, color);
-			break;
-		case 2: // NorthEast
-			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 9, y + 3, color);
-			NT_drawShapeI(kNT_line, x + 5, y + 3, x + 9, y + 3, color);
-			NT_drawShapeI(kNT_line, x + 6, y + 4, x + 9, y + 4, color);
-			NT_drawShapeI(kNT_line, x + 9, y + 3, x + 9, y + 7, color);
-			NT_drawShapeI(kNT_line, x + 8, y + 3, x + 8, y + 6, color);
-			break;
-		case 3: // East
-			NT_drawShapeI(kNT_line, x + 2, y + 6, x + 10, y + 6, color);
-			NT_drawShapeI(kNT_line, x + 9, y + 5, x +  9, y + 7, color);
-			NT_drawShapeI(kNT_line, x + 8, y + 4, x +  8, y + 8, color);
-			NT_drawShapeI(kNT_line, x + 7, y + 3, x +  7, y + 9, color);
-			break;
-		case 4: // SouthEast
-			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 9, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 9, y + 5, x + 9, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 8, y + 6, x + 8, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 5, y + 9, x + 9, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 6, y + 8, x + 9, y + 8, color);
-			break;
-		case 5: // South
-			NT_drawShapeI(kNT_line, x + 6, y + 2, x + 6, y + 10, color);
-			NT_drawShapeI(kNT_line, x + 5, y + 9, x + 7, y +  9, color);
-			NT_drawShapeI(kNT_line, x + 4, y + 8, x + 8, y +  8, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 7, x + 9, y +  7, color);
-			break;
-		case 6: // SouthWest
-			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 9, y + 3, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 5, x + 3, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 4, y + 6, x + 4, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 8, x + 6, y + 8, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 7, y + 9, color);
-			break;
-		case 7: // West
-			NT_drawShapeI(kNT_line, x + 2, y + 6, x + 10, y + 6, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 5, x +  3, y + 7, color);
-			NT_drawShapeI(kNT_line, x + 4, y + 4, x +  4, y + 8, color);
-			NT_drawShapeI(kNT_line, x + 5, y + 3, x +  5, y + 9, color);
-			break;
-		case 8: // NorthWest
-			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 9, y + 9, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 7, y + 3, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 4, x + 6, y + 4, color);
-			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 3, y + 7, color);
-			NT_drawShapeI(kNT_line, x + 4, y + 3, x + 4, y + 6, color);
-			break;
-		default:
-			break;
+	if (dir < 1 || dir > 8)
+		return;
+
+	// relative coordinates for lines making up each arrow direction
+	static const int8_t lineData[] = {
+		/* N  */ 6,2,6,10, 5,3,7,3, 4,4,8,4, 3,5,9,5,
+		/* NE */ 3,9,9,3,  5,3,9,3, 6,4,9,4, 9,3,9,7, 8,3,8,6,
+		/* E  */ 2,6,10,6, 9,5,9,7, 8,4,8,8, 7,3,7,9,
+		/* SE */ 3,3,9,9,  9,5,9,9, 8,6,8,9, 5,9,9,9, 6,8,9,8,
+		/* S  */ 6,2,6,10, 5,9,7,9, 4,8,8,8, 3,7,9,7,
+		/* SW */ 3,9,9,3,  3,5,3,9, 4,6,4,9, 3,8,6,8, 3,9,7,9,
+		/* W  */ 2,6,10,6, 3,5,3,7, 4,4,4,8, 5,3,5,9,
+		/* NW */ 3,3,9,9,  3,3,7,3, 3,4,6,4, 3,3,3,7, 4,3,4,6
+	};
+
+	// the offset into the lineData array for the start of each direction's data
+	static const uint8_t offsets[] = { 0, 16, 36, 52, 72, 88, 108, 124 };
+	// the number of lines to draw for each direction
+	static const uint8_t counts[]  = { 4, 5, 4, 5, 4, 5, 4, 5 };
+
+	const int8_t* p = &lineData[offsets[dir - 1]];
+	for (int i = 0; i < counts[dir - 1]; i++) {
+		NT_drawShapeI(kNT_line, x + p[0], y + p[1], x + p[2], y + p[3], color);
+		p += 4;
 	}
 }
 

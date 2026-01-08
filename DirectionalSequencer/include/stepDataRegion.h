@@ -29,6 +29,7 @@ private:
 		unsigned int RepeatCount      : 3;   // 0-7
 		unsigned int AccumulatorTimes : 3;   // 0-7
 		unsigned int MaxDriftAmount   : 14;  // 0.000 - 10.000 (fixed point)
+		unsigned int Unused           : 6;   // padding for unused space
 		// 6 bits left, could we think of another data point to pack into this space?
 		// or maybe just make some of the others bigger???
 
