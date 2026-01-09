@@ -233,8 +233,12 @@ void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellData
 
 void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	auto rval = Random->Next(min * cd.ScalingFactor, max * cd.ScalingFactor);
-	auto val = rval / cd.ScalingFactor;
+	int scaledMin = min * cd.ScalingFactor;
+	int scaledMax = max * cd.ScalingFactor;
+	auto lo = 0;
+	auto hi = scaledMax - scaledMin;
+	auto scaledRnd = static_cast<int>(Random->Next(lo, hi)) + scaledMin;
+	auto val = static_cast<float>(scaledRnd) / cd.ScalingFactor;
 	SetBaseCellValue(x, y, ct, val, true);
 	DoDataChanged();
 }
