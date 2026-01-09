@@ -315,7 +315,9 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		int16_t max = cd.Max * cd.ScalingFactor;
 		int16_t def = cd.Default * cd.ScalingFactor;
 
-		strncpy(PageNames[pageIndex], cd.DisplayName, MaxPageNameLen);
+		memset(PageNames[pageIndex], ' ', MaxPageNameLen);
+		memcpy(PageNames[pageIndex], cd.DisplayName, strlen(cd.DisplayName));
+		PageNames[pageIndex][MaxPageNameLen - 2] = 0;
 
 		const char* const *enums;
 		switch(static_cast<CellDataType>(modTarget)) {
