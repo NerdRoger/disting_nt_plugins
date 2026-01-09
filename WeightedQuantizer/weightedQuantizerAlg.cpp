@@ -44,11 +44,11 @@ WeightedQuantizerAlg::~WeightedQuantizerAlg() {
 }
 
 
-void WeightedQuantizerAlg::InjectDependencies(uint16_t numChannels, uint32_t sampleRate) {
+void WeightedQuantizerAlg::InjectDependencies(uint16_t numChannels, const _NT_globals* globals) {
 	NumChannels = numChannels;
-	Timer.InjectDependencies(sampleRate);
+	Timer.InjectDependencies(globals);
 	Banks.InjectDependencies(this);
-	QuantView.InjectDependencies(this, &Timer, numChannels, &HelpText, &PotMgr, &Banks, QuantResults);
+	QuantView.InjectDependencies(this);
 }
 
 
@@ -142,7 +142,7 @@ _NT_algorithm* WeightedQuantizerAlg::Construct(const _NT_algorithmMemoryPtrs& pt
 	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
 	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 2);
 	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels * kWQNumPerChannelParameters);
-	alg.InjectDependencies(numChannels, NT_globals.sampleRate);
+	alg.InjectDependencies(numChannels, &NT_globals);
 
 	alg.BuildParameters();
 	alg.QuantView.Activate();

@@ -2,11 +2,6 @@
 #include <distingnt/api.h>
 #include <stddef.h>
 #include "viewBase.h"
-#include "helpTextHelper.h"
-#include "potManager.h"
-#include "noteBanks.h"
-#include "timeKeeper.h"
-#include "quantizer.h"
 
 
 struct WeightedQuantizerAlg;
@@ -15,12 +10,7 @@ struct WeightedQuantizerAlg;
 // TODO:  derive from ViewBase also
 struct QuantizerView : ViewBase {
 private:
-	_NT_algorithm* Algorithm = nullptr;
-	Quantizer::QuantResult* QuantResults;
-	uint16_t NumChannels;
-	HelpTextHelper* HelpText = nullptr;
-	PotManager* PotMgr = nullptr;
-	NoteBanks* Banks = nullptr;
+	WeightedQuantizerAlg* Algorithm = nullptr;
 
 	bool BankPeeking = false;
 
@@ -43,7 +33,7 @@ private:
 
 public:
 	QuantizerView();
-	void InjectDependencies(_NT_algorithm* alg, TimeKeeper* timer, uint16_t numChannels, HelpTextHelper* helpText, PotManager* potMgr, NoteBanks* banks, Quantizer::QuantResult*& quantResults);
+	void InjectDependencies(WeightedQuantizerAlg* alg);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

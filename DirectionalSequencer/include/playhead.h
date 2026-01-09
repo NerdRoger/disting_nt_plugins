@@ -4,8 +4,9 @@
 #include "common.h"
 #include "gridInfo.h"
 #include "cellDefinition.h"
-#include "timeKeeper.h"
-#include "stepDataRegion.h"
+
+
+struct DirSeqAlg;
 
 
 // this class represents a single playhead moving thru the sequencer field
@@ -34,10 +35,7 @@ private:
 		float PreQuantStepVal;
 	};
 
-	_NT_algorithm* Algorithm = nullptr;
-	StepDataRegion* StepData = nullptr;
-	TimeKeeper* Timer = nullptr;
-	RandomGenerator* Random = nullptr;
+	DirSeqAlg* Algorithm = nullptr;
 	int ParamOffset;
 
 	uint32_t LastClock;
@@ -109,7 +107,7 @@ public:
 	Trigger ClockTrigger;
 
 	Playhead();
-	void InjectDependencies(_NT_algorithm* alg, size_t idx, TimeKeeper* timer, RandomGenerator* rnd, StepDataRegion* stepData);
+	void InjectDependencies(DirSeqAlg* alg, size_t idx);
 
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();

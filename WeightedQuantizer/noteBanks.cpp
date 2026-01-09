@@ -102,7 +102,7 @@ NoteBanks::NoteBanks() {
 }
 
 
-void NoteBanks::InjectDependencies(_NT_algorithm* alg) {
+void NoteBanks::InjectDependencies(WeightedQuantizerAlg* alg) {
 	Algorithm = alg;
 }
 

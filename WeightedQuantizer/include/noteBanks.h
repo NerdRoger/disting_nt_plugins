@@ -4,6 +4,9 @@
 #include <distingnt/api.h>
 
 
+struct WeightedQuantizerAlg;
+
+
 struct NoteBanks {
 public:
 	struct Bank {
@@ -11,7 +14,7 @@ public:
 	};
 
 private:
-	_NT_algorithm* Algorithm = nullptr;
+	WeightedQuantizerAlg* Algorithm = nullptr;
 
 	Bank Banks[10];
 
@@ -20,7 +23,7 @@ public:
 	bool ScanningLocked;
 
 	NoteBanks();
-	void InjectDependencies(_NT_algorithm* alg);
+	void InjectDependencies(WeightedQuantizerAlg* alg);
 
 	Bank& operator[](size_t index);
 	const Bank& operator[](size_t index) const;

@@ -5,6 +5,7 @@
 #include "quantizerView.h"
 #include "quantizer.h"
 #include "noteBanks.h"
+#include "potManager.h"
 
 
 enum {
@@ -48,7 +49,7 @@ private:
 	uint8_t* PageParams;
 	void BuildParameters();
 
-	void InjectDependencies(uint16_t numChannels, uint32_t sampleRate);
+	void InjectDependencies(uint16_t numChannels, const _NT_globals* globals);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
