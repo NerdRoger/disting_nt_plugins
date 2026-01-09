@@ -26,13 +26,6 @@ namespace {
 	};
 
 	auto CellDefs = CellDefinition::All;
-
-	void StepDataChanged(_NT_algorithm* self) {
-		if (self) {
-			auto& alg = *static_cast<DirSeqAlg*>(self);
-			alg.Grid.LoadParamForEditing();
-		}
-	}
 }
 
 
@@ -46,10 +39,15 @@ DirSeqAlg::~DirSeqAlg() {
 }
 
 
-void DirSeqAlg::InjectDependencies(uint32_t sampleRate) {
-	Timer.InjectDependencies(sampleRate);
-	StepData.InjectDependencies(this, &Random, StepDataChanged);
-	Grid.InjectDependencies(&Timer, &StepData, &HelpText, &PotMgr, &Playheads);
+void DirSeqAlg::StepDataChangedHandler() {
+	Grid.LoadParamForEditing();
+}
+
+
+void DirSeqAlg::InjectDependencies(const _NT_globals* globals) {
+	Timer.InjectDependencies(globals);
+	StepData.InjectDependencies(this);
+	Grid.InjectDependencies(this);
 }
 
 
@@ -138,7 +136,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
-	alg.InjectDependencies(NT_globals.sampleRate);
+	alg.InjectDependencies(&NT_globals);
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
 	for (int h = 0; h < alg.Playheads.Count; h++) {

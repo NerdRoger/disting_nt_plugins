@@ -37,8 +37,7 @@ private:
 		friend class StepDataRegion;
 	};
 
-	_NT_algorithm* Algorithm = nullptr;
-	RandomGenerator* Random = nullptr;
+	DirSeqAlg* Algorithm = nullptr;
 	SingleCellData Cells[GridSizeX][GridSizeY];	
 
 	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
@@ -46,11 +45,8 @@ private:
 
 public:
 
-	void (*OnDataChangedCallback)(_NT_algorithm* alg) = nullptr;
-
-
 	StepDataRegion();
-	void InjectDependencies(_NT_algorithm* alg, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm*));
+	void InjectDependencies(DirSeqAlg* alg);
 
 	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;

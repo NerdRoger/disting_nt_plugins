@@ -11,7 +11,7 @@ struct TimeKeeper {
 		uint32_t TotalMs;
 
 		TimeKeeper();
-		void InjectDependencies(uint32_t sampleRate);
+		void InjectDependencies(const _NT_globals* globals);
 		uint32_t CountMilliseconds(int numFrames);
 	};
 	

@@ -29,12 +29,9 @@ GridView::GridView() {
 }
 
 
-void GridView::InjectDependencies(TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads) {
-	ViewBase::InjectDependencies(timer);
-	StepData = stepData;
-	HelpText = helpText;
-	PotMgr = potMgr;
-	Playheads = playheads;
+void GridView::InjectDependencies(DirSeqAlg* alg) {
+	Algorithm = alg;
+	ViewBase::InjectDependencies(&alg->Timer);
 }
 
 
@@ -78,7 +75,7 @@ void GridView::DrawCells() const {
 			// is this cell selected?
 			bool selected = (x == SelectedCell.x) && (y == SelectedCell.y);
 			// is this the current step?
-			bool current = (x == (*Playheads)[SelectedPlayheadIndex].CurrentStep.x) && (y == (*Playheads)[SelectedPlayheadIndex].CurrentStep.y);
+			bool current = (x == Algorithm->Playheads[SelectedPlayheadIndex].CurrentStep.x) && (y == Algorithm->Playheads[SelectedPlayheadIndex].CurrentStep.y);
 
 			CellCoords coords { static_cast<int8_t>(x), static_cast<int8_t>(y) };
 			auto cb = CellCoordsToBounds(coords);
@@ -98,7 +95,7 @@ void GridView::DrawCells() const {
 
 
 void GridView::DrawInitialCellBorder() const {
-	auto cb = CellCoordsToBounds((*Playheads)[SelectedPlayheadIndex].InitialStep);
+	auto cb = CellCoordsToBounds(Algorithm->Playheads[SelectedPlayheadIndex].InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + (Editable ? 10 : 5);
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
@@ -117,7 +114,7 @@ void GridView::DrawSelectedCellBorder() const {
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
 	NT_drawShapeI(kNT_box, cb.x1 - 1, cb.y1 - 1, cb.x2 + 1, cb.y2 + 1, color);
-	auto& initial = (*Playheads)[SelectedPlayheadIndex].InitialStep;
+	auto& initial = Algorithm->Playheads[SelectedPlayheadIndex].InitialStep;
 	if (SelectedCell.x != initial.x || SelectedCell.y != initial.y) {
 		NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, 0);
 	}
@@ -147,9 +144,22 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 
 	auto idx = static_cast<CellDataType>(paramIndex);
 	const auto& cd = CellDefs[paramIndex];
-	NT_drawText(paramNameX, y, cd.DisplayName, color);
+	char buf[15];
+	auto len = strlen(cd.DisplayName);
+	strncpy(buf, cd.DisplayName, len);
 
-	float adjusted = StepData->GetAdjustedCellValue(SelectedCell.x, SelectedCell.y, idx);
+	if (idx == CellDataType::Value && (Algorithm->v[kParamAttenValue] != 1000 || Algorithm->v[kParamOffsetValue] != 0)) {
+		buf[len++] = '*';
+	} else if (idx == CellDataType::Velocity && (Algorithm->v[kParamVelocityAttenuate] != 1000 || Algorithm->v[kParamVelocityOffset] != 0)) {
+		buf[len++] = '*';
+	} else if (idx == CellDataType::GateLength && Algorithm->v[kParamGateLengthAttenuate] != 1000) {
+		buf[len++] = '*';
+	}
+	buf[len] = 0;
+
+	NT_drawText(paramNameX, y, buf, color);
+
+	float adjusted = Algorithm->StepData.GetAdjustedCellValue(SelectedCell.x, SelectedCell.y, idx);
 	DrawParamLineValue(paramValueX, y, color, idx, cd, adjusted);
 }
 
@@ -242,7 +252,7 @@ void GridView::DrawPlayheadIcon(int x, int y, int width, int color) const {
 
 
 void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
-	if (playheadIndex >= Playheads->Count)
+	if (playheadIndex >= Algorithm->Playheads.Count)
 		return;
 
 	auto x = 0;
@@ -267,7 +277,7 @@ void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
 
 void GridView::DrawPlayheadList() const {
 	auto top = max(SelectedPlayheadIndex - 2, 0);
-	top = min(top, Playheads->Count - 5);
+	top = min(top, Algorithm->Playheads.Count - 5);
 	top = max(top, 0);
 	for (int i = top; i < top + 5; i++) {
 		DrawPlayheadLine(i, top);
@@ -277,7 +287,7 @@ void GridView::DrawPlayheadList() const {
 
 void GridView::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
-	if (!HelpText->Draw()) {
+	if (!Algorithm->HelpText.Draw()) {
 		if (Editable) {
 			NT_drawText(142, 58, "Q: Lock, L: Set Start", 15, kNT_textLeft, kNT_textTiny);
 		} else {
@@ -367,7 +377,7 @@ void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 
 void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, int x2, int y2) const {
 	using enum CellDataType;
-	float val = StepData->GetAdjustedCellValue(cx, cy, SelectedParameterIndex);
+	float val = Algorithm->StepData.GetAdjustedCellValue(cx, cy, SelectedParameterIndex);
 	switch (SelectedParameterIndex)	{
 		case Direction:
 			DrawDirectionArrow(val, x1, y1, selected ? CellBrightColor : CellDimColor);
@@ -446,7 +456,7 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 
 void GridView::LoadParamForEditing() {
 	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-	ParamEditRaw = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon;
+	ParamEditRaw = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon;
 }
 
 
@@ -469,33 +479,33 @@ void GridView::Encoder2ShortPress() {
 
 void GridView::Encoder2LongPress() {
 	if (Editable) {
-		(*Playheads)[SelectedPlayheadIndex].InitialStep = SelectedCell;
+		Algorithm->Playheads[SelectedPlayheadIndex].InitialStep = SelectedCell;
 	}
 }
 
 
 void GridView::Pot1Turn(float val) {
 	auto old = SelectedPlayheadIndex;
-	PotMgr->UpdateValueWithPot(0, val, SelectedPlayheadIndexRaw, 0, Playheads->Count);
-	SelectedPlayheadIndexRaw = clamp(SelectedPlayheadIndexRaw, 0.0f, static_cast<float>(Playheads->Count) - 0.001f);
+	Algorithm->PotMgr.UpdateValueWithPot(0, val, SelectedPlayheadIndexRaw, 0, Algorithm->Playheads.Count);
+	SelectedPlayheadIndexRaw = clamp(SelectedPlayheadIndexRaw, 0.0f, static_cast<float>(Algorithm->Playheads.Count) - 0.001f);
 	SelectedPlayheadIndex = SelectedPlayheadIndexRaw;
 	if (SelectedPlayheadIndex != old) {
 		StringConcat(PlayheadHelpText, 20, "Playhead X Selected");
 		PlayheadHelpText[9] = 'A' + SelectedPlayheadIndex;
-		HelpText->DisplayHelpText(70, PlayheadHelpText);
+		Algorithm->HelpText.DisplayHelpText(70, PlayheadHelpText);
 	}
 }
 
 
 void GridView::Pot2Turn(float val) {
 	auto old = SelectedParameterIndex;
-	PotMgr->UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, static_cast<float>(CellDataType::NumCellDataTypes));
+	Algorithm->PotMgr.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, static_cast<float>(CellDataType::NumCellDataTypes));
 	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, static_cast<float>(CellDataType::NumCellDataTypes) - 0.001f);
 	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
 	if (SelectedParameterIndex != old) {
 		LoadParamForEditing();
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
 
@@ -503,9 +513,9 @@ void GridView::Pot2Turn(float val) {
 void GridView::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		PotMgr->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + cd.Epsilon);
-		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		Algorithm->PotMgr.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + cd.Epsilon);
+		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
+		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
 
@@ -515,8 +525,8 @@ void GridView::Pot3ShortPress() {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + cd.Epsilon;
-		StepData->SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
+		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
 	}
 }
@@ -528,10 +538,10 @@ void GridView::Pot3LongPress() {
 		ParamEditRaw = cd.Default + cd.Epsilon;
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				StepData->SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
+				Algorithm->StepData.SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
 			}
 		}
-		HelpText->DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
 	}
 }
@@ -545,7 +555,7 @@ void GridView::FixupPotValues(_NT_float3& pots) {
 
 	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
 	auto range = cd.Max - cd.Min;
-	pots[2] = StepData->GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
+	pots[2] = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
 }
 
 

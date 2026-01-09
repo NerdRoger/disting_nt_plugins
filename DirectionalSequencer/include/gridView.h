@@ -18,10 +18,7 @@ private:
 
 	friend DirSeqAlg;
 
-	PlayheadList* Playheads = nullptr;
-	StepDataRegion* StepData = nullptr;
-	HelpTextHelper* HelpText = nullptr;
-	PotManager* PotMgr = nullptr;
+	DirSeqAlg* Algorithm;
 
 	char PlayheadHelpText[20];
 
@@ -60,7 +57,7 @@ public:
 	CellCoords SelectedCell;
 
 	GridView();
-	void InjectDependencies(TimeKeeper* timer, StepDataRegion* stepData, HelpTextHelper* helpText, PotManager* potMgr, PlayheadList* playheads);
+	void InjectDependencies(DirSeqAlg* alg);
 	void Draw() const override;
 	void Encoder1Turn(int8_t x) override;
 	void Encoder2Turn(int8_t x) override;

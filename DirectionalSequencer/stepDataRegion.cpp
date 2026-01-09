@@ -4,6 +4,7 @@
 #include "common.h"
 #include "stepDataRegion.h"
 #include "cellDefinition.h"
+#include "dirSeqAlg.h"
 
 
 // anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
@@ -17,17 +18,13 @@ StepDataRegion::StepDataRegion() {
 }
 
 
-void StepDataRegion::InjectDependencies(_NT_algorithm* alg, RandomGenerator* random, void (*onDataChanged)(_NT_algorithm* alg)) {
+void StepDataRegion::InjectDependencies(DirSeqAlg* alg) {
 	Algorithm = alg;
-	Random = random;
-	OnDataChangedCallback = onDataChanged;
 }
 
 
 void StepDataRegion::DoDataChanged() {
-	if (OnDataChangedCallback) {
-		OnDataChangedCallback(Algorithm);
-	}
+	Algorithm->StepDataChangedHandler();
 }
 
 
@@ -169,7 +166,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 void StepDataRegion::ScrambleAllCellValues(CellDataType ct) {
 	const int totalCells = GridSizeX * GridSizeY;
 	for (int i = totalCells - 1; i > 0; --i) {
-		int j = Random->Next(0, i);
+		int j = Algorithm->Random.Next(0, i);
 		
 		if (i == j) {
 			continue;
@@ -219,8 +216,8 @@ void StepDataRegion::InvertAllCellValues(CellDataType ct) {
 
 
 void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellDataType ct) {
-	int8_t xOff = Random->Next(0, 2) - 1;
-	int8_t yOff = Random->Next(0, 2) - 1;
+	int8_t xOff = Algorithm->Random.Next(0, 2) - 1;
+	int8_t yOff = Algorithm->Random.Next(0, 2) - 1;
 	uint8_t x2 = wrap(x + xOff, 0, GridSizeX - 1);
 	uint8_t y2 = wrap(y + yOff, 0, GridSizeY - 1);
 	float v = GetBaseCellValue(x, y, ct);
@@ -237,7 +234,7 @@ void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, f
 	int scaledMax = max * cd.ScalingFactor;
 	auto lo = 0;
 	auto hi = scaledMax - scaledMin;
-	auto scaledRnd = static_cast<int>(Random->Next(lo, hi)) + scaledMin;
+	auto scaledRnd = static_cast<int>(Algorithm->Random.Next(lo, hi)) + scaledMin;
 	auto val = static_cast<float>(scaledRnd) / cd.ScalingFactor;
 	SetBaseCellValue(x, y, ct, val, true);
 	DoDataChanged();
@@ -287,7 +284,7 @@ void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8
 
 void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	auto rnd = static_cast<float>(Random->Next(0, deltaPercent * 100.0f) / 100.0f) * (Random->Next(0, 1) == 1 ? -1.0f : 1.0f);
+	auto rnd = static_cast<float>(Algorithm->Random.Next(0, deltaPercent * 100.0f) / 100.0f) * (Algorithm->Random.Next(0, 1) == 1 ? -1.0f : 1.0f);
 	float delta = (cd.Max - cd.Min) * rnd / 100.0f;
 	float oldVal = GetBaseCellValue(x, y, ct);
 	float newVal = oldVal + delta;

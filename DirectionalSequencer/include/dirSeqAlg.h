@@ -58,7 +58,7 @@ private:
 	uint8_t* PageParams;
 	void BuildParameters();
 
-	void InjectDependencies(uint32_t sampleRate);
+	void InjectDependencies(const _NT_globals* globals);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
@@ -95,4 +95,5 @@ public:
 
 	DirSeqAlg();
 	~DirSeqAlg();
+	void StepDataChangedHandler();
 };
