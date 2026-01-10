@@ -59,7 +59,7 @@ void StepDataRegion::SetDefaultCellValues() {
 		auto& cd = CellDefs[i];
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.Default, true);
+				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.ScaledDefault(), true);
 			}
 		}
 	}
@@ -79,27 +79,24 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 
 	// our internal cell data should always reflect the base value, because we keep it in sync even if it's updated from a mod matrix parameter
-	int result;
 	auto& cell = Cells[x][y];
 	switch (ct)
 	{
-		case CellDataType::Direction:   result = cell.Direction;        break;
-		case CellDataType::Value:       result = cell.StepValue;        break;
-		case CellDataType::Velocity:    result = cell.Velocity;         break;
-		case CellDataType::Probability: result = cell.Probability;      break;
-		case CellDataType::Ratchets:    result = cell.RatchetCount;     break;
-		case CellDataType::RestAfter:   result = cell.RestAfter;        break;
-		case CellDataType::GateLength:  result = cell.GateLength;       break;
-		case CellDataType::DriftProb:   result = cell.DriftProbability; break;
-		case CellDataType::MaxDrift:    result = cell.MaxDriftAmount;   break;
-		case CellDataType::Repeats:     result = cell.RepeatCount;      break;
-		case CellDataType::Glide:       result = cell.GlidePercent;     break;
-		case CellDataType::AccumAdd:    result = cell.AccumulatorAdd;   break;
-		case CellDataType::AccumTimes:  result = cell.AccumulatorTimes; break;
-		default: result = 0; break;
+		case CellDataType::Direction:   return cd.CellStorageToCellValue(cell.Direction);
+		case CellDataType::Value:       return cd.CellStorageToCellValue(cell.StepValue);
+		case CellDataType::Velocity:    return cd.CellStorageToCellValue(cell.Velocity);
+		case CellDataType::Probability: return cd.CellStorageToCellValue(cell.Probability);
+		case CellDataType::Ratchets:    return cd.CellStorageToCellValue(cell.RatchetCount);
+		case CellDataType::RestAfter:   return cd.CellStorageToCellValue(cell.RestAfter);
+		case CellDataType::GateLength:  return cd.CellStorageToCellValue(cell.GateLength);
+		case CellDataType::DriftProb:   return cd.CellStorageToCellValue(cell.DriftProbability);
+		case CellDataType::MaxDrift:    return cd.CellStorageToCellValue(cell.MaxDriftAmount);
+		case CellDataType::Repeats:     return cd.CellStorageToCellValue(cell.RepeatCount);
+		case CellDataType::Glide:       return cd.CellStorageToCellValue(cell.GlidePercent);
+		case CellDataType::AccumAdd:    return cd.CellStorageToCellValue(cell.AccumulatorAdd);
+		case CellDataType::AccumTimes:  return cd.CellStorageToCellValue(cell.AccumulatorTimes);
+		default: return cd.CellStorageToCellValue(0);
 	}
-	float fresult = static_cast<float>(result) / cd.ScalingFactor;
-	return fresult;
 }
 
 
@@ -115,8 +112,7 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 		NT_getSlot(slot, matrixIndex);
 		auto cellIndex = y * GridSizeX + x;
 		auto idx = paramTargetIndex + 1 + cellIndex + NT_parameterOffset();
-		auto val = static_cast<float>(slot.parameterValue(idx)) / cd.ScalingFactor;
-		return val;
+		return cd.NTValueToCellValue(slot.parameterValue(idx));
 	}
 
 	// otherwise take it from our internal cell data
@@ -127,8 +123,8 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
-	val = clamp(val, cd.Min, cd.Max);
-	int16_t ival = val * static_cast<int16_t>(cd.ScalingFactor);
+	val = clamp(val, cd.ScaledMin(), cd.ScaledMax());
+	int16_t ival = cd.CellValueToCellStorage(val);
 
 	// always update our internal cell data...
 	switch (ct)
@@ -197,8 +193,8 @@ void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct) {
 			val = wrap(ival + 4, 1, 8);
 		}
 	} else {
-		auto delta = val - cd.Min;
-		val = cd.Max - delta;
+		auto delta = val - cd.ScaledMin();
+		val = cd.ScaledMax() - delta;
 	}
 
 	SetBaseCellValue(x, y, ct, val, true);
@@ -230,12 +226,12 @@ void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellData
 
 void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
-	int scaledMin = min * cd.ScalingFactor;
-	int scaledMax = max * cd.ScalingFactor;
+	int scaledMin = cd.ScaleValue(min);
+	int scaledMax = cd.ScaleValue(max);
 	auto lo = 0;
 	auto hi = scaledMax - scaledMin;
 	auto scaledRnd = static_cast<int>(Algorithm->Random.Next(lo, hi)) + scaledMin;
-	auto val = static_cast<float>(scaledRnd) / cd.ScalingFactor;
+	auto val = cd.UnscaleValue(scaledRnd);
 	SetBaseCellValue(x, y, ct, val, true);
 	DoDataChanged();
 }
@@ -285,7 +281,7 @@ void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8
 void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent) {
 	const auto& cd = CellDefs[static_cast<size_t>(ct)];
 	auto rnd = static_cast<float>(Algorithm->Random.Next(0, deltaPercent * 100.0f) / 100.0f) * (Algorithm->Random.Next(0, 1) == 1 ? -1.0f : 1.0f);
-	float delta = (cd.Max - cd.Min) * rnd / 100.0f;
+	float delta = (cd.ScaledMax() - cd.ScaledMin()) * rnd / 100.0f;
 	float oldVal = GetBaseCellValue(x, y, ct);
 	float newVal = oldVal + delta;
 	SetBaseCellValue(x, y, ct, newVal, true);

@@ -168,7 +168,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 		auto algIndex = NT_algorithmIndex(&alg);
 		_NT_slot slot;
 		NT_getSlot(slot, algIndex);
-		auto val = static_cast<float>(slot.parameterPresetValue(p + NT_parameterOffset())) / cd.ScalingFactor;
+		auto val = cd.NTValueToCellValue(slot.parameterPresetValue(p + NT_parameterOffset()));
 		seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
 		return;
 	}
@@ -178,8 +178,8 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	if (alg.v[p] != 1 || !seq->Loaded)
 		return;
 
-	auto a = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]) / cd.ScalingFactor;
-	auto b = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]) / cd.ScalingFactor;
+	auto a = cd.NTValueToCellValue(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]);
+	auto b = cd.NTValueToCellValue(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]);
 	auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
 	auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
 
@@ -321,9 +321,9 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		// reduce modTarget by 1, since "None" == 0, but everything else is offset by 1
 		modTarget--;
 		auto cd = CellDefs[modTarget];
-		int16_t min = cd.Min * cd.ScalingFactor;
-		int16_t max = cd.Max * cd.ScalingFactor;
-		int16_t def = cd.Default * cd.ScalingFactor;
+		int16_t min = cd.Min;
+		int16_t max = cd.Max;
+		int16_t def = cd.Default;
 
 		memset(PageNames[pageIndex], ' ', MaxPageNameLen);
 		memcpy(PageNames[pageIndex], cd.DisplayName, strlen(cd.DisplayName));
@@ -353,7 +353,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			// this would then cause that clamped value to be written into the sequencer's grid data, therefore if we read it after, it is likely wrong
 			// think about this carefully before altering, I lost a whole evening to this!
 			auto fval = seq->StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget));
-			int16_t val = fval * cd.ScalingFactor;
+			int16_t val = cd.CellValueToNTValue(fval);
 
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;

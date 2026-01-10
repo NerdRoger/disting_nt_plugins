@@ -456,7 +456,7 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 
 void GridView::LoadParamForEditing() {
 	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-	ParamEditRaw = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon;
+	ParamEditRaw = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon();
 }
 
 
@@ -513,7 +513,7 @@ void GridView::Pot2Turn(float val) {
 void GridView::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		Algorithm->PotMgr.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + cd.Epsilon);
+		Algorithm->PotMgr.UpdateValueWithPot(2, val, ParamEditRaw, cd.ScaledMin(), cd.ScaledMax() + cd.Epsilon());
 		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
@@ -524,7 +524,7 @@ void GridView::Pot3ShortPress() {
 	// only change values if we are editable
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.Default + cd.Epsilon;
+		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
 		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		LoadParamForEditing();
@@ -535,7 +535,7 @@ void GridView::Pot3ShortPress() {
 void GridView::Pot3LongPress() {
 	if (Editable) {
 		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.Default + cd.Epsilon;
+		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
 				Algorithm->StepData.SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
@@ -554,7 +554,7 @@ void GridView::FixupPotValues(_NT_float3& pots) {
 	pots[1] = static_cast<float>(SelectedParameterIndex) / static_cast<int>(CellDataType::NumCellDataTypes) + epsilon2;
 
 	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
-	auto range = cd.Max - cd.Min;
+	auto range = cd.ScaledMax() - cd.ScaledMin();
 	pots[2] = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
 }
 
