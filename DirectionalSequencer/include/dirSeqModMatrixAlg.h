@@ -49,9 +49,6 @@ private:
 	static size_t constexpr MaxPageNameLen = 13;
   char PageNames[DirSeqModMatrixAlg::NumMatrices][MaxPageNameLen];
 	
-	const char* CellTargetEnums[static_cast<uint16_t>(CellDataType::NumCellDataTypes) + 1];
-	const char** BuildCellTargetEnums();
-
 	static void BuildModTargetPageDefs();
 
 	_NT_parameter ParameterDefs[NumMatrices * kParamModTargetStride];
@@ -65,6 +62,7 @@ private:
 	static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static bool Draw(_NT_algorithm* self);
+	static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);
 
 	DirSeqAlg* GetSequencerAlgorithm();
 	void SetupParametersForTarget(int modTargetParamIndex);

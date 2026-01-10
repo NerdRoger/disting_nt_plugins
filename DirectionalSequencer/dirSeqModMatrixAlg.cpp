@@ -37,15 +37,6 @@ void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
 }
 
 
-const char** DirSeqModMatrixAlg::BuildCellTargetEnums() {
-	CellTargetEnums[0] = "None";
-	for (size_t i = 0; i < static_cast<uint16_t>(CellDataType::NumCellDataTypes); i++) {
-		CellTargetEnums[i+1] = CellDefs[i].DisplayName;
-	}
-	return CellTargetEnums;
-}
-
-
 const char* const CellCoordStrings[] = {
 	"", // dummy entry for index 0 since param goes from 1-32, not 0-31
 	"Cell (1,1)", "Cell (2,1)", "Cell (3,1)", "Cell (4,1)", "Cell (5,1)", "Cell (6,1)", "Cell (7,1)", "Cell (8,1)", 
@@ -71,8 +62,6 @@ const char* const TriggerValues[] = { "Low", "High" };
 void DirSeqModMatrixAlg::BuildParameters() {
 	int numPages = 0;
 
-	auto cellTargetEnums = DirSeqModMatrixAlg::BuildCellTargetEnums();
-
 	for (int m = 0; m < NumMatrices; m++) {
 		// just fill with spaces for now....  this will actually be set when the target parameter changes down below
 		memset(PageNames[m], ' ', MaxPageNameLen);
@@ -85,7 +74,7 @@ void DirSeqModMatrixAlg::BuildParameters() {
 
 		auto matrixIndex = m * kParamModTargetStride;
 
-		ParameterDefs[matrixIndex] = { .name = TargetNames[m], .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = cellTargetEnums };
+		ParameterDefs[matrixIndex] = { .name = TargetNames[m], .min = 0, .max = static_cast<uint16_t>(CellDataType::NumCellDataTypes), .def = 0, .unit = kNT_unitConfirm, .scaling = kNT_scalingNone, .enumStrings = NULL };
 
 		for (int i = 0; i < 32; i++) {
 			ParameterDefs[matrixIndex + kParamModTargetCell1 + i] = { .name = CellCoordStrings[i+1], .min = 0, .max = 0, .def = 0, .unit = kNT_unitNone, .scaling = kNT_scalingNone, .enumStrings = NULL };
@@ -254,6 +243,27 @@ bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 }
 
 
+int DirSeqModMatrixAlg::ParameterString(_NT_algorithm* self, int p, int v, char* buff)
+{
+	memset(buff, 0, kNT_parameterStringSize);
+	auto idx = p % kParamModTargetStride;
+
+	switch (idx) {
+		case kParamModTarget: {
+			if (v == 0) {
+				strncpy(buff, "None", 5);
+			} else {
+				auto name = CellDefs[v - 1].DisplayName;
+				strncpy(buff, name, strlen(name) + 1);
+			}
+		}	break;
+		
+	}
+	
+	return strlen(buff);
+}
+
+
 DirSeqAlg* DirSeqModMatrixAlg::GetSequencerAlgorithm() {
 	auto algIndex = NT_algorithmIndex(this);
 
@@ -396,4 +406,5 @@ const _NT_factory DirSeqModMatrixAlg::Factory =
 	.parameterChanged = ParameterChanged,
 	.draw = Draw,
 	.tags = kNT_tagUtility,
+	.parameterString = ParameterString,
 };
