@@ -338,6 +338,13 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			auto x = i % 8;
 			auto y = i / 8;
 
+			// IMPORTANT:  Grab the current value BEFORE changing the parameter definition
+			// if we change the param def first, it can trigger a ParameterChanged event if the NT has to clamp the current value to the new range
+			// this would then cause that clamped value to be written into the sequencer's grid data, therefore if we read it after, it is likely wrong
+			// think about this carefully before altering, I lost a whole evening to this!
+			auto fval = seq->StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget));
+			int16_t val = fval * cd.ScalingFactor;
+
 			ParameterDefs[modTargetParamIndex + 1 + i].min = min;
 			ParameterDefs[modTargetParamIndex + 1 + i].max = max;
 			ParameterDefs[modTargetParamIndex + 1 + i].def = def;
@@ -346,9 +353,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = enums;
 			NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
 			
-			// set the parameter value to match the cell's current value
-			auto fval = seq->StepData.GetBaseCellValue(x, y, static_cast<CellDataType>(modTarget));
-			int16_t val = fval * cd.ScalingFactor;
+			// set the parameter value to match the cell's value we captured above
 			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), false);
 		}
