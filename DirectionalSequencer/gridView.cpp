@@ -18,9 +18,148 @@ static constexpr int UnselectedParameterColor = 5;
 static constexpr int TextLineHeight = 10;
 
 
+void GridView::OnActivateHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+	grid.LoadParamForEditing();
+}
+
+
+void GridView::OnDrawHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+	grid.DrawCells();
+	grid.DrawInitialCellBorder();
+	grid.DrawSelectedCellBorder();
+	grid.DrawPlayheadList();
+	grid.DrawParams();
+	grid.DrawHelpSection();
+}
+
+
+void GridView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
+	auto& grid = *static_cast<GridView*>(view);
+	grid.SelectedCell.x = wrap(grid.SelectedCell.x + x, 0, GridSizeX - 1);
+	grid.LoadParamForEditing();
+}
+
+
+void GridView::OnEncoder2TurnHandler(ViewBase* view, int8_t x) {
+	auto& grid = *static_cast<GridView*>(view);
+	grid.SelectedCell.y = wrap(grid.SelectedCell.y + x, 0, GridSizeY - 1);
+	grid.LoadParamForEditing();
+}
+
+
+void GridView::OnEncoder2ShortPressHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+	grid.Editable = !grid.Editable;
+}
+
+
+void GridView::OnEncoder2LongPressHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+	if (grid.Editable) {
+		grid.Algorithm->Playheads[grid.SelectedPlayheadIndex].InitialStep = grid.SelectedCell;
+	}
+}
+
+
+void GridView::OnPot1TurnHandler(ViewBase* view, float val) {
+	auto& grid = *static_cast<GridView*>(view);
+	auto old = grid.SelectedPlayheadIndex;
+	grid.Algorithm->PotMgr.UpdateValueWithPot(0, val, grid.SelectedPlayheadIndexRaw, 0, grid.Algorithm->Playheads.Count);
+	grid.SelectedPlayheadIndexRaw = clamp(grid.SelectedPlayheadIndexRaw, 0.0f, static_cast<float>(grid.Algorithm->Playheads.Count) - 0.001f);
+	grid.SelectedPlayheadIndex = grid.SelectedPlayheadIndexRaw;
+	if (grid.SelectedPlayheadIndex != old) {
+		StringConcat(grid.PlayheadHelpText, 20, "Playhead X Selected");
+		grid.PlayheadHelpText[9] = 'A' + grid.SelectedPlayheadIndex;
+		grid.Algorithm->HelpText.DisplayHelpText(70, grid.PlayheadHelpText);
+	}
+}
+
+
+void GridView::OnPot2TurnHandler(ViewBase* view, float val) {
+	auto& grid = *static_cast<GridView*>(view);
+	auto old = grid.SelectedParameterIndex;
+	grid.Algorithm->PotMgr.UpdateValueWithPot(1, val, grid.SelectedParameterIndexRaw, 0, static_cast<float>(CellDataType::NumCellDataTypes));
+	grid.SelectedParameterIndexRaw = clamp(grid.SelectedParameterIndexRaw, 0.0f, static_cast<float>(CellDataType::NumCellDataTypes) - 0.001f);
+	grid.SelectedParameterIndex = static_cast<CellDataType>(grid.SelectedParameterIndexRaw);
+	if (grid.SelectedParameterIndex != old) {
+		grid.LoadParamForEditing();
+		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
+		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
+	}
+}
+
+
+void GridView::OnPot3TurnHandler(ViewBase* view, float val) {
+	auto& grid = *static_cast<GridView*>(view);
+	if (grid.Editable) {
+		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
+		grid.Algorithm->PotMgr.UpdateValueWithPot(2, val, grid.ParamEditRaw, cd.ScaledMin(), cd.ScaledMax() + cd.Epsilon());
+		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
+	}
+}
+
+
+void GridView::OnPot3ShortPressHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+		// only change values if we are editable
+	if (grid.Editable) {
+		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
+		grid.ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
+		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		grid.LoadParamForEditing();
+	}
+}
+
+
+void GridView::OnPot3LongPressHandler(ViewBase* view) {
+	auto& grid = *static_cast<GridView*>(view);
+	if (grid.Editable) {
+		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
+		grid.ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
+		for (int x = 0; x < GridSizeX; x++) {
+			for (int y = 0; y < GridSizeY; y++) {
+				grid.Algorithm->StepData.SetBaseCellValue(x, y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+			}
+		}
+		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
+		grid.LoadParamForEditing();
+	}
+}
+
+
+void GridView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
+	auto& grid = *static_cast<GridView*>(view);
+	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"
+	// this way we aren't right on the edge, where a slight pot bump could change the value
+	auto epsilon2 = 0.5 / static_cast<int>(CellDataType::NumCellDataTypes);
+	pots[1] = static_cast<float>(grid.SelectedParameterIndex) / static_cast<int>(CellDataType::NumCellDataTypes) + epsilon2;
+
+	auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
+	auto range = cd.ScaledMax() - cd.ScaledMin();
+	pots[2] = grid.Algorithm->StepData.GetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex) / range;
+}
+
+
 GridView::GridView() {
 	SelectedCell = { .x = 0, .y = 0};
 	SelectedParameterIndex = CellDataType::Direction;
+
+	OnActivate = OnActivateHandler;
+	OnDraw = OnDrawHandler;
+	OnEncoder1Turn = OnEncoder1TurnHandler;
+	OnEncoder2Turn = OnEncoder2TurnHandler;
+	OnEncoder2ShortPress = OnEncoder2ShortPressHandler;
+	OnEncoder2LongPress = OnEncoder2LongPressHandler;
+	OnPot1Turn = OnPot1TurnHandler;
+	OnPot2Turn = OnPot2TurnHandler;
+	OnPot3Turn = OnPot3TurnHandler;
+	OnPot3ShortPress = OnPot3ShortPressHandler;
+	OnPot3LongPress = OnPot3LongPressHandler;
+	OnFixupPotValues = OnFixupPotValuesHandler;
 }
 
 
@@ -37,30 +176,6 @@ Bounds GridView::CellCoordsToBounds(const CellCoords& coords) const {
 	result.x2 = coords.x * CellSize + GridPosition.x + CellSize;
 	result.y2 = coords.y * CellSize + GridPosition.y + CellSize;
 	return result;
-}
-
-
-void GridView::Draw() const {
-	DrawCells();
-	DrawInitialCellBorder();
-	DrawSelectedCellBorder();
-	DrawPlayheadList();
-	DrawParams();
-	DrawHelpSection();
-
-
-	// TODO:  remove this test code ad the end of development
-	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
-	// NT_floatToString(&NumToStrBuf[0], ParamEditRaw, 3);
-	// NT_drawText(0, 10, NumToStrBuf, 15);
-	// NT_floatToString(&NumToStrBuf[0], tempval, 3);
-	// NT_drawText(0, 20, NumToStrBuf, 15);
-
-
-	// NT_floatToString(&NumToStrBuf[0], p3, 3);
-	// NT_drawText(0, 20, NumToStrBuf, 15);
-	// NT_floatToString(&NumToStrBuf[0], SelectedParameterIndexRaw, 3);
-	// NT_drawText(0, 30, NumToStrBuf, 15);
 }
 
 
@@ -452,108 +567,4 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 void GridView::LoadParamForEditing() {
 	auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 	ParamEditRaw = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon();
-}
-
-
-void GridView::Encoder1Turn(int8_t x) {
-	SelectedCell.x = wrap(SelectedCell.x + x, 0, GridSizeX - 1);
-	LoadParamForEditing();
-}
-
-
-void GridView::Encoder2Turn(int8_t x) {
-	SelectedCell.y = wrap(SelectedCell.y + x, 0, GridSizeY - 1);
-	LoadParamForEditing();
-}
-
-
-void GridView::Encoder2ShortPress() {
-	Editable = !Editable;
-}
-
-
-void GridView::Encoder2LongPress() {
-	if (Editable) {
-		Algorithm->Playheads[SelectedPlayheadIndex].InitialStep = SelectedCell;
-	}
-}
-
-
-void GridView::Pot1Turn(float val) {
-	auto old = SelectedPlayheadIndex;
-	Algorithm->PotMgr.UpdateValueWithPot(0, val, SelectedPlayheadIndexRaw, 0, Algorithm->Playheads.Count);
-	SelectedPlayheadIndexRaw = clamp(SelectedPlayheadIndexRaw, 0.0f, static_cast<float>(Algorithm->Playheads.Count) - 0.001f);
-	SelectedPlayheadIndex = SelectedPlayheadIndexRaw;
-	if (SelectedPlayheadIndex != old) {
-		StringConcat(PlayheadHelpText, 20, "Playhead X Selected");
-		PlayheadHelpText[9] = 'A' + SelectedPlayheadIndex;
-		Algorithm->HelpText.DisplayHelpText(70, PlayheadHelpText);
-	}
-}
-
-
-void GridView::Pot2Turn(float val) {
-	auto old = SelectedParameterIndex;
-	Algorithm->PotMgr.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, static_cast<float>(CellDataType::NumCellDataTypes));
-	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, static_cast<float>(CellDataType::NumCellDataTypes) - 0.001f);
-	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
-	if (SelectedParameterIndex != old) {
-		LoadParamForEditing();
-		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
-		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
-	}
-}
-
-
-void GridView::Pot3Turn(float val) {
-	if (Editable) {
-		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
-		Algorithm->PotMgr.UpdateValueWithPot(2, val, ParamEditRaw, cd.ScaledMin(), cd.ScaledMax() + cd.Epsilon());
-		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
-	}
-}
-
-
-void GridView::Pot3ShortPress() {
-	// only change values if we are editable
-	if (Editable) {
-		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
-		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
-		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
-		LoadParamForEditing();
-	}
-}
-
-
-void GridView::Pot3LongPress() {
-	if (Editable) {
-		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
-		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
-		for (int x = 0; x < GridSizeX; x++) {
-			for (int y = 0; y < GridSizeY; y++) {
-				Algorithm->StepData.SetBaseCellValue(x, y, SelectedParameterIndex, ParamEditRaw, true);
-			}
-		}
-		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
-		LoadParamForEditing();
-	}
-}
-
-
-void GridView::FixupPotValues(_NT_float3& pots) {
-	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"
-	// this way we aren't right on the edge, where a slight pot bump could change the value
-	auto epsilon2 = 0.5 / static_cast<int>(CellDataType::NumCellDataTypes);
-	pots[1] = static_cast<float>(SelectedParameterIndex) / static_cast<int>(CellDataType::NumCellDataTypes) + epsilon2;
-
-	auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
-	auto range = cd.ScaledMax() - cd.ScaledMin();
-	pots[2] = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
-}
-
-
-void GridView::Activate() {
-	LoadParamForEditing();
 }

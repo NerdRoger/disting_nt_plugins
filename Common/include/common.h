@@ -3,6 +3,15 @@
 #include <distingnt/api.h>
 
 
+#ifndef HIDDEN
+	#define HIDDEN __attribute__((visibility("hidden")))
+#endif
+
+#ifndef INLINE
+	#define INLINE __attribute__((always_inline)) inline
+#endif
+
+
 struct Point {
 	uint8_t x;
 	uint8_t y;
@@ -18,29 +27,25 @@ struct Bounds {
 
 
 template <typename T>
-__attribute__((always_inline)) 
-inline constexpr T min(T a, T b) {
+INLINE constexpr T min(T a, T b) {
 	return (a < b) ? a : b;
 }
 
 
 template <typename T>
-__attribute__((always_inline)) 
-inline constexpr T max(T a, T b) {
+INLINE constexpr T max(T a, T b) {
 	return (a > b) ? a : b;
 }
 
 
 template <typename T>
-__attribute__((always_inline)) 
-inline constexpr T clamp(T val, T lo, T hi) {
+INLINE constexpr T clamp(T val, T lo, T hi) {
 	return (val < lo) ? lo : (val > hi) ? hi : val;
 }
 
 
 template <typename T>
-__attribute__((always_inline)) 
-inline constexpr T wrap(T val, T lo, T hi) {
+INLINE constexpr T wrap(T val, T lo, T hi) {
 	const T range = hi - lo + 1;
 	val = (val - lo) % range;
 	if (val < 0) val += range;
@@ -48,8 +53,7 @@ inline constexpr T wrap(T val, T lo, T hi) {
 }
 
 
-__attribute__((always_inline)) 
-inline constexpr uint16_t CalculateScaling(int scale) {
+INLINE constexpr uint16_t CalculateScaling(int scale) {
 	switch (scale)
 	{
 		case kNT_scaling10:   return 10;
@@ -60,8 +64,7 @@ inline constexpr uint16_t CalculateScaling(int scale) {
 }
 
 
-__attribute__((always_inline))
-inline float GetScaledParameterValue(_NT_algorithm& alg, uint16_t paramIndex) {
+INLINE float GetScaledParameterValue(_NT_algorithm& alg, uint16_t paramIndex) {
 	return static_cast<float>(alg.v[paramIndex]) / CalculateScaling(alg.parameters[paramIndex].scaling);
 }
 
@@ -188,8 +191,7 @@ public:
 		Falling
 	};
 
-	__attribute__((always_inline)) 
-	inline Edge Process(float val) {
+	INLINE Edge Process(float val) {
 		if (State && (val < LowThreshold)) {
 			State = false;
 			return Falling;
@@ -209,13 +211,11 @@ private:
 
 public:
 
-	__attribute__((always_inline)) 
-	inline void Seed(uint32_t seed) {
+	INLINE void Seed(uint32_t seed) {
 		PrevRandom = seed;
 	}
 
-	__attribute__((always_inline)) 
-	inline uint32_t Next(uint32_t lowInclusive, uint32_t highInclusive) {
+	INLINE uint32_t Next(uint32_t lowInclusive, uint32_t highInclusive) {
 		uint32_t x = PrevRandom;
 		x ^= x << 13;
 		x ^= x >> 17;

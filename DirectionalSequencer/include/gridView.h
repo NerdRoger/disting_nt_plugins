@@ -16,7 +16,7 @@ struct DirSeqAlg;
 struct GridView : ViewBase {
 private:
 
-	friend DirSeqAlg;
+	friend struct DirSeqAlg;
 
 	DirSeqAlg* Algorithm;
 
@@ -52,24 +52,25 @@ private:
 	void DrawHelpSection() const;
 	void DrawDirectionArrow(unsigned int dir, int x, int y, int color) const;
 
+	HIDDEN static void OnActivateHandler(ViewBase* view);
+	HIDDEN static void OnDrawHandler(ViewBase* view);
+	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
+	HIDDEN static void OnEncoder2TurnHandler(ViewBase* view, int8_t x);
+	HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
+	HIDDEN static void OnEncoder2LongPressHandler(ViewBase* view);
+	HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
+	HIDDEN static void OnPot2TurnHandler(ViewBase* view, float val);
+	HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
+	HIDDEN static void OnPot3ShortPressHandler(ViewBase* view);
+	HIDDEN static void OnPot3LongPressHandler(ViewBase* view);
+	HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);
+
 public:
 
 	CellCoords SelectedCell;
 
 	GridView();
 	void InjectDependencies(DirSeqAlg* alg);
-	void Draw() const override;
-	void Encoder1Turn(int8_t x) override;
-	void Encoder2Turn(int8_t x) override;
-	void Encoder2ShortPress() override;
-	void Encoder2LongPress() override;
-	void Pot1Turn(float val) override;
-	void Pot2Turn(float val) override;
-	void Pot3Turn(float val) override;
-	void Pot3ShortPress() override;
-	void Pot3LongPress() override;
-	void FixupPotValues(_NT_float3& pots) override;
 
 	void LoadParamForEditing();
-	void Activate() override;
 };

@@ -68,8 +68,7 @@ private:
 	void SetupParametersForTarget(int modTargetParamIndex);
 
 public:
-	__attribute__((visibility("hidden")))
-	static const _NT_factory Factory;
+	HIDDEN static const _NT_factory Factory;
 
 	DirSeqModMatrixAlg();
 	~DirSeqModMatrixAlg();

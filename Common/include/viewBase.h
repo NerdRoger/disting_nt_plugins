@@ -22,6 +22,7 @@ private:
 	bool Encoder2LongPressFired = false;
 	bool Pot3LongPressFired = false;
 
+	void ProcessLongPresses();
 
 protected:
 	mutable char NumToStrBuf[20]; // for storing conversion results
@@ -32,26 +33,30 @@ protected:
 public:
 
 	void ProcessControlInput(const _NT_uiData& data);
-	void ProcessLongPresses();
 
-	virtual void Activate() { }
-	virtual void Draw() const { }
-	virtual void Encoder1Turn(int8_t x) { }
-	virtual void Encoder2Turn(int8_t x) { }
-	virtual void Encoder2Push() { }
-	virtual void Encoder2Release() { }
-	virtual void Encoder2ShortPress() { }
-	virtual void Encoder2LongPress() { }
-	virtual void Pot1Turn(float val) { }
-	virtual void Pot2Turn(float val) { }
-	virtual void Pot3Turn(float val) { }
-	virtual void Pot3Push() { }
-	virtual void Pot3Release() { }
-	virtual void Pot3ShortPress() { }
-	virtual void Pot3LongPress() { }
-	virtual void Button3Push() { }
-	virtual void Button3Release() { }
+	void (*OnActivate)(ViewBase* view);
+	void (*OnDraw)(ViewBase* view);
+	void (*OnEncoder1Turn)(ViewBase* view, int8_t x);
+	void (*OnEncoder2Turn)(ViewBase* view, int8_t x);
+	void (*OnEncoder2Push)(ViewBase* view);
+	void (*OnEncoder2Release)(ViewBase* view);
+	void (*OnEncoder2ShortPress)(ViewBase* view);
+	void (*OnEncoder2LongPress)(ViewBase* view);
+	void (*OnPot1Turn)(ViewBase* view, float val);
+	void (*OnPot2Turn)(ViewBase* view, float val);
+	void (*OnPot3Turn)(ViewBase* view, float val);
+	void (*OnPot3Push)(ViewBase* view);
+	void (*OnPot3Release)(ViewBase* view);
+	void (*OnPot3ShortPress)(ViewBase* view);
+	void (*OnPot3LongPress)(ViewBase* view);
+	void (*OnButton3Push)(ViewBase* view);
+	void (*OnButton3Release)(ViewBase* view);
+	void (*OnFixupPotValues)(ViewBase* view, _NT_float3& pots);
+	void (*OnParameterChanged)(ViewBase* view, int paramIndex);
 
-	virtual void FixupPotValues(_NT_float3& pots) { }
-	virtual void ParameterChanged(int paramIndex) { }
+	void FixupPotValues(_NT_float3& pots);
+	void ParameterChanged(int paramIndex);
+	void Activate();
+	void Draw();
+
 };

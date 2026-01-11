@@ -80,8 +80,7 @@ public:
 
 	bool Loaded;
 
-	__attribute__((visibility("hidden")))
-	static const _NT_factory Factory;
+	HIDDEN static const _NT_factory Factory;
 
 	// TODO:  Maybe find a better naming scheme for types/members
 	// order is important here, as some classes depend on others being constructed first

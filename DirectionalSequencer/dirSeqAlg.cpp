@@ -260,25 +260,6 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 
 bool DirSeqAlg::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
-	// do this in draw, because we don't need it as frequently as step
-	alg.Grid.ProcessLongPresses();
-
-
-// TODO:  remove this at the end of development
-	// char buf[15];
-	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
-  // NT_drawText(0, 10, alg.Seq.StableClock ? "stable" : "unstable", 15);
-	// NT_intToString(buf, alg.Seq.ClockRateFreeze);
-	// NT_drawText(0, 20, buf, 15);
-	// NT_intToString(buf, alg.Seq.PrevClockRateFreeze);
-	// NT_drawText(0, 30, buf, 15);
-  // NT_drawText(0, 40, alg.Seq.Ratchets.Active ? "ratchet" : "normal", 15);
-	// NT_floatToString(buf, alg.Seq.PercentOff, 3);
-	// NT_drawText(0, 50, buf, 15);
-	// NT_floatToString(buf, alg.Seq.Delta, 3);
-	// NT_drawText(100, 50, buf, 15);
-
-
 	alg.Grid.Draw();
 	return true;
 }

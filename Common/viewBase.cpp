@@ -21,32 +21,33 @@ void ViewBase::DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text
 
 
 void ViewBase::ProcessControlInput(const _NT_uiData& data) {
-	if (data.encoders[0]) {
-		Encoder1Turn(data.encoders[0]);
+	if (data.encoders[0] && OnEncoder1Turn) {
+		OnEncoder1Turn(this, data.encoders[0]);
 	}
 
-	if (data.encoders[1]) {
-		Encoder2Turn(data.encoders[1]);
+	if (data.encoders[1] && OnEncoder2Turn) {
+		OnEncoder2Turn(this, data.encoders[1]);
 	}
 
-	if (data.controls & kNT_potL) {
-		Pot1Turn(data.pots[0]);
+	if (data.controls & kNT_potL && OnPot1Turn) {
+		OnPot1Turn(this, data.pots[0]);
 	}
 
-	if (data.controls & kNT_potC) {
-		Pot2Turn(data.pots[1]);
+	if (data.controls & kNT_potC && OnPot2Turn) {
+		OnPot2Turn(this, data.pots[1]);
 	}
 
 	if (data.controls & kNT_potR) {
 		// don't register turns during the brief period where we are lifting our finger after a press
-		if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= Timer->TotalMs) {
-			Pot3Turn(data.pots[2]);
+		if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= Timer->TotalMs && OnPot3Turn) {
+			OnPot3Turn(this, data.pots[2]);
 		}
 	}
 
 	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
 		Encoder2DownTime = Timer->TotalMs;
-		Encoder2Push();
+		if (OnEncoder2Push)
+			OnEncoder2Push(this);
 	}
 
 	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
@@ -55,7 +56,8 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 			// calculate how long we held the encoder down (in ms)
 			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
 			if (totalDownTime < ShortPressThreshold) {
-				Encoder2ShortPress();
+				if (OnEncoder2ShortPress)
+					OnEncoder2ShortPress(this);
 			} else {
 				// reset to prepare for another long press
 				// we don't fire LongPress from here, because that can fire before even lifting
@@ -64,12 +66,14 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 			Encoder2DownTime = 0;
 		}
 
-		Encoder2Release();
+		if (OnEncoder2Release)
+			OnEncoder2Release(this);
 	}
 
 	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
 		Pot3DownTime = Timer->TotalMs;
-		Pot3Push();
+		if (OnPot3Push)
+			OnPot3Push(this);
 	}
 
 	if (!(data.controls & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
@@ -78,7 +82,8 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 			// calculate how long we held the encoder down (in ms)
 			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
 			if (totalDownTime < ShortPressThreshold) {
-				Pot3ShortPress();
+				if (OnPot3ShortPress)
+					OnPot3ShortPress(this);
 			} else {
 				// reset to prepare for another long press
 				// we don't fire LongPress from here, because that can fire before even lifting
@@ -89,15 +94,16 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 			BlockPot3ChangesUntil = Timer->TotalMs + 100;
 		}
 
-		Pot3Release();
+		if (OnPot3Release)
+			OnPot3Release(this);
 	}
 
-	if ((data.controls & kNT_button3) && !(data.lastButtons & kNT_button3)) {
-		Button3Push();
+	if ((data.controls & kNT_button3) && !(data.lastButtons & kNT_button3) && OnButton3Push) {
+		OnButton3Push(this);
 	}
 
-	if (!(data.controls & kNT_button3) && (data.lastButtons & kNT_button3)) {
-		Button3Release();
+	if (!(data.controls & kNT_button3) && (data.lastButtons & kNT_button3) && OnButton3Release) {
+		OnButton3Release(this);
 	}
 }
 
@@ -110,7 +116,8 @@ void ViewBase::ProcessLongPresses() {
 			// calculate how long we held the pot down (in ms)
 			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
 			if (totalDownTime >= ShortPressThreshold) {
-				Pot3LongPress();
+				if (OnPot3LongPress)
+					OnPot3LongPress(this);
 				Pot3LongPressFired = true;
 			}
 		}
@@ -120,9 +127,35 @@ void ViewBase::ProcessLongPresses() {
 			// calculate how long we held the pot down (in ms)
 			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
 			if (totalDownTime >= ShortPressThreshold) {
-				Encoder2LongPress();
+				if (OnEncoder2LongPress)
+					OnEncoder2LongPress(this);
 				Encoder2LongPressFired = true;
 			}
 		}
 	}
+}
+
+
+void ViewBase::Activate() {
+	if (OnActivate)
+		OnActivate(this);
+}
+
+
+void ViewBase::Draw() {
+	ProcessLongPresses();
+	if (OnDraw)
+		OnDraw(this);
+}
+
+
+void ViewBase::FixupPotValues(_NT_float3& pots) {
+	if (OnFixupPotValues)
+		OnFixupPotValues(this, pots);
+}
+
+
+void ViewBase::ParameterChanged(int paramIndex) {
+	if (OnParameterChanged)
+		OnParameterChanged(this, paramIndex);
 }

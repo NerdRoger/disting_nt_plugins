@@ -1,7 +1,8 @@
+#include "common.h"
 #include "cellDefinition.h"
 
-__attribute__((visibility("hidden")))
-const CellDefinition CellDefinition::All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)] = {
+
+HIDDEN const CellDefinition CellDefinition::All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)] = {
 	// Don't Change
 	//   vvvv
 	{ "Direction",   "Direction",    0,    8,     0,    kNT_unitNone,    kNT_scalingNone, 10, "Direction of next step. Blank = keep going" },

@@ -33,8 +33,7 @@ struct CellDefinition {
 	int HelpTextX;
 	const char* HelpText;
 
-	__attribute__((always_inline))
-	float ScalingFactor() const {
+	INLINE float ScalingFactor() const {
 		switch (Scaling) {
 			case kNT_scalingNone: return 1.0f;
 			case kNT_scaling10:   return 10.0f;
@@ -49,62 +48,51 @@ struct CellDefinition {
 	// are inline, it shouldn't matter as all the code will just be inlined
 
 	// converts a scaled int down to the unscaled float
-	__attribute__((always_inline))
-	float UnscaleValue(int16_t value) const {
+	INLINE float UnscaleValue(int16_t value) const {
 		return static_cast<float>(value) / ScalingFactor();
 	}
 	
 	// converts unscaled float up to a scaled int
-	__attribute__((always_inline))
-	int16_t ScaleValue(float value) const {
+	INLINE int16_t ScaleValue(float value) const {
 		return value * ScalingFactor();
 	}
 
 	// converts data stored in internal cell data to the actual cell value
-	__attribute__((always_inline))
-	float CellStorageToCellValue(int16_t storedValue) const {
+	INLINE float CellStorageToCellValue(int16_t storedValue) const {
 		return static_cast<float>(storedValue) / ScalingFactor();
 	}
 	
 	// converts an actual cell value into internal cell data storage
-	__attribute__((always_inline))
-	int16_t CellValueToCellStorage(float cellValue) const {
+	INLINE int16_t CellValueToCellStorage(float cellValue) const {
 		return cellValue * ScalingFactor();
 	}
 
 	// convert an NT parameter value to the cell value
-	__attribute__((always_inline))
-	float NTValueToCellValue(int16_t ntValue) const {
+	INLINE float NTValueToCellValue(int16_t ntValue) const {
 		return static_cast<float>(ntValue) / ScalingFactor();
 	}
 
 	// convert the cell value to an NT parameter value
-	__attribute__((always_inline))
-	int16_t CellValueToNTValue(float cellValue) const {
+	INLINE int16_t CellValueToNTValue(float cellValue) const {
 		return cellValue * ScalingFactor();
 	}
 
-	__attribute__((always_inline))
-	float ScaledMin() const {
+	INLINE float ScaledMin() const {
 		return static_cast<float>(Min) / ScalingFactor();
 	}
 
-	__attribute__((always_inline))
-	float ScaledMax() const {
+	INLINE float ScaledMax() const {
 		return static_cast<float>(Max) / ScalingFactor();
 	}
 
-	__attribute__((always_inline))
-	float ScaledDefault() const {
+	INLINE float ScaledDefault() const {
 		return static_cast<float>(Default) / ScalingFactor();
 	}
 
-	__attribute__((always_inline))
-	float Epsilon() const {
+	INLINE float Epsilon() const {
 		return 0.5f / ScalingFactor();
 	}
 
-	__attribute__((visibility("hidden")))
-	static const CellDefinition All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];
+	HIDDEN static const CellDefinition All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];
 
 };
