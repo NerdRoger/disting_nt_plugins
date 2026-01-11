@@ -7,12 +7,6 @@
 #include "dirSeqAlg.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	auto CellDefs = CellDefinition::All;
-}
-
-
 StepDataRegion::StepDataRegion() {
 	
 }
@@ -56,7 +50,7 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 void StepDataRegion::SetDefaultCellValues() {
 	// set the default cell values
 	for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
-		auto& cd = CellDefs[i];
+		auto cd = CellDefinition::All[i];
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
 				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.ScaledDefault(), true);
@@ -76,7 +70,7 @@ bool StepDataRegion::CellTypeHasMapping(CellDataType ct) const {
 
 
 float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 
 	// our internal cell data should always reflect the base value, because we keep it in sync even if it's updated from a mod matrix parameter
 	auto& cell = Cells[x][y];
@@ -101,7 +95,7 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 
 
 float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 
 	// if we have a mod matrix assigned to this cell type, get the value from there...
 	int paramTargetIndex;
@@ -121,7 +115,7 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 
 
 void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix) {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.ScaledMin(), cd.ScaledMax());
 	int16_t ival = cd.CellValueToCellStorage(val);
@@ -183,7 +177,7 @@ void StepDataRegion::ScrambleAllCellValues(CellDataType ct) {
 
 
 void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct) {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	float val = GetBaseCellValue(x, y, ct);
 
 	// direction is a special case, we want to invert the cardinal direction, not the index number representing it
@@ -225,7 +219,7 @@ void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellData
 
 
 void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	int scaledMin = cd.ScaleValue(min);
 	int scaledMax = cd.ScaleValue(max);
 	auto lo = 0;
@@ -279,7 +273,7 @@ void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8
 
 
 void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent) {
-	const auto& cd = CellDefs[static_cast<size_t>(ct)];
+	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	auto rnd = static_cast<float>(Algorithm->Random.Next(0, deltaPercent * 100.0f) / 100.0f) * (Algorithm->Random.Next(0, 1) == 1 ? -1.0f : 1.0f);
 	float delta = (cd.ScaledMax() - cd.ScaledMin()) * rnd / 100.0f;
 	float oldVal = GetBaseCellValue(x, y, ct);

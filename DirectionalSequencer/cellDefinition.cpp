@@ -1,6 +1,6 @@
 #include "cellDefinition.h"
 
-
+__attribute__((visibility("hidden")))
 const CellDefinition CellDefinition::All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)] = {
 	// Don't Change
 	//   vvvv

@@ -104,6 +104,7 @@ struct CellDefinition {
 		return 0.5f / ScalingFactor();
 	}
 
+	__attribute__((visibility("hidden")))
 	static const CellDefinition All[static_cast<uint16_t>(CellDataType::NumCellDataTypes)];
 
 };

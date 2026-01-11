@@ -7,20 +7,15 @@
 #include "dirSeqAlg.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	static constexpr int CellSize = 12;
-	static constexpr int CellBorderColor = 5;
-	static constexpr int CellBrightColor = 15;
-	static constexpr int CellDimColor = 2;
-	static constexpr int EditableCellBorderColor = 15;
-	static constexpr int NonEditableCellBorderColor = 7;
-	static constexpr int SelectedParameterColor = 15;
-	static constexpr int UnselectedParameterColor = 5;
-	static constexpr int TextLineHeight = 10;
-
-	auto CellDefs = CellDefinition::All;
-}
+static constexpr int CellSize = 12;
+static constexpr int CellBorderColor = 5;
+static constexpr int CellBrightColor = 15;
+static constexpr int CellDimColor = 2;
+static constexpr int EditableCellBorderColor = 15;
+static constexpr int NonEditableCellBorderColor = 7;
+static constexpr int SelectedParameterColor = 15;
+static constexpr int UnselectedParameterColor = 5;
+static constexpr int TextLineHeight = 10;
 
 
 GridView::GridView() {
@@ -143,7 +138,7 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 	}
 
 	auto idx = static_cast<CellDataType>(paramIndex);
-	const auto& cd = CellDefs[paramIndex];
+	auto cd = CellDefinition::All[paramIndex];
 	char buf[15];
 	auto len = strlen(cd.DisplayName);
 	strncpy(buf, cd.DisplayName, len);
@@ -455,7 +450,7 @@ void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) con
 
 
 void GridView::LoadParamForEditing() {
-	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+	auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 	ParamEditRaw = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) + cd.Epsilon();
 }
 
@@ -504,7 +499,7 @@ void GridView::Pot2Turn(float val) {
 	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
 	if (SelectedParameterIndex != old) {
 		LoadParamForEditing();
-		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
@@ -512,7 +507,7 @@ void GridView::Pot2Turn(float val) {
 
 void GridView::Pot3Turn(float val) {
 	if (Editable) {
-		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 		Algorithm->PotMgr.UpdateValueWithPot(2, val, ParamEditRaw, cd.ScaledMin(), cd.ScaledMax() + cd.Epsilon());
 		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
@@ -523,7 +518,7 @@ void GridView::Pot3Turn(float val) {
 void GridView::Pot3ShortPress() {
 	// only change values if we are editable
 	if (Editable) {
-		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
 		Algorithm->StepData.SetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex, ParamEditRaw, true);
 		Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
@@ -534,7 +529,7 @@ void GridView::Pot3ShortPress() {
 
 void GridView::Pot3LongPress() {
 	if (Editable) {
-		const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+		auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
@@ -553,7 +548,7 @@ void GridView::FixupPotValues(_NT_float3& pots) {
 	auto epsilon2 = 0.5 / static_cast<int>(CellDataType::NumCellDataTypes);
 	pots[1] = static_cast<float>(SelectedParameterIndex) / static_cast<int>(CellDataType::NumCellDataTypes) + epsilon2;
 
-	const auto& cd = CellDefs[static_cast<size_t>(SelectedParameterIndex)];
+	auto cd = CellDefinition::All[static_cast<size_t>(SelectedParameterIndex)];
 	auto range = cd.ScaledMax() - cd.ScaledMin();
 	pots[2] = Algorithm->StepData.GetBaseCellValue(SelectedCell.x, SelectedCell.y, SelectedParameterIndex) / range;
 }

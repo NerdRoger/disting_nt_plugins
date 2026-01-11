@@ -8,25 +8,20 @@
 #include "playhead.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	static const char* const HeadOptionsPageNamesDef[] = {
-		"Head A Options", "Head B Options", "Head C Options", "Head D Options", "Head E Options", "Head F Options", "Head G Options", "Head H Options",
-	};
+static const char* const HeadOptionsPageNamesDef[] = {
+	"Head A Options", "Head B Options", "Head C Options", "Head D Options", "Head E Options", "Head F Options", "Head G Options", "Head H Options",
+};
 
-	static const char* HeadRoutingPageNamesDef[] = {
-		"Head A Routing", "Head B Routing", "Head C Routing", "Head D Routing", "Head E Routing", "Head F Routing", "Head G Routing", "Head H Routing",
-	};
+static const char* HeadRoutingPageNamesDef[] = {
+	"Head A Routing", "Head B Routing", "Head C Routing", "Head D Routing", "Head E Routing", "Head F Routing", "Head G Routing", "Head H Routing",
+};
 
-	static const char* const EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
-  static const char* const EnumStringsResetWhenInactive[] = { "No", "Yes" };
+static const char* const EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+static const char* const EnumStringsResetWhenInactive[] = { "No", "Yes" };
 
-	static const _NT_specification SpecificationsDef[] = {
-		{ .name = "Playheads", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
-	};
-
-	auto CellDefs = CellDefinition::All;
-}
+static const _NT_specification SpecificationsDef[] = {
+	{ .name = "Playheads", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
+};
 
 
 DirSeqAlg::DirSeqAlg() {
@@ -320,8 +315,8 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
 				auto fval = alg.StepData.GetBaseCellValue(x, y, cdt);
-				stream.addMemberName(CellDefs[i].FieldName);
-				if (CellDefs[i].Scaling > 0) {
+				stream.addMemberName(CellDefinition::All[i].FieldName);
+				if (CellDefinition::All[i].Scaling > 0) {
 					stream.addNumber(fval);
 				} else {
 					stream.addNumber(static_cast<int>(fval));
@@ -429,8 +424,8 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 			bool found = false;
 			for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				if (parse.matchName(CellDefs[i].FieldName)) {
-					if (CellDefs[i].Scaling > 0) {
+				if (parse.matchName(CellDefinition::All[i].FieldName)) {
+					if (CellDefinition::All[i].Scaling > 0) {
 						if (!parse.number(fval)) {
 							return false;
 						}

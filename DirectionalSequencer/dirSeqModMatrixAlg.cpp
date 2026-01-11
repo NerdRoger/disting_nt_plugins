@@ -8,24 +8,19 @@
 #include "cellDefinition.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	static uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
+static uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];
 
-	static size_t constexpr MaxTargetNameLen = 9;
-	static char TargetNames[DirSeqModMatrixAlg::NumMatrices][MaxTargetNameLen];
+static size_t constexpr MaxTargetNameLen = 9;
+static char TargetNames[DirSeqModMatrixAlg::NumMatrices][MaxTargetNameLen];
 
-	static const char* const CellDirectionNames[] = {
-		"", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
-	};
+static const char* const CellDirectionNames[] = {
+	"", "North", "NorthEast", "East", "SouthEast", "South", "SouthWest", "West", "NorthWest", 
+};
 
-	// we use enum strings for these because the values are off-by-one
-	static const char* const RatchetNames[] = {
-		"--", "2", "3", "4", "5", "6", "7", "8", 
-	};
-
-	auto CellDefs = CellDefinition::All;
-}
+// we use enum strings for these because the values are off-by-one
+static const char* const RatchetNames[] = {
+	"--", "2", "3", "4", "5", "6", "7", "8", 
+};
 
 
 void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
@@ -161,7 +156,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 		return;
 
 	auto ct = static_cast<CellDataType>(target);
-	auto cd = CellDefs[target];
+	auto cd = CellDefinition::All[target];
 
 	if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
 		auto cellNum = idx - 1;
@@ -236,7 +231,7 @@ bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 		buf[7] = 'A' + m;
 		buf[16] = 0;
 		NT_drawText( 40, 10 * m + 10, buf, 15);
-		NT_drawText(140, 10 * m + 10, modTarget == 0 ? "None" : CellDefs[modTarget - 1].DisplayName, 15);
+		NT_drawText(140, 10 * m + 10, modTarget == 0 ? "None" : CellDefinition::All[modTarget - 1].DisplayName, 15);
 	}
 
 	return true;
@@ -253,7 +248,7 @@ int DirSeqModMatrixAlg::ParameterString(_NT_algorithm* self, int p, int v, char*
 			if (v == 0) {
 				strncpy(buff, "None", 5);
 			} else {
-				auto name = CellDefs[v - 1].DisplayName;
+				auto name = CellDefinition::All[v - 1].DisplayName;
 				strncpy(buff, name, strlen(name) + 1);
 			}
 		}	break;
@@ -320,7 +315,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 	} else {
 		// reduce modTarget by 1, since "None" == 0, but everything else is offset by 1
 		modTarget--;
-		auto cd = CellDefs[modTarget];
+		auto cd = CellDefinition::All[modTarget];
 		int16_t min = cd.Min;
 		int16_t max = cd.Max;
 		int16_t def = cd.Default;

@@ -5,12 +5,9 @@
 #include "dirSeqAlg.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	static constexpr uint16_t InactiveTime = 10000;
-	static constexpr float GateHigh = 5.0;
-	static constexpr float GateLow = 0.0;
-}
+static constexpr uint16_t InactiveTime = 10000;
+static constexpr float GateHigh = 5.0;
+static constexpr float GateLow = 0.0;
 
 
 Playhead::Playhead() {

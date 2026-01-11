@@ -3,13 +3,6 @@
 #include "dirSeqModMatrixAlg.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	auto DirSeqFactory = &DirSeqAlg::Factory;
-	auto ModMatrixFactory = &DirSeqModMatrixAlg::Factory;
-}
-
-
 uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
 {
 	switch ( selector )
@@ -20,10 +13,10 @@ uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
 			return 2;
 		case kNT_selector_factoryInfo:
 			if (data == 0) {
-				return (uintptr_t)DirSeqFactory;
+				return (uintptr_t)&DirSeqAlg::Factory;
 			}
 			if (data == 1) {
-				return (uintptr_t)ModMatrixFactory;
+				return (uintptr_t)&DirSeqModMatrixAlg::Factory;
 			}
 			return 0;
 	}
