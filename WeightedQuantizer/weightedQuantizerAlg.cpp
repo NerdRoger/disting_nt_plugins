@@ -6,32 +6,29 @@
 #include "quantizer.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	const uint8_t GeneralPageDef[] = {
-		kWQParamTransposeAll,
-		kWQParamBankScanPosition,
-		kWQParamTriggerSampleDelay,
-	};
+static const uint8_t GeneralPageDef[] = {
+	kWQParamTransposeAll,
+	kWQParamBankScanPosition,
+	kWQParamTriggerSampleDelay,
+};
 
-	const uint8_t NoteWeightsPageDef[] = {
-		kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
-		kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
-		kWQParamQuantWeightE,
-		kWQParamQuantWeightF,	kWQParamQuantWeightFSharp,
-		kWQParamQuantWeightG,	kWQParamQuantWeightGSharp,
-		kWQParamQuantWeightA,	kWQParamQuantWeightASharp,
-		kWQParamQuantWeightB,
-	};
+static const uint8_t NoteWeightsPageDef[] = {
+	kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
+	kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
+	kWQParamQuantWeightE,
+	kWQParamQuantWeightF,	kWQParamQuantWeightFSharp,
+	kWQParamQuantWeightG,	kWQParamQuantWeightGSharp,
+	kWQParamQuantWeightA,	kWQParamQuantWeightASharp,
+	kWQParamQuantWeightB,
+};
 
-	const char* const PageNamesDef[] = {
-		"Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8",
-	};
+static const char* const PageNamesDef[] = {
+	"Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5", "Channel 6", "Channel 7", "Channel 8",
+};
 
-	const _NT_specification SpecificationsDef[] = {
-		{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
-	};
-}
+static const _NT_specification SpecificationsDef[] = {
+	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
+};
 
 
 WeightedQuantizerAlg::WeightedQuantizerAlg() {
@@ -241,28 +238,7 @@ void WeightedQuantizerAlg::Step(_NT_algorithm* self, float* busFrames, int numFr
 
 bool WeightedQuantizerAlg::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<WeightedQuantizerAlg*>(self);
-	// do this in draw, because we don't need it as frequently as step
-	alg.QuantView.ProcessLongPresses();
 	alg.QuantView.Draw();
-
-
-	// NT_drawShapeI(kNT_rectangle, 120, 0, 255, 60, 0);
-	// char buf[15];
-	// NT_intToString(buf, alg.updateCount);
-	// NT_drawText(125, 10, buf);
-	// NT_floatToString(buf, alg.firstValuePre, 3);
-	// NT_drawText(125, 20, buf);
-	// NT_floatToString(buf, alg.firstValuePost, 3);
-	// NT_drawText(125, 30, buf);
-	// NT_floatToString(buf, alg.firstCurrPotVal, 3);
-	// NT_drawText(125, 40, buf);
-	// NT_floatToString(buf, alg.firstPrevPotVal, 3);
-	// NT_drawText(125, 50, buf);
-
-	// NT_drawText(180, 10, alg.reason);
-	// NT_intToString(buf, fixupCount);
-	// NT_drawText(180, 20, buf);
-
 	return true;
 }
 

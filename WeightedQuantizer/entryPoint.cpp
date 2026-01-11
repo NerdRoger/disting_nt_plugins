@@ -2,12 +2,6 @@
 #include "weightedQuantizerAlg.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	auto WeightedQuantizerFactory = &WeightedQuantizerAlg::Factory;
-}
-
-
 uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
 {
 	switch ( selector )
@@ -18,7 +12,7 @@ uintptr_t pluginEntry( _NT_selector selector, uint32_t data )
 			return 1;
 		case kNT_selector_factoryInfo:
 			if (data == 0) {
-				return (uintptr_t)WeightedQuantizerFactory;
+				return (uintptr_t)&WeightedQuantizerAlg::Factory;
 			}
 			return 0;
 	}

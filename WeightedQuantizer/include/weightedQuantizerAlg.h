@@ -67,7 +67,7 @@ private:
 	uint32_t* DelayedTriggers;
 
 public:
-	static const _NT_factory Factory;
+	HIDDEN static const _NT_factory Factory;
 
 	uint16_t NumChannels;
 

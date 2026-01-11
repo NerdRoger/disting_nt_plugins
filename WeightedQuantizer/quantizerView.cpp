@@ -4,60 +4,205 @@
 #include "common.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	static constexpr int KeyWidth = 13;
-	static constexpr int KeyHeight = 15;
-	static constexpr int KeySpacing = 3;
+static constexpr int KeyWidth = 13;
+static constexpr int KeyHeight = 15;
+static constexpr int KeySpacing = 3;
 
-	static constexpr int KeyBackgroundColor = 1;
-	static constexpr int KeyForegroundColor = 8;
-	static constexpr int SelectedKeyBorderColor = 15;
-	static constexpr float MaxSliderValue = 10.0f;
-	
-	struct Control {
-		uint8_t     ParameterIndex;
-		const char* HelpText;
-	};
+static constexpr int KeyBackgroundColor = 1;
+static constexpr int KeyForegroundColor = 8;
+static constexpr int SelectedKeyBorderColor = 15;
+static constexpr float MaxSliderValue = 10.0f;
 
-	const Control KeyControls[] = {
-		{ kWQParamQuantWeightC,      "Adjust the attraction weighting of note C"  },
-		{ kWQParamQuantWeightCSharp, "Adjust the attraction weighting of note C#" },
-		{ kWQParamQuantWeightD,      "Adjust the attraction weighting of note D"  },
-		{ kWQParamQuantWeightDSharp, "Adjust the attraction weighting of note D#" },
-		{ kWQParamQuantWeightE,      "Adjust the attraction weighting of note E"  },
-		{ kWQParamQuantWeightF,      "Adjust the attraction weighting of note F"  },
-		{ kWQParamQuantWeightFSharp, "Adjust the attraction weighting of note F#" },
-		{ kWQParamQuantWeightG,      "Adjust the attraction weighting of note G"  },
-		{ kWQParamQuantWeightGSharp, "Adjust the attraction weighting of note G#" },
-		{ kWQParamQuantWeightA,      "Adjust the attraction weighting of note A"  },
-		{ kWQParamQuantWeightASharp, "Adjust the attraction weighting of note A#" },
-		{ kWQParamQuantWeightB,      "Adjust the attraction weighting of note B"  },
-	};
+struct Control {
+	uint8_t     ParameterIndex;
+	const char* HelpText;
+};
+
+static const Control KeyControls[] = {
+	{ kWQParamQuantWeightC,      "Adjust the attraction weighting of note C"  },
+	{ kWQParamQuantWeightCSharp, "Adjust the attraction weighting of note C#" },
+	{ kWQParamQuantWeightD,      "Adjust the attraction weighting of note D"  },
+	{ kWQParamQuantWeightDSharp, "Adjust the attraction weighting of note D#" },
+	{ kWQParamQuantWeightE,      "Adjust the attraction weighting of note E"  },
+	{ kWQParamQuantWeightF,      "Adjust the attraction weighting of note F"  },
+	{ kWQParamQuantWeightFSharp, "Adjust the attraction weighting of note F#" },
+	{ kWQParamQuantWeightG,      "Adjust the attraction weighting of note G"  },
+	{ kWQParamQuantWeightGSharp, "Adjust the attraction weighting of note G#" },
+	{ kWQParamQuantWeightA,      "Adjust the attraction weighting of note A"  },
+	{ kWQParamQuantWeightASharp, "Adjust the attraction weighting of note A#" },
+	{ kWQParamQuantWeightB,      "Adjust the attraction weighting of note B"  },
+};
+
+
+void QuantizerView::OnActivateHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.LoadKeyControlForEditing();
 }
 
 
+void QuantizerView::OnDrawHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.DrawBanks();
+	qv.DrawKeyboard();
+	if (qv.BankPeeking) {
+		qv.DrawPeek();
+	} else {
+		qv.DrawResults();
+	}
+	qv.DrawHelpSection();
+}
+
+
+void QuantizerView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	if (!qv.BankPeeking) {
+		qv.SelectedKeyIndex = wrap(static_cast<int>(qv.SelectedKeyIndex) + x, 0, 11);
+		qv.LoadKeyControlForEditing();
+		qv.Algorithm->HelpText.DisplayHelpText(10, KeyControls[qv.SelectedKeyIndex].HelpText);
+	}
+}
+
+
+void QuantizerView::OnEncoder2TurnHandler(ViewBase* view, int8_t x) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	if (!qv.BankPeeking) {
+		qv.SelectedBankIndex = wrap(static_cast<int>(qv.SelectedBankIndex) + x, 0, 9);
+		qv.Algorithm->HelpText.DisplayHelpText(15, "Short press to load, long press to save");
+	}
+}
+
+
+void QuantizerView::OnEncoder2ShortPressHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	auto algIndex = NT_algorithmIndex(qv.Algorithm);
+	auto& param = qv.Algorithm->parameters[kWQParamBankScanPosition];
+	auto val = (qv.SelectedBankIndex + 1) * CalculateScaling(param.scaling);
+	NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val);
+
+	qv.Algorithm->Banks.LoadNotesFromBank(qv.SelectedBankIndex);
+	qv.LoadKeyControlForEditing();
+	qv.Algorithm->HelpText.DisplayHelpText(60, "Loaded notes from bank");
+}
+
+
+void QuantizerView::OnEncoder2LongPressHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.Algorithm->Banks.SaveNotesToBank(qv.SelectedBankIndex);
+	qv.Algorithm->HelpText.DisplayHelpText(65, "Saved notes to bank");
+}
+
+
+void QuantizerView::OnPot1TurnHandler(ViewBase* view, float val) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	if (!qv.BankPeeking) {
+		if (!qv.Algorithm->Banks.ScanningLocked) {
+			qv.Algorithm->HelpText.DisplayHelpText(20, "Disable bank scanning to change weights");
+		} else {
+			auto algIndex = NT_algorithmIndex(qv.Algorithm);
+			auto parameterIndex = KeyControls[qv.SelectedKeyIndex].ParameterIndex;
+			auto& param = qv.Algorithm->parameters[parameterIndex];
+			qv.Algorithm->PotMgr.UpdateValueWithPot(0, val, qv.SelectedKeyValueRaw, param.min, param.max);
+			NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), qv.SelectedKeyValueRaw);
+			qv.Algorithm->HelpText.DisplayHelpText(10, KeyControls[qv.SelectedKeyIndex].HelpText);
+		}
+	}
+}
+
+
+void QuantizerView::OnPot3TurnHandler(ViewBase* view, float val) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	if (!qv.BankPeeking) {
+		if (!qv.Algorithm->Banks.ScanningLocked) {
+			auto algIndex = NT_algorithmIndex(qv.Algorithm);
+			auto& param = qv.Algorithm->parameters[kWQParamBankScanPosition];
+			auto scanPos = GetScaledParameterValue(*qv.Algorithm, kWQParamBankScanPosition);
+			auto scaling = CalculateScaling(param.scaling);
+			auto min = param.min / scaling;
+			auto max = param.max / scaling;
+			qv.Algorithm->PotMgr.UpdateValueWithPot(2, val, scanPos, min, max);
+			auto paramVal = scanPos * scaling;
+			NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), paramVal);
+		} else {
+			qv.Algorithm->HelpText.DisplayHelpText(45, "Push to enable bank scanning");
+		}
+	}
+}
+
+
+void QuantizerView::OnPot3ShortPressHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	if (!qv.BankPeeking) {
+		qv.Algorithm->Banks.ScanningLocked = !qv.Algorithm->Banks.ScanningLocked;
+		if (!qv.Algorithm->Banks.ScanningLocked) {
+			qv.Algorithm->Banks.DoBankScan(qv.Algorithm->v[kWQParamBankScanPosition]);
+			qv.Algorithm->HelpText.DisplayHelpText(80, "Bank scanning on");
+		} else {
+			qv.Algorithm->HelpText.DisplayHelpText(80, "Bank scanning off");
+		}
+	}
+}
+
+
+void QuantizerView::OnButton3PushHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.BankPeeking = true;
+}
+
+
+void QuantizerView::OnButton3ReleaseHandler(ViewBase* view) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.BankPeeking = false;
+}
+
+
+void QuantizerView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	// calculate p1
+	auto parameterIndex = KeyControls[qv.SelectedKeyIndex].ParameterIndex;
+	auto& keyParam = qv.Algorithm->parameters[parameterIndex];
+	auto keyVal = qv.Algorithm->v[parameterIndex];
+	bool isEnum = keyParam.unit == kNT_unitEnum;
+	auto min = keyParam.min;
+	auto max = keyParam.max + (isEnum ? 0 : 0.99f);
+	auto range = max - min;
+	pots[0] = (keyVal - min) / range;
+
+	// calculate p3
+	auto& scanParam = qv.Algorithm->parameters[kWQParamBankScanPosition];
+	auto scanVal = qv.Algorithm->v[kWQParamBankScanPosition];
+	pots[2] = static_cast<float>(scanVal - scanParam.min) / static_cast<float>(scanParam.max - scanParam.min);
+	// we need to reload our control for editing because the underlying parameter value could have changed while we were "sleeping"
+	// this works because this event is fired when returning to our algorithm from other disting screens
+	qv.LoadKeyControlForEditing();
+}
+
+
+void QuantizerView::OnParameterChangedHandler(ViewBase* view, int paramIndex) {
+	auto& qv = *static_cast<QuantizerView*>(view);
+	qv.LoadKeyControlForEditing();
+}
+
 
 QuantizerView::QuantizerView() {
-	
+	OnActivate = OnActivateHandler;
+	OnDraw = OnDrawHandler;
+	OnEncoder1Turn = OnEncoder1TurnHandler;
+	OnEncoder2Turn = OnEncoder2TurnHandler;
+	OnEncoder2ShortPress = OnEncoder2ShortPressHandler;
+	OnEncoder2LongPress = OnEncoder2LongPressHandler;
+	OnPot1Turn = OnPot1TurnHandler;
+	OnPot3Turn = OnPot3TurnHandler;
+	OnPot3ShortPress = OnPot3ShortPressHandler;
+	OnButton3Push = OnButton3PushHandler;
+	OnButton3Release = OnButton3ReleaseHandler;
+	OnFixupPotValues = OnFixupPotValuesHandler;
+	OnParameterChanged = OnParameterChangedHandler;
 }
 
 
 void QuantizerView::InjectDependencies(WeightedQuantizerAlg* alg) {
 	Algorithm = alg;
 	ViewBase::InjectDependencies(&alg->Timer);
-}
-
-
-void QuantizerView::Draw() const {
-	DrawBanks();
-	DrawKeyboard();
-	if (BankPeeking) {
-		DrawPeek();
-	} else {
-		DrawResults();
-	}
-	DrawHelpSection();
 }
 
 
@@ -235,131 +380,3 @@ void QuantizerView::LoadKeyControlForEditing() {
 	// since we are dealing with unscaled numbers here, epsilon is always 0.5
 	SelectedKeyValueRaw = val + 0.5f;
 }
-
-
-void QuantizerView::FixupPotValues(_NT_float3& pots) {
-	// calculate p1
-	auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-	auto& keyParam = Algorithm->parameters[parameterIndex];
-	auto keyVal = Algorithm->v[parameterIndex];
-	bool isEnum = keyParam.unit == kNT_unitEnum;
-	auto min = keyParam.min;
-	auto max = keyParam.max + (isEnum ? 0 : 0.99f);
-	auto range = max - min;
-	pots[0] = (keyVal - min) / range;
-
-	// calculate p3
-	auto& scanParam = Algorithm->parameters[kWQParamBankScanPosition];
-	auto scanVal = Algorithm->v[kWQParamBankScanPosition];
-	pots[2] = static_cast<float>(scanVal - scanParam.min) / static_cast<float>(scanParam.max - scanParam.min);
-	// we need to reload our control for editing because the underlying parameter value could have changed while we were "sleeping"
-	// this works because this event is fired when returning to our algorithm from other disting screens
-	LoadKeyControlForEditing();
-}
-
-
-void QuantizerView::ParameterChanged(int paramIndex) {
-	LoadKeyControlForEditing();
-}
-
-
-void QuantizerView::Activate() {
-	LoadKeyControlForEditing();
-}
-
-
-void QuantizerView::Encoder1Turn(int8_t x) {
-	if (!BankPeeking) {
-		SelectedKeyIndex = wrap(static_cast<int>(SelectedKeyIndex) + x, 0, 11);
-		LoadKeyControlForEditing();
-		Algorithm->HelpText.DisplayHelpText(10, KeyControls[SelectedKeyIndex].HelpText);
-	}
-}
-
-
-void QuantizerView::Encoder2Turn(int8_t x) {
-	if (!BankPeeking) {
-		SelectedBankIndex = wrap(static_cast<int>(SelectedBankIndex) + x, 0, 9);
-		Algorithm->HelpText.DisplayHelpText(15, "Short press to load, long press to save");
-	}
-}
-
-
-void QuantizerView::Pot1Turn(float val) {
-	if (!BankPeeking) {
-
-		if (!Algorithm->Banks.ScanningLocked) {
-			Algorithm->HelpText.DisplayHelpText(20, "Disable bank scanning to change weights");
-		} else {
-			auto algIndex = NT_algorithmIndex(Algorithm);
-			auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-			auto& param = Algorithm->parameters[parameterIndex];
-			Algorithm->PotMgr.UpdateValueWithPot(0, val, SelectedKeyValueRaw, param.min, param.max);
-			NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), SelectedKeyValueRaw);
-			Algorithm->HelpText.DisplayHelpText(10, KeyControls[SelectedKeyIndex].HelpText);
-		}
-
-	}
-}
-
-
-void QuantizerView::Pot3Turn(float val) {
-	if (!BankPeeking) {
-		if (!Algorithm->Banks.ScanningLocked) {
-			auto algIndex = NT_algorithmIndex(Algorithm);
-			auto& param = Algorithm->parameters[kWQParamBankScanPosition];
-			auto scanPos = GetScaledParameterValue(*Algorithm, kWQParamBankScanPosition);
-			auto scaling = CalculateScaling(param.scaling);
-			auto min = param.min / scaling;
-			auto max = param.max / scaling;
-			Algorithm->PotMgr.UpdateValueWithPot(2, val, scanPos, min, max);
-			auto paramVal = scanPos * scaling;
-			NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), paramVal);
-		} else {
-			Algorithm->HelpText.DisplayHelpText(45, "Push to enable bank scanning");
-		}
-	}
-}
-
-
-void QuantizerView::Pot3ShortPress() {
-	if (!BankPeeking) {
-		Algorithm->Banks.ScanningLocked = !Algorithm->Banks.ScanningLocked;
-		if (!Algorithm->Banks.ScanningLocked) {
-			Algorithm->Banks.DoBankScan(Algorithm->v[kWQParamBankScanPosition]);
-			Algorithm->HelpText.DisplayHelpText(80, "Bank scanning on");
-		} else {
-			Algorithm->HelpText.DisplayHelpText(80, "Bank scanning off");
-		}
-	}
-}
-
-
-void QuantizerView::Button3Push() {
-	BankPeeking = true;
-}
-
-
-void QuantizerView::Button3Release() {
-	BankPeeking = false;
-}
-
-
-void QuantizerView::Encoder2ShortPress() {
-	auto algIndex = NT_algorithmIndex(Algorithm);
-	auto& param = Algorithm->parameters[kWQParamBankScanPosition];
-	auto val = (SelectedBankIndex + 1) * CalculateScaling(param.scaling);
-	NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val);
-
-	Algorithm->Banks.LoadNotesFromBank(SelectedBankIndex);
-	LoadKeyControlForEditing();
-	Algorithm->HelpText.DisplayHelpText(60, "Loaded notes from bank");
-}
-
-
-void QuantizerView::Encoder2LongPress() {
-	Algorithm->Banks.SaveNotesToBank(SelectedBankIndex);
-	Algorithm->HelpText.DisplayHelpText(65, "Saved notes to bank");
-}
-
-

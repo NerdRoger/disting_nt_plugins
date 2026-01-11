@@ -1,6 +1,7 @@
 #pragma once
 #include <distingnt/api.h>
 #include <stddef.h>
+#include "common.h"
 #include "viewBase.h"
 
 
@@ -31,20 +32,23 @@ private:
 
 	void LoadKeyControlForEditing();
 
+	HIDDEN static void OnActivateHandler(ViewBase* view);
+	HIDDEN static void OnDrawHandler(ViewBase* view);
+	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
+	HIDDEN static void OnEncoder2TurnHandler(ViewBase* view, int8_t x);
+	HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
+	HIDDEN static void OnEncoder2LongPressHandler(ViewBase* view);
+	HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
+	HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
+	HIDDEN static void OnPot3ShortPressHandler(ViewBase* view);
+	HIDDEN static void OnButton3PushHandler(ViewBase* view);
+	HIDDEN static void OnButton3ReleaseHandler(ViewBase* view);
+	HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);
+	HIDDEN static void OnParameterChangedHandler(ViewBase* view, int paramIndex);
+
+
 public:
 	QuantizerView();
 	void InjectDependencies(WeightedQuantizerAlg* alg);
-	void Draw() const override;
-	void Encoder1Turn(int8_t x) override;
-	void Encoder2Turn(int8_t x) override;
-	void Encoder2ShortPress() override;
-	void Encoder2LongPress() override;
-	void Pot1Turn(float val) override;
-	void Pot3Turn(float val) override;
-	void Pot3ShortPress() override;
-	void Button3Push() override;
-	void Button3Release() override;
-	void FixupPotValues(_NT_float3& pots) override;
-	void Activate() override;
-	void ParameterChanged(int paramIndex) override;
+
 };

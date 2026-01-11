@@ -4,30 +4,27 @@
 #include "quantizer.h"
 
 
-// anonymous namespace for this data keeps the compiler from generating GOT entries, keeps us using internal linkage
-namespace {
-	struct NoteDef {
-		const char* Name;
-		float       Fractional;
-	};
+struct NoteDef {
+	const char* Name;
+	float       Fractional;
+};
 
-	static constexpr uint16_t NumberOfNotes = 12;
+static constexpr uint16_t NumberOfNotes = 12;
 
-	static const NoteDef Notes[NumberOfNotes] = {
-		{ .Name = "C",  .Fractional = 0.0f  / 12.0f },
-		{ .Name = "C#", .Fractional = 1.0f  / 12.0f },
-		{ .Name = "D",  .Fractional = 2.0f  / 12.0f },
-		{ .Name = "D#", .Fractional = 3.0f  / 12.0f },
-		{ .Name = "E",  .Fractional = 4.0f  / 12.0f },
-		{ .Name = "F",  .Fractional = 5.0f  / 12.0f },
-		{ .Name = "F#", .Fractional = 6.0f  / 12.0f },
-		{ .Name = "G",  .Fractional = 7.0f  / 12.0f },
-		{ .Name = "G#", .Fractional = 8.0f  / 12.0f },
-		{ .Name = "A",  .Fractional = 9.0f  / 12.0f },
-		{ .Name = "A#", .Fractional = 10.0f / 12.0f },
-		{ .Name = "B",  .Fractional = 11.0f / 12.0f },
-	};
-}
+static const NoteDef Notes[NumberOfNotes] = {
+	{ .Name = "C",  .Fractional = 0.0f  / 12.0f },
+	{ .Name = "C#", .Fractional = 1.0f  / 12.0f },
+	{ .Name = "D",  .Fractional = 2.0f  / 12.0f },
+	{ .Name = "D#", .Fractional = 3.0f  / 12.0f },
+	{ .Name = "E",  .Fractional = 4.0f  / 12.0f },
+	{ .Name = "F",  .Fractional = 5.0f  / 12.0f },
+	{ .Name = "F#", .Fractional = 6.0f  / 12.0f },
+	{ .Name = "G",  .Fractional = 7.0f  / 12.0f },
+	{ .Name = "G#", .Fractional = 8.0f  / 12.0f },
+	{ .Name = "A",  .Fractional = 9.0f  / 12.0f },
+	{ .Name = "A#", .Fractional = 10.0f / 12.0f },
+	{ .Name = "B",  .Fractional = 11.0f / 12.0f },
+};
 
 
 void Quantizer::Quantize(Quantizer::QuantRequest& req, Quantizer::QuantResult& result) {
