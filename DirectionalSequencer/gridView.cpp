@@ -138,9 +138,16 @@ void GridView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
 	auto epsilon2 = 0.5 / static_cast<int>(CellDataType::NumCellDataTypes);
 	pots[1] = static_cast<float>(grid.SelectedParameterIndex) / static_cast<int>(CellDataType::NumCellDataTypes) + epsilon2;
 
-	auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
-	auto range = cd.ScaledMax() - cd.ScaledMin();
-	pots[2] = grid.Algorithm->StepData.GetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex) / range;
+	// we don't need to calculate anything here, just pass back a 0.5, and our soft takeover logic will handle it from there.
+	// If we try to calculate it, it can go wrong thusly:
+	// 1. We pass a zero because the cell we are on has a zero value
+	// 2. We change cell types to another cell which actually does have a value.
+	// 3. We already told the NT the value was zero, and have no way to update what NT thinks the value is
+	// 4. User spins the pot, and value jumps to zero because NT thinks there is no room left on the low end of the knob
+	// 5. In reality, we are on a new cell that CAN be adjusted down
+	// Therefore we stick the value to the midpoint, and let our soft takeover logic handle it!
+	pots[2] = 0.5;
+	grid.LoadParamForEditing();
 }
 
 
