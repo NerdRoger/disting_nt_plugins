@@ -3,18 +3,19 @@
 #include <distingnt/api.h>
 
 
+// orders must match the CellDefinition::All array
 enum class CellDataType {
 	Direction,
 	Value,
 	Velocity,
-	Probability,
-	Ratchets,
-	RestAfter,
+	Glide,
 	GateLength,
+	Ratchets,
+	Probability,
+	RestAfter,
+	Repeats,
 	DriftProb,
 	MaxDrift,
-	Repeats,
-	Glide,
 	AccumAdd,
 	AccumTimes,
 
