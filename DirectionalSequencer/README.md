@@ -73,7 +73,7 @@ Additionally, each playhead has its own routing and option parameters:
 | `Reset` | The disting NT input/bus to send a trigger to in order to reset the playhead to its initial position. |
 | `Value` | The disting NT output/bus where the value (pitch) for the current step of this playhead is sent. |
 | `Gate` | The disting NT output/bus where the gate for the current step of this playhead is sent. |
-| `Velocity Gate Min` | The minimum amplitude for the gate. The step's velocity is applied on top of this, creating a "velocity gate". |
+| `Velocity Gate Min` | The minimum amplitude for the gate. The step's velocity is applied on top of this, creating a "velocity gate", to a maximum of 5V.  Setting value to 5V effectively "turns off" velocity gates, making all gates the same value. |
 | `Velocity` | The disting NT output/bus where the velocity value for the current step of this playhead is sent. |
 | `Quant Send` | The disting NT output/bus to "send" the raw, unquantized step value to. |
 | `Quant Return` | The disting NT input/bus to act as the "return" bus for a quantized value. When using `Quant Return`, this is the value that will be sent to the `Value` output/bus. |

@@ -91,7 +91,7 @@ void DirSeqAlg::BuildParameters() {
 		defineParamAndAddToPage(kParamReset,           { .name = "Reset",          .min = 0, .max =  28,   .def =  2,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamValue,           { .name = "Value",          .min = 0, .max =  28,   .def = 13,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamGate,            { .name = "Gate",           .min = 0, .max =  28,   .def = 14,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
-		defineParamAndAddToPage(kParamVelocityGateMin, { .name = "Velo. Gate Min", .min = 0, .max =  5000, .def = 1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL });
+		defineParamAndAddToPage(kParamVelocityGateMin, { .name = "Velo. Gate Min", .min = 0, .max =  5000, .def = 5000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamVelocity,        { .name = "Velocity",       .min = 0, .max =  28,   .def = 15,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamQuantSend,       { .name = "Quant Send",     .min = 0, .max =  28,   .def =  0,   .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamQuantReturn,     { .name = "Quant Return",   .min = 0, .max =  28,   .def =  0,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
