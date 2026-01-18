@@ -49,6 +49,12 @@ enum {
 };
 
 
+enum class GateLengthSource {
+	MaxGateLength,
+	Clock
+};
+
+
 struct DirSeqAlg : public _NT_algorithm{
 private:
 	// NT Parameter Data

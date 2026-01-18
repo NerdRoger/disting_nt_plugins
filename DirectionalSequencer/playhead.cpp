@@ -419,10 +419,9 @@ void Playhead::RecordCellVisit() {
 
 void Playhead::CalculateGateLength() {
 	GatePct = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
+	auto gateLengthSource = static_cast<GateLengthSource>(Algorithm->v[ParamOffset + kParamGateLengthSource]);
 
-	// if we are processing a tie, always play legato.  Use an absurd gate percent to account for non-clocked gates.  This gets recalculated every step anyway.
-	if (Tie != TieMode::None)
-		GatePct = 65535;
+	// if we are processing a tie, always play legato.  100% if we are using clocked gates, otherwise calc the percentage
 
 	if (GatePct == 0) {
 		EmitGate = false;
@@ -435,11 +434,17 @@ void Playhead::CalculateGateLength() {
 	}
 
 	// calculate the gate length for the step
-	auto gateLengthSource = Algorithm->v[ParamOffset + kParamGateLengthSource];
-	if (gateLengthSource == 0) {
+  // if we are processing a tie, always play legato.  100% if we are using clocked gates, otherwise calc the percentage
+	if (gateLengthSource == GateLengthSource::MaxGateLength) {
 		auto maxLen = Algorithm->v[ParamOffset + kParamMaxGateLength];
+		// if this is a tie step, play legato.  calc the percentage, using about 5% leeway.
+		// It's ok to overshoot because it will be recalculated next step.  But wa don't want to overshoot by much, so the gate stops if we stop the clock
+		// We don't, however, want to undershoot, because then we will not play legato
+		GatePct = (Tie != TieMode::None) ? EffectiveClockRate() * 105 / maxLen : GatePct;
 		GateLen = maxLen * GatePct / 100;
-	} else if (gateLengthSource == 1) {
+	} else if (gateLengthSource == GateLengthSource::Clock) {
+		// if this is a tie step, play legato
+		GatePct = (Tie != TieMode::None) ? 100 : GatePct;
 		GateLen = EffectiveClockRate() * GatePct / 100;
 		// this cheat helps ensure that the gate will play legato if the gatelen is 100%
 		// floating point math and/or slight clock fluctuations could make it not work out that way otherwise
