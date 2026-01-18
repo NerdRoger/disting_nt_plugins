@@ -56,7 +56,7 @@ Each cell carries the following attributes:
 | `Repeats` | If set, the step repeats this many times before advancing. |
 | `Drift Probability` | Percent chance the cell’s value will “drift” (randomly vary) on a visit. |
 | `Max Drift` | Maximum amount the value can drift away from the value (randomly up or down) when drift occurs. |
-| `Accumulator Add` | Amount to add (or subtract) to the cell value each visit; accumulated across visits to change pitch progressively. Range −1V to +1V. |
+| `Accumulator Add` | Amount to add (or subtract) to the cell value each visit; accumulated across visits to change pitch progressively. Range −5V to +5V. |
 | `Accumulator Times` | Number of visits the accumulation is applied before the accumulation process starts over. |
 
 ## Playheads
