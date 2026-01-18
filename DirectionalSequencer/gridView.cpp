@@ -501,6 +501,10 @@ void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 }
 
 
+void GridView::DrawCellAccumAdd(float val, bool selected, int x1, int y1, int x2, int y2) const {
+	DrawCellBipolarValue(val / 5.0f, selected, x1, y1, x2, y2);
+}
+
 
 void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, int x2, int y2) const {
 	using enum CellDataType;
@@ -541,7 +545,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
 		case AccumAdd:
-			DrawCellBipolarValue(val, selected, x1, y1, x2, y2);
+			DrawCellAccumAdd(val, selected, x1, y1, x2, y2);
 			break;
 		case AccumTimes:
 			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");

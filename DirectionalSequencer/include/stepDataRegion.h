@@ -21,18 +21,17 @@ private:
 		unsigned int Direction        : 4;   // 0-8
 		// 32-BIT BOUNDARY
 		unsigned int StepValue        : 14;  // 0.000 - 10.000 (fixed point)
-		unsigned int GlidePercent     : 7;   // 0-100
-		signed   int AccumulatorAdd   : 11;  // -1.000 - 1.000 (fixed point)
+		unsigned int MaxDriftAmount   : 14;  // 0.000 - 10.000 (fixed point)
+		unsigned int TieStepCount     : 3;   // 0-7
+		unsigned int Unused           : 1;
+
 		// 32-BIT BOUNDARY
 		unsigned int RatchetCount     : 3;   // 0-7
 		unsigned int RestAfter        : 3;   // 0-7
 		unsigned int RepeatCount      : 3;   // 0-7
+		unsigned int GlidePercent     : 7;   // 0-100
+		signed   int AccumulatorAdd   : 13;  // -5.000 - 5.000 (fixed point)
 		unsigned int AccumulatorTimes : 3;   // 0-7
-		unsigned int MaxDriftAmount   : 14;  // 0.000 - 10.000 (fixed point)
-		unsigned int TieStepCount     : 3;   // 0-7
-		unsigned int Unused           : 3;   // padding for unused space
-		// 3 bits left, could we think of another data point to pack into this space?
-		// or maybe just make some of the others bigger???
 
 	public:
 		friend class StepDataRegion;
