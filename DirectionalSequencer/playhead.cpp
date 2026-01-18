@@ -172,9 +172,9 @@ void Playhead::Advance() {
 
 	// start off emitting a gate...  further processing may change this
 	EmitGate = true;
-	ProcessTies();
 	ProcessRest();
 	ProcessProbability();
+	ProcessTies();
 	ProcessRepeats();
 	RecordCellVisit();
 
@@ -208,8 +208,11 @@ void Playhead::Advance() {
 
 void Playhead::ProcessTies() {
 	if (TieCount == 0) {
-		TieCount = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
-		Tie = (TieCount > 0) ? TieMode::Start : TieMode::None;
+		// only start a tie if we are not resting
+		if (EmitGate) {
+			TieCount = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
+			Tie = (TieCount > 0) ? TieMode::Start : TieMode::None;
+		}
 	} else {
 		TieCount--;
 		Tie = TieMode::Continuation;
