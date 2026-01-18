@@ -35,6 +35,12 @@ private:
 		float PreQuantStepVal;
 	};
 
+	enum class TieMode {
+		None,
+		Start,
+		Continuation
+	};
+
 	DirSeqAlg* Algorithm = nullptr;
 	int ParamOffset;
 
@@ -57,13 +63,15 @@ private:
 	GlideInfo Glide;
 	uint8_t Dip;
 	bool EmitGate;
-	uint8_t GatePct;
+	uint16_t GatePct;
 	uint8_t LastGatePct;
 	float PreQuantStepVal;
 	float StepVal;
 	uint32_t CellVisitCounts[GridSizeX][GridSizeY];
 	uint32_t GateLen;
 	uint8_t Velocity = 127;
+	uint8_t TieCount = 0;
+	TieMode Tie;
 
 	uint32_t EffectiveClockRate();
 	void Advance();
@@ -92,6 +100,7 @@ private:
 	void HumanizeGate();
 	void CalculateVelocity();
 	void HumanizeVelocity();
+	void ProcessTies();
 	float NormalizeVelocityForOutput();
 
 public:

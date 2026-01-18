@@ -47,16 +47,17 @@ Each cell carries the following attributes:
 | `Direction` | The direction to move for the next step. If empty, play continues in the current direction. If a playhead’s initial cell has no value, it moves right (east). Directions that would move outside the grid wrap to the opposite side (Pac‑Man warp). |
 | `Value` | The step value (typically pitch), modular; range 0–10V. |
 | `Velocity` | The step velocity. Can be sent to a playhead output and used to create “velocity gates”; range 1–127. |
+| `Glide` | How quickly the value glides to the next step, expressed as a percentage of the gate length. 0% = no glide; 100% = glide over the entire step. |
+| `Gate Length` | Gate duration for the step as a percentage of either the clock period or the defined max gate length. 0% = no gate; 100% = full legato. |
+| `Ratchets` | Number of evenly‑divided ratchets (based on incoming clock) to play for this step, up to 8. Irregular clocks disable ratcheting.  Steps that are part of a tie also cannot ratchet. |
 | `Probability` | Percent chance that the step will emit a gate. |
-| `Ratchets` | Number of evenly‑divided ratchets (based on incoming clock) to play for this step; up to 8. Irregular clocks disable ratcheting. |
 | `Rest After` | The step will play this many times, then rest on the next visit, then repeat the cycle (e.g., 3 → play 3 times, rest once). |
-| `Gate Length` | Gate duration for the step as a percentage of either the clock period or the defined max gate length. 0% = no gate; 100% = full legato (tie). |
-| `Drift Probability` | Percent chance the cell’s value will “drift” (randomly vary) on a visit. |
-| `Max Drift` | Maximum amount the value can drift (randomly up or down) when drift occurs. |
 | `Repeats` | If set, the step repeats this many times before advancing. |
-| `Glide` | How quickly the value glides to the next step, expressed as a percentage of the gate length. 0% = no glide; 100% = glide over the entire gate. |
+| `Drift Probability` | Percent chance the cell’s value will “drift” (randomly vary) on a visit. |
+| `Max Drift` | Maximum amount the value can drift away from the value (randomly up or down) when drift occurs. |
 | `Accumulator Add` | Amount to add (or subtract) to the cell value each visit; accumulated across visits to change pitch progressively. Range −1V to +1V. |
-| `Accumulator Times` | Number of visits the accumulation is applied before the accumulation process resets. |
+| `Accumulator Times` | Number of visits the accumulation is applied before the accumulation process starts over. |
+| `Tie Steps` | The number of steps following this step that will be tied to it, meaning the gate will be held high for the duration of all tied steps, and the value and velocity for this step will be used on all tied steps. |
 
 ## Playheads
 You can have up to 8 playheads each moving through the grid.  When you have multiple playheads, you can select them by turning the left pot.  The cell attributes remain the same across all playheads, but there are a number of parameters designed to make each playhead unique!  Each playhead can have its own starting position (chosen using Right Encoder, as above), so that each one can start in different areas of the grid.

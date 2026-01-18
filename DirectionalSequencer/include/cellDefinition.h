@@ -18,6 +18,7 @@ enum class CellDataType {
 	MaxDrift,
 	AccumAdd,
 	AccumTimes,
+	TieSteps,
 
 	NumCellDataTypes
 };

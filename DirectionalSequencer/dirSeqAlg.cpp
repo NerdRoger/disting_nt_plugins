@@ -394,7 +394,7 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 		}
 
 		// validate we have the right number of data points
-		if (numMembers != static_cast<int>(CellDataType::NumCellDataTypes)) {
+		if (numMembers > static_cast<int>(CellDataType::NumCellDataTypes)) {
 			return false;
 		}
 

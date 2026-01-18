@@ -343,6 +343,10 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
+		case TieSteps:
+			NT_intToString(&NumToStrBuf[0], ival);
+			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
+			break;
 		default:
 			break;
 	}
@@ -534,6 +538,9 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			DrawCellBipolarValue(val, selected, x1, y1, x2, y2);
 			break;
 		case AccumTimes:
+			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
+			break;
+		case TieSteps:
 			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
 			break;
 		default:

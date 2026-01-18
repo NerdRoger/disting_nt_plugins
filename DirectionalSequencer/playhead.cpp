@@ -172,6 +172,7 @@ void Playhead::Advance() {
 
 	// start off emitting a gate...  further processing may change this
 	EmitGate = true;
+	ProcessTies();
 	ProcessRest();
 	ProcessProbability();
 	ProcessRepeats();
@@ -201,6 +202,17 @@ void Playhead::Advance() {
 		LastGatePct = GatePct;
 	} else {
 		LastGatePct = 0;
+	}
+}
+
+
+void Playhead::ProcessTies() {
+	if (TieCount == 0) {
+		TieCount = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
+		Tie = (TieCount > 0) ? TieMode::Start : TieMode::None;
+	} else {
+		TieCount--;
+		Tie = TieMode::Continuation;
 	}
 }
 
@@ -276,11 +288,19 @@ void Playhead::MoveToNextCell() {
 
 
 void Playhead::CalculateStepValue() {
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	StepVal = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
 }
 
 
 void Playhead::ProcessAccumulator() {
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto accumAdd = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
 	auto accumTimes = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
 
@@ -295,6 +315,10 @@ void Playhead::ProcessAccumulator() {
 
 
 void Playhead::ProcessDrift() {
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto driftProb = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
 	if (Algorithm->Random.Next(1, 100) <= driftProb) {
 		// we are going to drift the value, now let's figure out by how much
@@ -315,6 +339,10 @@ void Playhead::ProcessDrift() {
 
 
 void Playhead::AttenuateValue() {
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto& param = Algorithm->parameters[ParamOffset + kParamAttenValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = Algorithm->v[ParamOffset + kParamAttenValue] / scaling;
@@ -323,6 +351,10 @@ void Playhead::AttenuateValue() {
 
 
 void Playhead::OffsetValue() {
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto& param = Algorithm->parameters[ParamOffset + kParamOffsetValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto offset = Algorithm->v[ParamOffset + kParamOffsetValue] / scaling;
@@ -331,6 +363,10 @@ void Playhead::OffsetValue() {
 
 
 void Playhead::QuantizeValue()	{
+	// don't change the value if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	if (QuantReturnSupplied) {
 		PreQuantStepVal = StepVal;
 		StepVal = QuantReturn;
@@ -370,6 +406,8 @@ void Playhead::ProcessRepeats() {
 	// if we're not already playing a repeated cell, set the repeat counter.  If we are repeating, this will tick down above
 	if (!IsRepeat) {
 		RepeatCount = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
+		if (Tie != TieMode::None)
+			TieCount += RepeatCount;
 	}
 }
 
@@ -381,6 +419,10 @@ void Playhead::RecordCellVisit() {
 
 void Playhead::CalculateGateLength() {
 	GatePct = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
+
+	// if we are processing a tie, always play legato.  Use an absurd gate percent to account for non-clocked gates.  This gets recalculated every step anyway.
+	if (Tie != TieMode::None)
+		GatePct = 65535;
 
 	if (GatePct == 0) {
 		EmitGate = false;
@@ -418,6 +460,10 @@ void Playhead::SetupStepValue() {
 
 
 void Playhead::DipIfNeccessary() {
+	// don't dip if we are processing a tie
+	if (Tie != TieMode::None)
+		return;
+	
 	// unless we are playing legato (last step gate len = 100), we have to briefly dip to end the previous gate,
 	// no matter the calculated length, unless of course we are already low
 	if (LastGatePct < 100 && Outputs.Gate > 0.0) {
@@ -526,6 +572,10 @@ void Playhead::HumanizeGate() {
 
 
 void Playhead::CalculateVelocity() {
+	// don't change the velocity if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto& param = Algorithm->parameters[ParamOffset + kParamVelocityAttenuate];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = Algorithm->v[ParamOffset + kParamVelocityAttenuate] / scaling;
@@ -538,6 +588,10 @@ void Playhead::CalculateVelocity() {
 
 
 void Playhead::HumanizeVelocity() {
+	// don't change the velocity if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto& param = Algorithm->parameters[ParamOffset + kParamHumanizeValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto human = Algorithm->v[ParamOffset + kParamHumanizeValue] / scaling;

@@ -89,6 +89,7 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 		case CellDataType::Glide:       return cd.CellStorageToCellValue(cell.GlidePercent);
 		case CellDataType::AccumAdd:    return cd.CellStorageToCellValue(cell.AccumulatorAdd);
 		case CellDataType::AccumTimes:  return cd.CellStorageToCellValue(cell.AccumulatorTimes);
+		case CellDataType::TieSteps:    return cd.CellStorageToCellValue(cell.TieStepCount);
 		default: return cd.CellStorageToCellValue(0);
 	}
 }
@@ -136,6 +137,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 		case CellDataType::Glide:       cell.GlidePercent = ival;     break;
 		case CellDataType::AccumAdd:    cell.AccumulatorAdd = ival;   break;
 		case CellDataType::AccumTimes:  cell.AccumulatorTimes = ival; break;
+		case CellDataType::TieSteps:    cell.TieStepCount = ival;     break;
 		default: break;  // do nothing
 	}
 
