@@ -50,7 +50,7 @@ Each cell carries the following attributes:
 | `Glide` | How quickly the value glides to the next step, expressed as a percentage of the gate length. 0% = no glide; 100% = glide over the entire step. |
 | `Gate Length` | Gate duration for the step as a percentage of either the clock period or the defined max gate length. 0% = no gate; 100% = full legato. |
 | `Ratchets` | Number of evenly‑divided ratchets (based on incoming clock) to play for this step, up to 8. Irregular clocks disable ratcheting.  Steps that are part of a tie also cannot ratchet. |
-| `Tie Steps` | The number of steps following this step that will be tied to it, meaning the gate will be held high for the duration of all tied steps, and the value and velocity for this step will be used on all tied steps. |
+| `Tie Steps` | The number of steps following this step that will be tied to it, meaning the gate will be held high for the duration of all tied steps, and the value and velocity for this step will be used on all tied steps.  When a tie is playing, the current step indicator changes to be thicker.  This allows the user to understand that the tie might be currently overriding other attributes. |
 | `Probability` | Percent chance that the step will emit a gate. |
 | `Rest After` | The step will play this many times, then rest on the next visit, then repeat the cycle (e.g., 3 → play 3 times, rest once). |
 | `Repeats` | If set, the step repeats this many times before advancing. |
