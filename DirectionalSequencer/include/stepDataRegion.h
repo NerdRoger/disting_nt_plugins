@@ -29,8 +29,9 @@ private:
 		unsigned int RestAfter        : 3;   // 0-7
 		unsigned int RepeatCount      : 3;   // 0-7
 		unsigned int GlidePercent     : 7;   // 0-100
-		signed   int AccumulatorAdd   : 13;  // -5.000 - 5.000 (fixed point)
+		signed   int AccumulatorAdd   : 13;  // -4.000 - 4.000 (fixed point)
 		unsigned int AccumulatorTimes : 3;   // 0-7
+		// 32-BIT BOUNDARY
 
 	public:
 		friend class StepDataRegion;

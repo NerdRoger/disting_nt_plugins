@@ -514,7 +514,8 @@ void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 
 
 void GridView::DrawCellAccumAdd(float val, bool selected, int x1, int y1, int x2, int y2) const {
-	DrawCellBipolarValue(val / 5.0f, selected, x1, y1, x2, y2);
+	auto cd = CellDefinition::All[static_cast<size_t>(CellDataType::AccumAdd)];
+	DrawCellBipolarValue(val / cd.ScaledMax(), selected, x1, y1, x2, y2);
 }
 
 
