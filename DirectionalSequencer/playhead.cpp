@@ -503,6 +503,10 @@ void Playhead::ProcessGlide() {
 
 
 void Playhead::ProcessRatchets() {
+	// don't ratchet if we are pard of a tie
+	if (Tie != TieMode::None)
+		return;
+	
 	auto ratchets = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
 	// only ratchet when our clock is stable, otherwise it will sound weird
 	if (ratchets > 0 && StableClock) {
