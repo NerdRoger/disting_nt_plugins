@@ -11,6 +11,7 @@ enum class CellDataType {
 	Glide,
 	GateLength,
 	Ratchets,
+	TieSteps,
 	Probability,
 	RestAfter,
 	Repeats,
@@ -18,7 +19,6 @@ enum class CellDataType {
 	MaxDrift,
 	AccumAdd,
 	AccumTimes,
-	TieSteps,
 
 	NumCellDataTypes
 };
