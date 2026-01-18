@@ -23,8 +23,7 @@ private:
 		unsigned int StepValue        : 14;  // 0.000 - 10.000 (fixed point)
 		unsigned int MaxDriftAmount   : 14;  // 0.000 - 10.000 (fixed point)
 		unsigned int TieStepCount     : 3;   // 0-7
-		unsigned int Unused           : 1;
-
+		bool         Mute             : 1;   // true or false
 		// 32-BIT BOUNDARY
 		unsigned int RatchetCount     : 3;   // 0-7
 		unsigned int RestAfter        : 3;   // 0-7

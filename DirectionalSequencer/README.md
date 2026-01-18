@@ -12,7 +12,7 @@ When you first add the Directional Sequencer, you can specify how many playheads
 As you can see in the image above, the UI is divided into 4 sections:
 - On the left, the playhead list.  We just have a single one here.
 - In the middle, the grid field.  These are your steps.  Here, you can see that the top-left cell is selected.
-- On the right, the per-step attributes of the selected cell.  The UI can only show 5 attributes at a time, but the list scrolls, and there are actually 13 different attributes per cell you can select.
+- On the right, the per-step attributes of the selected cell.  The UI can only show 5 attributes at a time, but the list scrolls, and there are actually 15 different attributes per cell you can select.
 - On the bottom, you can see a help section showing you the controls.  As you scroll through the attributes, this area will change to show you what each of them means.
 
 <br>
@@ -58,6 +58,7 @@ Each cell carries the following attributes:
 | `Max Drift` | Maximum amount the value can drift away from the value (randomly up or down) when drift occurs. |
 | `Accumulator Add` | Amount to add (or subtract) to the cell value each visit; accumulated across visits to change pitch progressively. Range −5V to +5V. |
 | `Accumulator Times` | Number of visits the accumulation is applied before the accumulation process starts over. |
+| `Mute` | If set, the step will not emit a gate, effectively muting the step. |
 
 ## Playheads
 You can have up to 8 playheads each moving through the grid.  When you have multiple playheads, you can select them by turning the left pot.  The cell attributes remain the same across all playheads, but there are a number of parameters designed to make each playhead unique!  Each playhead can have its own starting position (chosen using Right Encoder, as above), so that each one can start in different areas of the grid.
@@ -107,7 +108,7 @@ So why would you want to use a send/return for quantizing your values, rather th
 
 ## Overview
 
-So what if you want to modulate an attribute of a single cell in the grid?  Normally with the disting NT, everything you want to modulate would be its own parameter of the algorithm.  However the disting NT has a limit on how many parameters a single algorithm can have, and unfortunately if you take the 32 cells and multiply out by the 13 possible attributes, that comes out to way to many parameters.  But it sure would be cool to be able to change all of these attributes with modulation!  Of course you would likely never modulate them all at once, but it would be great to, for example, modulate the `Value` on cells 5 and 7, modulate the `Velocity` on 3 and 11, and modulate the `Direction` on cells 2, 4, 6, and 8.
+So what if you want to modulate an attribute of a single cell in the grid?  Normally with the disting NT, everything you want to modulate would be its own parameter of the algorithm.  However the disting NT has a limit on how many parameters a single algorithm can have, and unfortunately if you take the 32 cells and multiply out by the 15 possible attributes, that comes out to way to many parameters.  But it sure would be cool to be able to change all of these attributes with modulation!  Of course you would likely never modulate them all at once, but it would be great to, for example, modulate the `Value` on cells 5 and 7, modulate the `Velocity` on 3 and 11, and modulate the `Direction` on cells 2, 4, 6, and 8.
 
 This is where the Mod Matrix Expander for the Directional Sequencer comes in!  It is a sidecar to the Directional Sequencer, and when you place it just below the Directional Sequencer in the algorithm list, it "links up" to it automatically.  If it is not linked to a Directional Sequencer, the UI will instruct you to move it into place.  However once linked, you will see a simple UI like this:
 
@@ -121,7 +122,7 @@ To get started, go into the disting NT parameters of the expander, and select on
 
 You can also see from this image, that there is a parameter for each grid cell for the attribute, and you can assign CV/MIDI/I2C mappings to whichever ones you like!  The parameter value stays in sync with the underlying attribute value in the Directional Sequencer, so as long as the two are linked (matrix below sequencer), when you change one, the other changes automatically!
 
-But the expander only allows you to target 4 attributes, and there are 13 total.  So you can chain multiple matrix algorithms, one below the next, to stack up as many attribute values as you want to modulate!
+But the expander only allows you to target 4 attributes, and there are 15 total.  So you can chain multiple matrix algorithms, one below the next, to stack up as many attribute values as you want to modulate!
 
 ## Parameters
 

@@ -36,6 +36,7 @@ private:
 	void DrawCellValue(float val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellVelocity(float val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2, int16_t specialCase, const char *specialCaseTxt) const;
+  void DrawCellMute(int16_t val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellAccumAdd(float val, bool selected, int x1, int y1, int x2, int y2) const;
 

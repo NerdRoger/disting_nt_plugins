@@ -20,4 +20,5 @@ HIDDEN const CellDefinition CellDefinition::All[static_cast<uint16_t>(CellDataTy
 	{ "MaxDrift",    "Max Drift",    0,    10000, 0,    kNT_unitVolts,   kNT_scaling1000, 15, "Max amount the value will drift by, 0-10V" },
 	{ "AccumAdd",    "Accum Add",   -5000, 5000,  0,    kNT_unitVolts,   kNT_scaling1000,  5, "How much gets added to this cell each visit" },
 	{ "AccumTimes",  "Accum Times",  0,    7,     0,    kNT_unitNone,    kNT_scalingNone, 10, "Clear accumulator for cell after N visits" },
+	{ "Mute",        "Mute",         0,    1,     0,    kNT_unitNone,    kNT_scalingNone, 30, "Mute this step, it will emit no gate" },
 };

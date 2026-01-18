@@ -19,6 +19,7 @@ enum class CellDataType {
 	MaxDrift,
 	AccumAdd,
 	AccumTimes,
+	Mute,
 
 	NumCellDataTypes
 };

@@ -353,6 +353,9 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, ival == 0 ? "--" : NumToStrBuf, color);
 			break;
+		case Mute:
+			NT_drawText(x, y, ival == 0 ? "--" : "Yes", color);
+			break;
 		default:
 			break;
 	}
@@ -473,6 +476,15 @@ void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2
 }
 
 
+void GridView::DrawCellMute(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
+	if (val >= 0 && val <= 1) {
+		auto color = selected ? CellBrightColor : CellDimColor;
+		auto txt = (val == 0) ? "" : "M";
+		NT_drawText(x1 + 4, y1 + 10, txt, color);
+	}
+}
+
+
 void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val == 0) return;
 	auto color = selected ? CellBrightColor : CellDimColor;
@@ -552,6 +564,9 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 			break;
 		case TieSteps:
 			DrawCellNumber(val, selected, x1, y1, x2, y2, 0, "");
+			break;
+		case Mute:
+			DrawCellMute(val, selected, x1, y1, x2, y2);
 			break;
 		default:
 			break;

@@ -172,6 +172,7 @@ void Playhead::Advance() {
 
 	// start off emitting a gate...  further processing may change this
 	EmitGate = true;
+	ProcessMute();
 	ProcessRest();
 	ProcessProbability();
 	ProcessTies();
@@ -208,7 +209,7 @@ void Playhead::Advance() {
 
 void Playhead::ProcessTies() {
 	if (TieCount == 0) {
-		// only start a tie if we are not resting
+		// only start a tie if we are not resting or muted
 		if (EmitGate) {
 			TieCount = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
 			Tie = (TieCount > 0) ? TieMode::Start : TieMode::None;
@@ -373,6 +374,14 @@ void Playhead::QuantizeValue()	{
 	if (QuantReturnSupplied) {
 		PreQuantStepVal = StepVal;
 		StepVal = QuantReturn;
+	}
+}
+
+
+void Playhead::ProcessMute() {
+	auto mute = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Mute);
+	if (mute) {
+		EmitGate = false;
 	}
 }
 

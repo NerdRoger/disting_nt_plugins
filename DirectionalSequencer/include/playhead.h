@@ -89,6 +89,7 @@ private:
 	void AttenuateValue();
 	void OffsetValue();
 	void QuantizeValue();
+	void ProcessMute();
 	void ProcessRest();
 	void ProcessProbability();
 	void ProcessRepeats();
