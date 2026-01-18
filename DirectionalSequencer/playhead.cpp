@@ -446,8 +446,8 @@ void Playhead::CalculateGateLength() {
 		GatePct = (Tie != TieMode::None) ? EffectiveClockRate() * 105 / maxLen : GatePct;
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == GateLengthSource::Clock) {
-		// if this is a tie step, play legato
-		GatePct = (Tie != TieMode::None) ? 100 : GatePct;
+		// if this is a tie step, play legato, again overshooting by a small amount to account for rounding errors
+		GatePct = (Tie != TieMode::None) ? 101 : GatePct;
 		GateLen = EffectiveClockRate() * GatePct / 100;
 		// this cheat helps ensure that the gate will play legato if the gatelen is 100%
 		// floating point math and/or slight clock fluctuations could make it not work out that way otherwise
