@@ -12,6 +12,9 @@ struct DirSeqAlg;
 // this class represents a single playhead moving thru the sequencer field
 struct Playhead {
 private:
+
+	friend struct GridView;
+
 	struct RatchetInfo {
 		bool Active;
 		uint8_t Count;

@@ -198,10 +198,16 @@ void GridView::DrawCells() const {
 			auto cb = CellCoordsToBounds(coords);
 			
 			// draw the inner part of the cell, depending on what is selected/current
-			if (current) {
-					NT_drawShapeI(kNT_box, cb.x1 + 1, cb.y1 + 1, cb.x2 - 1, cb.y2 - 1, 15);
-			}
 			DrawCell(x, y, selected, cb.x1, cb.y1, cb.x2, cb.y2);
+			if (current) {
+				NT_drawShapeI(kNT_box, cb.x1 + 1, cb.y1 + 1, cb.x2 - 1, cb.y2 - 1, 15);
+				bool tie = (Algorithm->Playheads[SelectedPlayheadIndex].Tie != Playhead::TieMode::None);
+				if (tie) {
+					NT_drawShapeI(kNT_box, cb.x1 + 2, cb.y1 + 2, cb.x2 - 2, cb.y2 - 2, 10);
+					NT_drawShapeI(kNT_box, cb.x1 + 3, cb.y1 + 3, cb.x2 - 3, cb.y2 - 3, 5);
+				}
+
+			}
 
 			// draw the cell border
 			NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
