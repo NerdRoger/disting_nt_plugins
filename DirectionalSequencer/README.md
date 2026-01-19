@@ -145,3 +145,13 @@ The expander has some other modulation tricks as well.  We will go over all of t
 | `Swap With Neighbor` | Trigger that swaps the selected `Action Cell`'s `Target` attribute value with one of its neighbors (edges wrap around). |
 | `Rotate Row` | Trigger that rotates all `Target` attribute values in the `Action Cell`'s row by one position. |
 | `Rotate Column` | Trigger that rotates all `Target` attribute values in the `Action Cell`'s column by one position. |
+
+## Housekeeping
+
+This plugin utilizes features in API version 12 of the Disting NT API.  This version is first supported in NT firmware version 1.13.
+
+Here is a video I made covering most of the functionality described above.
+
+[Video](https://www.youtube.com/watch?v=HXw8AbAmCJM)
+
+Bugs, PRs, etc on [GitHub](https://github.com/NerdRoger/disting_nt_plugins) or find me (AgentTerror) on the Expert Sleepers Discord.
