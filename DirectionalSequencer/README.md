@@ -44,10 +44,10 @@ Each cell carries the following attributes:
 
 | Attribute | Description |
 |--------|--------|
-| `Direction` | The direction to move for the next step. If empty, play continues in the current direction. If a playhead’s initial cell has no value, it moves right (east). Directions that would move outside the grid wrap to the opposite side (Pac‑Man warp). |
+| `Direction` | The direction to move for the next step. If empty, play continues in the current direction. If a playhead’s initial cell has no direction, it moves right (east). Directions that would move outside the grid wrap to the opposite side (Pac‑Man warp). |
 | `Value` | The step value (typically pitch), modular; range 0–10V. |
 | `Velocity` | The step velocity. Can be sent to a playhead output and used to create “velocity gates”; range 1–127. |
-| `Glide` | How quickly the value glides to the next step, expressed as a percentage of the gate length. 0% = no glide; 100% = glide over the entire step. |
+| `Glide` | How quickly the value glides across the step, expressed as a percentage of the gate length. If a tie is playing, then the gate length spans multiple steps, so your glide can as well.  0% = no glide; 100% = glide over the entire step. |
 | `Gate Length` | Gate duration for the step as a percentage of either the clock period or the defined max gate length. 0% = no gate; 100% = full legato. |
 | `Ratchets` | Number of evenly‑divided ratchets (based on incoming clock) to play for this step, up to 8. Irregular clocks disable ratcheting.  Steps that are part of a tie also cannot ratchet. |
 | `Tie Steps` | The number of steps following this step that will be tied to it, meaning the gate will be held high for the duration of all tied steps, and the value and velocity for this step will be used on all tied steps.  When a tie is playing, the current step indicator changes to be thicker.  This allows the user to understand that the tie might be currently overriding other attributes. |
@@ -80,7 +80,7 @@ Additionally, each playhead has its own routing and option parameters:
 | `Quant Send` | The disting NT output/bus to "send" the raw, unquantized step value to. |
 | `Quant Return` | The disting NT input/bus to act as the "return" bus for a quantized value. When using `Quant Return`, this is the value that will be sent to the `Value` output/bus. |
 
-So why would you want to use a send/return for quantizing your values, rather than just sticking a quantizer after the `Value` output?  The answer is when you are using `Glide`.  If you quantize the value after the sequencer, then any glide is just going to be swallowed by your quantizer, or its going to glide in discrete steps, and not smoothly (which may be cool, but may also not be what you want).  By using a send/return to send pitch information out to your quantizer, the sequencer can ask the quantizer to tell it the quantized value of the next step, and then smoothly glide the pitch there.  If this is unimportant to you, just send `Value` so your quantizer, and don't use the extra send/return channels.
+So why would you want to use a send/return for quantizing your values, rather than just sticking a quantizer after the `Value` output?  The answer is when you are using `Glide`.  If you quantize the value after the sequencer, then any glide is just going to be swallowed by your quantizer if it uses sample and hold, or it is going to glide in discrete steps (glissando), and not smoothly (portamento).  By using a send/return to send pitch information out to your quantizer, the sequencer can ask the quantizer to tell it the quantized value of the next step, and then smoothly glide the pitch there (portamento).  If this is unimportant to you, just send `Value` so your quantizer, and don't use the extra send/return channels.
 
 ### Playhead Options
 

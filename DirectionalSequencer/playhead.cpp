@@ -468,6 +468,10 @@ void Playhead::CalculateGateLength() {
 
 
 void Playhead::SetupStepValue() {
+	// don't change the glide values if we are continuing a tie
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	// a duration of zero means no glide, just a normal step.  We will adjust duration below, if required
 	Glide.OldStepVal = Glide.NewStepVal;
 	Glide.NewStepVal = StepVal;
@@ -490,10 +494,21 @@ void Playhead::DipIfNeccessary() {
 
 
 void Playhead::ProcessGlide() {
+	// Don't recalculate glide on continuation steps - use what was set on the start step
+	if (Tie == TieMode::Continuation)
+		return;
+	
 	auto glidePct = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
 	if (glidePct > 0) {
-		// calculate the glide as a percentage of the gate length
-		Glide.Duration = GateLen * glidePct / 100;
+		// If we're starting a tie, spread the glide across all tied steps
+		auto totalGateLen = GateLen;
+		if (Tie == TieMode::Start && TieCount > 0) {
+			// Total duration spans all tied steps (current step + remaining TieCount steps)
+			totalGateLen = GateLen * (TieCount + 1);
+		}
+		
+		// calculate the glide as a percentage of the total gate length
+		Glide.Duration = totalGateLen * glidePct / 100;
 		Glide.Delta = (Glide.NewStepVal - Glide.OldStepVal) / Glide.Duration;
 	} else {
 		Glide.Duration = 0;
