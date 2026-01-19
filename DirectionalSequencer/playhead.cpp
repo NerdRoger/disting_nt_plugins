@@ -541,6 +541,10 @@ void Playhead::ProcessRatchets() {
 
 
 void Playhead::AttenuateGateLength() {
+	// don't change the gate length if we are part of a tie
+	if (Tie != TieMode::None)
+		return;
+
 	// if we are using a defined max gate length, we change that to attenuate.  We don't want to double attenuate here
 	auto gateLengthSource = Algorithm->v[ParamOffset + kParamGateLengthSource];
 	if (gateLengthSource == 0) {
