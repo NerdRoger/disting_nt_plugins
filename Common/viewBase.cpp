@@ -21,118 +21,165 @@ void ViewBase::DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text
 
 
 void ViewBase::ProcessControlInput(const _NT_uiData& data) {
-	if (data.encoders[0] && OnEncoder1Turn) {
-		OnEncoder1Turn(this, data.encoders[0]);
-	}
 
-	if (data.encoders[1] && OnEncoder2Turn) {
-		OnEncoder2Turn(this, data.encoders[1]);
-	}
-
-	if (data.controls & kNT_potL && OnPot1Turn) {
-		OnPot1Turn(this, data.pots[0]);
-	}
-
-	if (data.controls & kNT_potC && OnPot2Turn) {
-		OnPot2Turn(this, data.pots[1]);
-	}
-
-	if (data.controls & kNT_potR) {
-		// don't register turns during the brief period where we are lifting our finger after a press
-		if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= Timer->TotalMs && OnPot3Turn) {
-			OnPot3Turn(this, data.pots[2]);
+	// lambda for encoder turn functionality
+	auto handleEncoderTurn = [&](int index, auto turnCallback) {
+    if (data.encoders[index] && turnCallback) {
+			turnCallback(this, data.encoders[index]);
 		}
-	}
+	};
+	handleEncoderTurn(0, OnEncoder1Turn);
+	handleEncoderTurn(1, OnEncoder2Turn);
 
-	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
-		Encoder2DownTime = Timer->TotalMs;
-		if (OnEncoder2Push)
-			OnEncoder2Push(this);
-	}
-
-	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
-
-		if (Encoder2DownTime > 0) {
-			// calculate how long we held the encoder down (in ms)
-			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
-			if (totalDownTime < ShortPressThreshold) {
-				if (OnEncoder2ShortPress)
-					OnEncoder2ShortPress(this);
-			} else {
-				// reset to prepare for another long press
-				// we don't fire LongPress from here, because that can fire before even lifting
-				Encoder2LongPressFired = false;
+	// lambda for pot turn functionality
+	auto handlePotTurn = [&](uint32_t mask, int index, auto turnCallback) {
+    if ((data.controls & mask) && turnCallback) {
+			// don't register turns during the brief period where we are lifting our finger after a press
+			if (PotDownTime[index] == 0 && BlockPotChangesUntil[index] <= Timer->TotalMs) {
+					turnCallback(this, data.pots[index]);
 			}
-			Encoder2DownTime = 0;
-		}
+    }
+	};
+	handlePotTurn(kNT_potL, 0, OnPot1Turn);
+	handlePotTurn(kNT_potC, 1, OnPot2Turn);
+	handlePotTurn(kNT_potR, 2, OnPot3Turn);
 
-		if (OnEncoder2Release)
-			OnEncoder2Release(this);
-	}
+	// lambda for encoder push functionality
+	auto handleEncoderPush = [&](uint32_t mask, int index, auto pushCallback) {
+    if ((data.controls & mask) && !(data.lastButtons & mask)) {
+			EncoderDownTime[index] = Timer->TotalMs;
+			if (pushCallback)
+				pushCallback(this);
+    }
+	};
+	handleEncoderPush(kNT_encoderButtonL, 0, OnEncoder1Push);
+	handleEncoderPush(kNT_encoderButtonR, 1, OnEncoder2Push);
 
-	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
-		Pot3DownTime = Timer->TotalMs;
-		if (OnPot3Push)
-			OnPot3Push(this);
-	}
+	// lambda for encoder release functionality
+	auto handleEncoderRelease = [&](uint32_t mask, int index, auto shortPressCallback, auto releaseCallback) {
+		if (!(data.controls & mask) && (data.lastButtons & mask)) {
+			if (EncoderDownTime[index] > 0) {
+				// Calculate how long we held the encoder down (in ms)
+				auto totalDownTime = Timer->TotalMs - EncoderDownTime[index];
 
-	if (!(data.controls & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
-
-		if (Pot3DownTime > 0) {
-			// calculate how long we held the encoder down (in ms)
-			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
-			if (totalDownTime < ShortPressThreshold) {
-				if (OnPot3ShortPress)
-					OnPot3ShortPress(this);
-			} else {
-				// reset to prepare for another long press
-				// we don't fire LongPress from here, because that can fire before even lifting
-				Pot3LongPressFired = false;
+				if (totalDownTime < ShortPressThreshold) {
+					if (shortPressCallback)
+						shortPressCallback(this);
+				} else {
+					// Reset to prepare for another long press
+					EncoderLongPressFired[index] = false;
+				}
+				EncoderDownTime[index] = 0;
 			}
-			Pot3DownTime = 0;
-			// block any changes from taking place for a brief period afterward, because lifting finger from the pot can cause minute changes otherwise
-			BlockPot3ChangesUntil = Timer->TotalMs + 100;
+
+			if (releaseCallback)
+				releaseCallback(this);
 		}
+	};
+	handleEncoderRelease(kNT_encoderButtonL, 0, OnEncoder1ShortPress, OnEncoder1Release);
+	handleEncoderRelease(kNT_encoderButtonR, 1, OnEncoder2ShortPress, OnEncoder2Release);
 
-		if (OnPot3Release)
-			OnPot3Release(this);
-	}
+	// lambda for pot push functionality
+	auto handlePotPush = [&](uint32_t mask, int index, auto pushCallback) {
+		if ((data.controls & mask) && !(data.lastButtons & mask)) {
+			PotDownTime[index] = Timer->TotalMs;
+			if (pushCallback)
+				pushCallback(this);
+		}
+	};
+	handlePotPush(kNT_potButtonL, 0, OnPot1Push);
+	handlePotPush(kNT_potButtonC, 1, OnPot2Push);
+	handlePotPush(kNT_potButtonR, 2, OnPot3Push);
 
-	if ((data.controls & kNT_button3) && !(data.lastButtons & kNT_button3) && OnButton3Push) {
-		OnButton3Push(this);
-	}
+	// lmabda for pot release functionality
+	auto handlePotRelease = [&](uint32_t mask, int index, auto shortPressCallback, auto releaseCallback) {
+		if (!(data.controls & mask) && (data.lastButtons & mask)) {
+			if (PotDownTime[index] > 0) {
+				auto totalDownTime = Timer->TotalMs - PotDownTime[index];
+				
+				if (totalDownTime < ShortPressThreshold) {
+					if (shortPressCallback)
+						shortPressCallback(this);
+				} else {
+					PotLongPressFired[index] = false;
+				}
 
-	if (!(data.controls & kNT_button3) && (data.lastButtons & kNT_button3) && OnButton3Release) {
-		OnButton3Release(this);
-	}
+				PotDownTime[index] = 0;
+				BlockPotChangesUntil[index] = Timer->TotalMs + 100;
+			}
+
+			if (releaseCallback)
+				releaseCallback(this);
+		}
+	};
+	handlePotRelease(kNT_potButtonL, 0, OnPot1ShortPress, OnPot1Release);
+	handlePotRelease(kNT_potButtonC, 1, OnPot2ShortPress, OnPot2Release);
+	handlePotRelease(kNT_potButtonR, 2, OnPot3ShortPress, OnPot3Release);
+
+	// lambda for button push functionality
+	auto handleButtonPush = [&](uint32_t mask, auto pushCallback) {
+		if ((data.controls & mask) && !(data.lastButtons & mask) && pushCallback) {
+			pushCallback(this);
+		}
+	};
+	handleButtonPush(kNT_button1, OnButton1Push);
+	handleButtonPush(kNT_button2, OnButton2Push);
+	handleButtonPush(kNT_button3, OnButton3Push);
+	handleButtonPush(kNT_button4, OnButton4Push);
+
+	// lambda for button release functionality
+	auto handleButtonRelease = [&](uint32_t mask, auto releaseCallback) {
+		if (!(data.controls & mask) && (data.lastButtons & mask) && releaseCallback) {
+			releaseCallback(this);
+		}
+	};
+	handleButtonRelease(kNT_button1, OnButton1Release);
+	handleButtonRelease(kNT_button2, OnButton2Release);
+	handleButtonRelease(kNT_button3, OnButton3Release);
+	handleButtonRelease(kNT_button4, OnButton4Release);
 }
 
 
 // this method needs to be called regularly in order to measure time and fire the long press
 // generally calling it from draw() is a good idea, because you don't need as frequently as step()
 void ViewBase::ProcessLongPresses() {
-	if (Pot3DownTime > 0) {
-		if (!Pot3LongPressFired) {
-			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = Timer->TotalMs - Pot3DownTime;
+
+	// lambda for handling pots
+	auto handlePotLongPress = [&](int index, auto longPressCallback) {
+		if (PotDownTime[index] > 0 && !PotLongPressFired[index]) {
+			// Calculate how long we held the pot down (in ms)
+			auto totalDownTime = Timer->TotalMs - PotDownTime[index];
+			
 			if (totalDownTime >= ShortPressThreshold) {
-				if (OnPot3LongPress)
-					OnPot3LongPress(this);
-				Pot3LongPressFired = true;
+				if (longPressCallback)
+					longPressCallback(this);
+						
+				PotLongPressFired[index] = true;
 			}
 		}
-	}
-	if (Encoder2DownTime > 0) {
-		if (!Encoder2LongPressFired) {
-			// calculate how long we held the pot down (in ms)
-			auto totalDownTime = Timer->TotalMs - Encoder2DownTime;
+	};
+
+	handlePotLongPress(0, OnPot1LongPress);
+	handlePotLongPress(1, OnPot2LongPress);
+	handlePotLongPress(2, OnPot3LongPress);
+
+	// lambda for handling encoders
+	auto handleEncoderLongPress = [&](int index, auto longPressCallback) {
+    if (EncoderDownTime[index] > 0 && !EncoderLongPressFired[index]) {
+			// Calculate how long we held the encoder down (in ms)
+			auto totalDownTime = Timer->TotalMs - EncoderDownTime[index];
+			
 			if (totalDownTime >= ShortPressThreshold) {
-				if (OnEncoder2LongPress)
-					OnEncoder2LongPress(this);
-				Encoder2LongPressFired = true;
+				if (longPressCallback)
+					longPressCallback(this);
+						
+				EncoderLongPressFired[index] = true;
 			}
-		}
-	}
+    }
+	};
+
+	handleEncoderLongPress(0, OnEncoder1LongPress);
+	handleEncoderLongPress(1, OnEncoder2LongPress);
 }
 
 
