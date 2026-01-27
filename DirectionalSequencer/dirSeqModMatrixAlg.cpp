@@ -61,7 +61,7 @@ void DirSeqModMatrixAlg::BuildParameters() {
 		// just fill with spaces for now....  this will actually be set when the target parameter changes down below
 		memset(PageNames[m], ' ', MaxPageNameLen);
 		PageNames[m][MaxPageNameLen - 1] = 0;
-		PageDefs[m] = { .name = PageNames[m], .numParams = kParamModTargetStride, .params = ModTargetPageDefs[m] };
+		PageDefs[m] = { .name = PageNames[m], .numParams = kParamModTargetStride, .group = 1, .params = ModTargetPageDefs[m] };
 
 		strncpy(TargetNames[m], "Target ", 8);
 		TargetNames[m][7] = 'A' + m;

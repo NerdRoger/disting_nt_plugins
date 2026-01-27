@@ -65,7 +65,7 @@ void DirSeqAlg::BuildParameters() {
 		};
 
 		// define the general parameters for this playhead
-		PageDefs[numPages] = { .name = HeadOptionsPageNamesDef[h], .numParams = kNumGeneralPlayheadParameters, .params = pagePtr };
+		PageDefs[numPages] = { .name = HeadOptionsPageNamesDef[h], .numParams = kNumGeneralPlayheadParameters, .group = 1, .params = pagePtr };
 		defineParamAndAddToPage(kParamGateLengthSource,    { .name = "Gate Len From",  .min =     0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom });
 		defineParamAndAddToPage(kParamMaxGateLength,       { .name = "Max Gate Len",   .min =     0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamGateLengthAttenuate, { .name = "Gate Atten. %",  .min =     0, .max = 1000, .def = 1000, .unit = kNT_unitPercent, .scaling = kNT_scaling10,   .enumStrings = NULL });
@@ -83,7 +83,7 @@ void DirSeqAlg::BuildParameters() {
 		numPages++;
 
 		// define the routing (I/O) parameters for this playhead
-		PageDefs[numPages] = { .name = HeadRoutingPageNamesDef[h], .numParams = kNumIOPlayheadParameters, .params = pagePtr };
+		PageDefs[numPages] = { .name = HeadRoutingPageNamesDef[h], .numParams = kNumIOPlayheadParameters, .group = 2, .params = pagePtr };
 		// TODO:  user better defaults once develpmnet is done
 		defineParamAndAddToPage(kParamClock,           { .name = "Clock",          .min = 1, .max =  28,   .def =  1,   .unit = kNT_unitCvInput,  .scaling = 0, .enumStrings = NULL });
 		defineParamAndAddToPage(kParamClockDivisor,    { .name = "Clock Divisor",  .min = 1, .max = 128,   .def =  1,   .unit = kNT_unitNone,     .scaling = kNT_scalingNone, .enumStrings = NULL });
