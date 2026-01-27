@@ -126,7 +126,7 @@ void WindowComparatorAlg::BuildParameterPages() {
 	// global page
 	pagePtr[0] = kParamGlobalInputScale;
 	pagePtr[1] = kParamGlobalInputOffset;
-	PageDefs[numPages] = { .name = "Global", .numParams = kNumCommonParameters, .params = pagePtr };
+	PageDefs[numPages] = { .name = "Global", .numParams = kNumCommonParameters, .group = 1, .params = pagePtr };
 	pagePtr += kNumCommonParameters;
 	numPages++;
 
@@ -145,7 +145,7 @@ void WindowComparatorAlg::BuildParameterPages() {
 		pagePtr[9]  = offset + kParamOutsideWindowGate;
 		pagePtr[10] = offset + kParamEnterTrigger;
 		pagePtr[11] = offset + kParamExitTrigger;
-		PageDefs[numPages] = { .name = ChannelPageNames[ch], .numParams = kNumPerChannelParameters, .params = pagePtr };
+		PageDefs[numPages] = { .name = ChannelPageNames[ch], .numParams = kNumPerChannelParameters, .group = 2, .params = pagePtr };
 		pagePtr += kNumPerChannelParameters;
 		numPages++;
 	}
@@ -174,7 +174,7 @@ void WindowComparatorAlg::BuildParameterPages() {
 		pagePtr += kNumCommonAggregateParameters;
 		cnt += kNumCommonAggregateParameters;
 
-		PageDefs[numPages] = { .name = "Aggregate", .numParams = cnt, .params = aggPagePtr };
+		PageDefs[numPages] = { .name = "Aggregate", .numParams = cnt, .group = 3, .params = aggPagePtr };
 		numPages++;
 	}
 
