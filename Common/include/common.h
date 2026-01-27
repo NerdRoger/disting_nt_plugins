@@ -12,6 +12,9 @@
 #endif
 
 
+constexpr uint8_t MAX_BUS_COUNT = 28;
+
+
 struct Point {
 	uint8_t x;
 	uint8_t y;
@@ -53,6 +56,16 @@ INLINE constexpr T wrap(T val, T lo, T hi) {
 }
 
 
+template <typename T>
+INLINE constexpr void lohi(T& a, T& b) {
+	if (b < a) {
+		T tmp = a;
+		a = b;
+		b = tmp;
+	}
+}
+
+
 INLINE constexpr uint16_t CalculateScaling(int scale) {
 	switch (scale)
 	{
@@ -66,6 +79,11 @@ INLINE constexpr uint16_t CalculateScaling(int scale) {
 
 INLINE float GetScaledParameterValue(_NT_algorithm& alg, uint16_t paramIndex) {
 	return static_cast<float>(alg.v[paramIndex]) / CalculateScaling(alg.parameters[paramIndex].scaling);
+}
+
+
+INLINE int16_t UnscaleValueForParameter(_NT_algorithm& alg, uint16_t paramIndex, float val) {
+	return val * CalculateScaling(alg.parameters[paramIndex].scaling);
 }
 
 

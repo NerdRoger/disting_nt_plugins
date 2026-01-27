@@ -1,0 +1,410 @@
+#include <cstring>
+#include "windowComparatorAlg.h"
+
+
+static constexpr float GateHigh = 10.0;
+static constexpr float GateLow = 0.0;
+static constexpr float TrigHigh = 10.0;
+static constexpr float TrigLow = 0.0;
+
+
+static const _NT_specification SpecificationsDef[] = {
+	{ .name = "Channels", .min = 1, .max = 8, .def = 1, .type = kNT_typeGeneric },
+};
+
+
+static const char* const EnumStringsOverrideGlobalAtten[] = { "No", "Yes" };
+
+
+static const char* const ChannelPageNames[] = {
+	"Channel A", "Channel B", "Channel C", "Channel D", "Channel E", "Channel F", "Channel G", "Channel H",
+};
+
+
+static const char* const ExactlyInside[] = {
+	"Exactly 1 Inside Gate", "Exactly 2 Inside Gate", "Exactly 3 Inside Gate", "Exactly 4 Inside Gate", "Exactly 5 Inside Gate", "Exactly 6 Inside Gate", "Exactly 7 Inside Gate",
+};
+
+
+static const char* const ExactlyOutside[] = {
+	"Exactly 1 Outside Gate", "Exactly 2 Outside Gate", "Exactly 3 Outside Gate", "Exactly 4 Outside Gate", "Exactly 5 Outside Gate", "Exactly 6 Outside Gate", "Exactly 7 Outside Gate",
+};
+
+
+static const char* const AtLeastInside[] = {
+	"At Least 1 Inside Gate", "At Least 2 Inside Gate", "At Least 3 Inside Gate", "At Least 4 Inside Gate", "At Least 5 Inside Gate", "At Least 6 Inside Gate", "At Least 7 Inside Gate",
+};
+	
+
+static const char* const AtLeastOutside[] = {
+	"At Least 1 Outside Gate", "At Least 2 Outside Gate", "At Least 3 Outside Gate", "At Least 4 Outside Gate", "At Least 5 Outside Gate", "At Least 6 Outside Gate", "At Least 7 Outside Gate",
+};
+
+
+uint8_t WindowComparatorAlg::CountParameters(uint8_t numChannels) {
+	uint8_t result = 0 + kNumCommonParameters + kNumPerChannelParameters;
+	if (numChannels > 1) {
+		result += kNumCommonAggregateParameters + (numChannels - 1) * (0 + kNumPerChannelParameters + kNumPerChannelAggregateParameters);
+	}
+	return result;
+}
+
+
+void WindowComparatorAlg::InjectDependencies(uint8_t numChannels, const _NT_globals* globals) {
+	NumChannels = numChannels;
+	TriggerSampleLength = globals->sampleRate / 1000;
+	View.InjectDependencies(this);
+}
+
+
+void WindowComparatorAlg::BuildParameters() {
+
+	// It may seem more natural at first glance for us to group all of the aggregate parameters together, at the end.
+  // However, if we do that, then parameter numbers will change when we respecify the algorithm to use more or less channels
+	// Laying them out in this manner ensures that as we add channels, all the new parameters go on the end, and
+	// as we remove channels, the remaining parameters have the same ordinal index.
+	// This way, every parameter is always at the same ordinal position, ergo respecify works as expected
+
+	// Global
+	ParameterDefs[kParamGlobalInputScale]  = { .name = "Atten Input",  .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent, .scaling = kNT_scaling100, .enumStrings = NULL };
+	ParameterDefs[kParamGlobalInputOffset] = { .name = "Offset Input", .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,   .scaling = kNT_scaling100, .enumStrings = NULL };
+	
+	// Comparator A
+	int idx = kNumCommonParameters;
+	ChannelOffsets[0] = idx;
+	ParameterDefs[idx + kParamBound1]              = { .name = "Bound 1",               .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamBound2]              = { .name = "Bound 2",               .min = -10000, .max = 10000, .def =  1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
+	ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
+	ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
+	ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+	
+	// Common Aggregate Parameters
+	if (NumChannels > 1) {
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllInsideWindowGate]  = { .name = "All Inside Gate",   .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllOutsideWindowGate] = { .name = "All Outside Gate",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+	}
+
+	idx = 0 + kNumCommonParameters + kNumPerChannelParameters + kNumCommonAggregateParameters;
+	for (uint8_t ch = 1; ch < NumChannels; ch++) {
+		// Comparator
+		ChannelOffsets[ch] = idx;
+		ParameterDefs[idx + kParamBound1]              = { .name = "Bound 1",               .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamBound2]              = { .name = "Bound 2",               .min = -10000, .max = 10000, .def =  1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
+		ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
+		ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
+		ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+
+		// Aggregate Parameters
+		ParameterDefs[idx + kNumPerChannelParameters + kParamExactlyNInsideWindowGate]  = { .name = ExactlyInside[ch - 1],  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kNumPerChannelParameters + kParamExactlyNOutsideWindowGate] = { .name = ExactlyOutside[ch - 1], .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kNumPerChannelParameters + kParamAtLeastNInsideWindowGate]  = { .name = AtLeastInside[ch - 1],  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[idx + kNumPerChannelParameters + kParamAtLeastNOutsideWindowGate] = { .name = AtLeastOutside[ch - 1], .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		idx += 0 + kNumPerChannelParameters + kNumPerChannelAggregateParameters;
+	}
+	parameters = ParameterDefs;
+}
+
+
+void WindowComparatorAlg::BuildParameterPages() {
+	int numPages = 0;
+	uint8_t* pagePtr = PageLayout;
+
+	// global page
+	pagePtr[0] = kParamGlobalInputScale;
+	pagePtr[1] = kParamGlobalInputOffset;
+	PageDefs[numPages] = { .name = "Global", .numParams = kNumCommonParameters, .params = pagePtr };
+	pagePtr += kNumCommonParameters;
+	numPages++;
+
+	// channels
+	for (uint8_t ch = 0; ch < NumChannels; ch++) {
+		uint8_t offset = ChannelOffsets[ch];
+		pagePtr[0] = offset + kParamBound1;
+		pagePtr[1] = offset + kParamBound2;
+		pagePtr[2] = offset + kParamInput;
+		pagePtr[3] = offset + kParamOverrideGlobalAtten;
+		pagePtr[4] = offset + kParamInputScale;
+		pagePtr[5] = offset + kParamInputOffset;
+		pagePtr[6] = offset + kParamInsideWindowGate;
+		pagePtr[7] = offset + kParamOutsideWindowGate;
+		pagePtr[8] = offset + kParamEnterTrigger;
+		pagePtr[9] = offset + kParamExitTrigger;
+		PageDefs[numPages] = { .name = ChannelPageNames[ch], .numParams = kNumPerChannelParameters, .params = pagePtr };
+		pagePtr += kNumPerChannelParameters;
+		numPages++;
+	}
+
+	// aggregate page
+	if (NumChannels > 1) {
+		auto aggPagePtr = pagePtr;
+		uint8_t cnt = 0;
+		for (uint8_t ch = 1; ch < NumChannels; ch++) {
+			uint8_t offset = 0 + kNumCommonParameters;
+			offset += 0 + kNumPerChannelParameters + kNumCommonAggregateParameters;
+			offset += (ch - 1) * (0 + kNumPerChannelParameters + kNumPerChannelAggregateParameters);
+			offset += kNumPerChannelParameters;
+
+			pagePtr[0] = offset + kParamExactlyNInsideWindowGate;
+			pagePtr[1] = offset + kParamExactlyNOutsideWindowGate;
+			pagePtr[2] = offset + kParamAtLeastNInsideWindowGate;
+			pagePtr[3] = offset + kParamAtLeastNOutsideWindowGate;
+			pagePtr += kNumPerChannelAggregateParameters;
+			cnt += kNumPerChannelAggregateParameters;
+		}
+
+		int offset = 0 + kNumCommonParameters + kNumPerChannelParameters;
+		pagePtr[0] = offset + kParamAllInsideWindowGate;
+		pagePtr[1] = offset + kParamAllOutsideWindowGate;
+		pagePtr += kNumCommonAggregateParameters;
+		cnt += kNumCommonAggregateParameters;
+
+		PageDefs[numPages] = { .name = "Aggregate", .numParams = cnt, .params = aggPagePtr };
+		numPages++;
+	}
+
+	PagesDefs.numPages = numPages;
+	PagesDefs.pages = PageDefs;
+
+	parameterPages = &PagesDefs;
+}
+
+
+void WindowComparatorAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
+	uint8_t numChannels = specifications[0];
+	req.numParameters = CountParameters(numChannels);
+	req.sram = 0;
+	req.dram = 0;
+	req.dtc = 0;
+	req.itc = 0;
+
+	// calculate the memory requirements for all of the objects and dynamic arrays we need to create
+	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
+	MemoryHelper<WindowComparatorAlg>::AlignAndIncrementMemoryRequirement(req.sram, 1); // WindowComparatorAlg
+	MemoryHelper<_NT_parameter>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WindowComparatorAlg::ParameterDefs
+	MemoryHelper<_NT_parameterPage>::AlignAndIncrementMemoryRequirement(req.sram, numChannels + 2); // WindowComparatorAlg::PageDefs
+	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WindowComparatorAlg::PageLayout
+	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::ChannelOffsets
+	MemoryHelper<bool>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::PreviouslyInside
+	MemoryHelper<float>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::CurrentValues
+}
+
+
+_NT_algorithm* WindowComparatorAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+	uint8_t numChannels = specifications[0];
+	auto mem = ptrs.sram;
+
+	// initialize arrays that depend on number of channels
+	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
+	auto& alg = *MemoryHelper<WindowComparatorAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
+	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
+	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 2);
+	alg.PageLayout = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
+	alg.ChannelOffsets = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.PreviouslyInside = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.CurrentValues = MemoryHelper<float>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+
+	alg.InjectDependencies(numChannels, &NT_globals);
+
+	alg.BuildParameters();
+	alg.BuildParameterPages();
+
+	return &alg;
+}
+
+
+void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	auto algIndex = NT_algorithmIndex(self);
+
+	for (uint8_t ch = 0; ch < alg.NumChannels; ch++) {
+		auto offset = alg.ChannelOffsets[ch];
+		if (p == offset + kParamOverrideGlobalAtten) {
+			bool override = alg.v[p] == 1;
+			NT_setParameterGrayedOut(algIndex, offset + kParamInputScale  + NT_parameterOffset(), !override);
+			NT_setParameterGrayedOut(algIndex, offset + kParamInputOffset + NT_parameterOffset(), !override);
+		}
+
+		if (p == offset + kParamBound1) {
+			alg.ParameterDefs[offset + kParamBound2].min = alg.v[p];
+			NT_updateParameterDefinition(algIndex, offset + kParamBound2);
+		}
+
+		if (p == offset + kParamBound2) {
+			alg.ParameterDefs[offset + kParamBound1].max = alg.v[p];
+			NT_updateParameterDefinition(algIndex, offset + kParamBound1);
+		}
+	}
+}
+
+
+bool WindowComparatorAlg::Draw(_NT_algorithm* self) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	alg.View.Draw();
+	return true;
+}
+
+
+uint32_t WindowComparatorAlg::HasCustomUI(_NT_algorithm* self) {
+	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
+}
+
+
+void WindowComparatorAlg::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	alg.View.ProcessControlInput(data);
+	alg.PotMgr.RecordPreviousPotValues(data);
+}
+
+
+void WindowComparatorAlg::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	alg.View.FixupPotValues(pots);
+}
+
+
+int WindowComparatorAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	for (uint8_t ch = 0; ch < alg.NumChannels; ch++) {
+		auto offset = alg.ChannelOffsets[ch];
+		if (p >= offset && p < offset + kNumPerChannelParameters) {
+			buff[0] = 'A' + ch;
+			buff[1] = ':';
+			buff[2] = 0;
+			return 3;
+		}
+	}
+	return 0;
+}
+
+
+void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+	auto numFrames = numFramesBy4 * 4;
+
+	// we only want to clear the block for the outputs before writing to them
+	// after that, we want our outputs to "stack".  This will track, per bus, if we 
+	// have already cleared the block.
+	bool clearedThisStep[MAX_BUS_COUNT] = { };
+
+	// a lambda to clear the block if necessary
+	auto clearBlockIfRequired = [&](uint8_t busIndex) {
+		if (!clearedThisStep[busIndex]) {
+			memset(busFrames + (busIndex * numFrames), 0, numFrames * sizeof(float));
+			clearedThisStep[busIndex] = true;
+		}
+	};
+
+	// a lambda to write a block to a bus
+	auto writeEventToBusBlock = [&](int8_t busIndex, bool high, uint16_t* remainingSamplesPtr = nullptr) {
+		if (busIndex < 0)
+			return;
+
+		clearBlockIfRequired(busIndex);
+		float* busBuffer = busFrames + (busIndex * numFrames);
+
+		if (high && remainingSamplesPtr) {
+			remainingSamplesPtr[busIndex] = alg.TriggerSampleLength;
+		}
+
+		// only pull the buffer up, never down
+		// multiple events could be writing triggers/gates into our buffer
+		// and we want them to "stack"
+		if (high) {
+			// fill the whole output block with our result
+			for (int i = 0; i < numFrames; i++) {
+				busBuffer[i] = GateHigh;
+			}
+		}
+
+		if (remainingSamplesPtr) {
+			remainingSamplesPtr[busIndex] = remainingSamplesPtr[busIndex] <= numFrames ? 0 : remainingSamplesPtr[busIndex] - numFrames;
+		}
+	};
+
+	uint8_t insideCount = 0;
+	uint8_t outsideCount = 0;
+	for (uint8_t ch = 0; ch < alg.NumChannels; ch++) {
+		auto offset = alg.ChannelOffsets[ch];
+		auto inputBusIndex = alg.v[offset + kParamInput] - 1;
+
+		// get the bounds for the window
+		auto bound1 = GetScaledParameterValue(alg, offset + kParamBound1);
+		auto bound2 = GetScaledParameterValue(alg, offset + kParamBound2);
+		lohi(bound1, bound2);
+
+		// get the value
+		bool override = alg.v[offset + kParamOverrideGlobalAtten] == 1;
+		auto valScale  = override ? GetScaledParameterValue(alg, offset + kParamInputScale)  : GetScaledParameterValue(alg, kParamGlobalInputScale);
+		auto valOffset = override ? GetScaledParameterValue(alg, offset + kParamInputOffset) : GetScaledParameterValue(alg, kParamGlobalInputOffset);
+		auto val = (inputBusIndex < 0) ? 0.0f : busFrames[inputBusIndex * numFrames];
+		val = val * valScale / 100.0f + valOffset;
+		val = clamp(val, static_cast<float>(RangeMin), static_cast<float>(RangeMax));
+		alg.CurrentValues[ch] = val;
+
+		// calculate our state(s)
+		bool inside = val >= bound1 && val <= bound2;
+		// don't set entered/exited on the very first step, to prevent triggers from firing when loading a preset
+		bool entered = inside && !alg.PreviouslyInside[ch] && !alg.FirstStep;
+		bool exited = !inside && alg.PreviouslyInside[ch] && !alg.FirstStep;
+		alg.PreviouslyInside[ch] = inside;
+		if (inside) {
+			insideCount++;
+		} else {
+			outsideCount++;
+		}
+
+		// write the triggers/gates
+		writeEventToBusBlock(alg.v[offset + kParamInsideWindowGate]  - 1, inside);
+		writeEventToBusBlock(alg.v[offset + kParamOutsideWindowGate] - 1, !inside);
+		writeEventToBusBlock(alg.v[offset + kParamEnterTrigger] - 1, entered, alg.TriggerRemainingSamples);
+		writeEventToBusBlock(alg.v[offset + kParamExitTrigger]  - 1, exited,  alg.TriggerRemainingSamples);
+	}
+
+	// common aggregate parameters
+	if (alg.NumChannels > 1) {
+		auto offset = 0 + kNumCommonParameters + kNumPerChannelParameters;
+  	writeEventToBusBlock(alg.v[offset + kParamAllInsideWindowGate]  - 1, insideCount  == alg.NumChannels);
+  	writeEventToBusBlock(alg.v[offset + kParamAllOutsideWindowGate] - 1, outsideCount == alg.NumChannels);
+	}
+
+	// per-channel aggregate parameters
+	for (uint8_t ch = 1; ch < alg.NumChannels; ch++) {
+		auto offset = alg.ChannelOffsets[ch] + kNumPerChannelParameters;
+  	writeEventToBusBlock(alg.v[offset + kParamExactlyNInsideWindowGate]  - 1, insideCount == ch);
+  	writeEventToBusBlock(alg.v[offset + kParamExactlyNOutsideWindowGate] - 1, outsideCount == ch);
+  	writeEventToBusBlock(alg.v[offset + kParamAtLeastNInsideWindowGate]  - 1, insideCount >= ch);
+  	writeEventToBusBlock(alg.v[offset + kParamAtLeastNOutsideWindowGate] - 1, outsideCount >= ch);
+	}
+
+	alg.FirstStep = false;
+}
+
+
+const _NT_factory WindowComparatorAlg::Factory =
+{
+	.guid = NT_MULTICHAR( 'A', 'T', 'w', 'c' ),
+	.name = "Window Comparator",
+	.description = "A window comparator",
+	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
+	.specifications = SpecificationsDef,
+	.calculateRequirements = CalculateRequirements,
+	.construct = Construct,
+	.parameterChanged = ParameterChanged,
+	.step = Step,
+	.draw = Draw,
+	.tags = kNT_tagUtility,
+	.hasCustomUi = HasCustomUI,
+	.customUi = CustomUI,
+	.setupUi = SetupUI,
+	.parameterUiPrefix = ParameterUiPrefix,
+};

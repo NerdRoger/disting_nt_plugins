@@ -6,7 +6,8 @@
                 "${workspaceFolder}/distingNT_API/include",
                 "${workspaceFolder}/Common/include",
                 "${workspaceFolder}/WeightedQuantizer/include",
-                "${workspaceFolder}/DirectionalSequencer/include"
+                "${workspaceFolder}/DirectionalSequencer/include",
+                "${workspaceFolder}/WindowComparator/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-c++",
