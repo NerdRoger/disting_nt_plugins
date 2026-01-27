@@ -6,7 +6,7 @@
 static constexpr uint8_t MaxDisplayedLines = 4;
 static constexpr uint8_t LinePadding = 2;
 static constexpr uint8_t BarHeight = 10;
-static constexpr uint8_t BarWidth = 230;
+static constexpr uint8_t BarWidth = 240;
 static constexpr uint8_t BarLeft = 15;
 static constexpr uint8_t SelectedBarColor = 6;
 static constexpr uint8_t UnselectedBarColor = 2;
@@ -32,50 +32,44 @@ void ComparatorView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
 }
 
 
-
-void ComparatorView::OnPot1TurnHandler(ViewBase* view, float val) {
+void ComparatorView::OnEncoder2ShortPressHandler(ViewBase* view) {
 	auto& cv = *static_cast<ComparatorView*>(view);
-	auto algIndex = NT_algorithmIndex(cv.Algorithm);
-	auto paramIdx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + kParamBound1;
-	auto bound1 = GetScaledParameterValue(*cv.Algorithm, paramIdx);
-	float rmin = cv.Algorithm->RangeMin;
-	float rmax = cv.Algorithm->RangeMax;
-	cv.Algorithm->PotMgr.UpdateValueWithPot(0, val, bound1, rmin, rmax);
-	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, bound1);
-	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
+	cv.BoundsEditMode = !cv.BoundsEditMode;
 }
 
 
-void ComparatorView::OnPot2TurnHandler(ViewBase* view, float val) {
+void ComparatorView::OnPot1TurnHandler(ViewBase* view, float val) {
 	auto& cv = *static_cast<ComparatorView*>(view);
+	if (!cv.Editable)
+		return;
+
+	auto idx = cv.BoundsEditMode ? kParamWindowLeft : kParamWindowCenter;
+	float rmin = cv.Algorithm->RangeMin;
+	float rmax = cv.Algorithm->RangeMax;
+
 	auto algIndex = NT_algorithmIndex(cv.Algorithm);
-	auto bound1Idx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + kParamBound1;
-	auto bound1 = GetScaledParameterValue(*cv.Algorithm, bound1Idx);
-	auto bound2Idx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + kParamBound2;
-	auto bound2 = GetScaledParameterValue(*cv.Algorithm, bound2Idx);
-	auto width = bound2 - bound1;
-	auto maxWidth = cv.Algorithm->Range;
-	auto oldWidth = width;
-	cv.Algorithm->PotMgr.UpdateValueWithPot(1, val, width, 0, maxWidth);
-	auto delta = width - oldWidth;
-	bound1 -= delta;
-	bound2 += delta;
-	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, bound1Idx, bound1);
-	NT_setParameterFromAudio(algIndex, bound1Idx + NT_parameterOffset(), unscaled);
-	unscaled = UnscaleValueForParameter(*cv.Algorithm, bound2Idx, bound2);
-	NT_setParameterFromAudio(algIndex, bound2Idx + NT_parameterOffset(), unscaled);
+	auto paramIdx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + idx;
+	auto paramVal = GetScaledParameterValue(*cv.Algorithm, paramIdx);
+	cv.Algorithm->PotMgr.UpdateValueWithPot(0, val, paramVal, rmin, rmax);
+	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
+	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
 }
 
 
 void ComparatorView::OnPot3TurnHandler(ViewBase* view, float val) {
 	auto& cv = *static_cast<ComparatorView*>(view);
+	if (!cv.Editable)
+		return;
+
+	auto idx = cv.BoundsEditMode ? kParamWindowRight : kParamWindowWidth;
+	float rmin = cv.BoundsEditMode ? cv.Algorithm->RangeMin : 0;
+	float rmax = cv.BoundsEditMode ? cv.Algorithm->RangeMax : cv.Algorithm->Range;
+
 	auto algIndex = NT_algorithmIndex(cv.Algorithm);
-	auto paramIdx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + kParamBound2;
-	auto bound2 = GetScaledParameterValue(*cv.Algorithm, paramIdx);
-	float rmin = cv.Algorithm->RangeMin;
-	float rmax = cv.Algorithm->RangeMax;
-	cv.Algorithm->PotMgr.UpdateValueWithPot(2, val, bound2, rmin, rmax);
-	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, bound2);
+	auto paramIdx = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex] + idx;
+	auto paramVal = GetScaledParameterValue(*cv.Algorithm, paramIdx);
+	cv.Algorithm->PotMgr.UpdateValueWithPot(2, val, paramVal, rmin, rmax);
+	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
 	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
 }
 
@@ -92,8 +86,8 @@ void ComparatorView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
 ComparatorView::ComparatorView() {
 	OnDraw = OnDrawHandler;
 	OnEncoder1Turn = OnEncoder1TurnHandler;
+	OnEncoder2ShortPress = OnEncoder2ShortPressHandler;
 	OnPot1Turn = OnPot1TurnHandler;
-	OnPot2Turn = OnPot2TurnHandler;
 	OnPot3Turn = OnPot3TurnHandler;
 	OnFixupPotValues = OnFixupPotValuesHandler;
 }
@@ -147,15 +141,14 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 
 	// get the bounds and value
 	uint8_t offset = Algorithm->ChannelOffsets[ch];
-	auto bound1 = GetScaledParameterValue(*Algorithm, offset + kParamBound1);
-	auto bound2 = GetScaledParameterValue(*Algorithm, offset + kParamBound2);
-	lohi(bound1, bound2);
+	auto winLeft = GetScaledParameterValue(*Algorithm, offset + kParamWindowLeft);
+	auto winRight = GetScaledParameterValue(*Algorithm, offset + kParamWindowRight);
 	auto val = Algorithm->CurrentValues[ch];
-	auto inWindow = (val >= bound1 && val <= bound2);
+	auto inWindow = (val >= winLeft && val <= winRight);
 
 	// draw the window
-	auto leftPos = static_cast<int>((bound1 - Algorithm->RangeMin) * Scale);
-	auto rightPos = static_cast<int>((bound2 - Algorithm->RangeMin) * Scale);
+	auto leftPos = static_cast<int>((winLeft - Algorithm->RangeMin) * Scale);
+	auto rightPos = static_cast<int>((winRight - Algorithm->RangeMin) * Scale);
 	NT_drawShapeI(kNT_box, BarLeft + leftPos, y, BarLeft + rightPos, y + BarHeight, color);
 	NT_drawShapeI(kNT_rectangle, BarLeft + leftPos + 1, y + 1, BarLeft + rightPos - 1, y + BarHeight - 1, inWindow ? color / 2 : 0);
 	if (selected) {

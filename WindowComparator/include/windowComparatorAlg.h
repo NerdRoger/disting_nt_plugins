@@ -14,9 +14,11 @@ enum {
 
 
 enum {
-	kParamBound1,
-	kParamBound2,
 	kParamInput,
+	kParamWindowLeft,
+	kParamWindowRight,
+	kParamWindowCenter,
+	kParamWindowWidth,
 	kParamOverrideGlobalAtten,
 	kParamInputScale,
 	kParamInputOffset,
@@ -59,6 +61,8 @@ private:
 	uint8_t* ChannelOffsets;
 	bool* PreviouslyInside;
 	float* CurrentValues;
+	bool* UpdatingBounds;
+	bool* UpdatingSizePos;
 	uint16_t TriggerRemainingSamples[MAX_BUS_COUNT] = { };
 	uint16_t TriggerSampleLength;
 	bool FirstStep = true;

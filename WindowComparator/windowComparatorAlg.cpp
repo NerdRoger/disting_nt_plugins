@@ -72,9 +72,11 @@ void WindowComparatorAlg::BuildParameters() {
 	// Comparator A
 	int idx = kNumCommonParameters;
 	ChannelOffsets[0] = idx;
-	ParameterDefs[idx + kParamBound1]              = { .name = "Bound 1",               .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-	ParameterDefs[idx + kParamBound2]              = { .name = "Bound 2",               .min = -10000, .max = 10000, .def =  1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -10000, .max = 10000, .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowWidth]         = { .name = "Window Width",          .min = 0,      .max = 20000, .def = 2000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 	ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 	ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
@@ -93,9 +95,11 @@ void WindowComparatorAlg::BuildParameters() {
 	for (uint8_t ch = 1; ch < NumChannels; ch++) {
 		// Comparator
 		ChannelOffsets[ch] = idx;
-		ParameterDefs[idx + kParamBound1]              = { .name = "Bound 1",               .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-		ParameterDefs[idx + kParamBound2]              = { .name = "Bound 2",               .min = -10000, .max = 10000, .def =  1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 		ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -10000, .max = 10000, .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowWidth]         = { .name = "Window Width",          .min = 0,      .max = 20000, .def = 2000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 		ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 		ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 		ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
@@ -129,16 +133,18 @@ void WindowComparatorAlg::BuildParameterPages() {
 	// channels
 	for (uint8_t ch = 0; ch < NumChannels; ch++) {
 		uint8_t offset = ChannelOffsets[ch];
-		pagePtr[0] = offset + kParamBound1;
-		pagePtr[1] = offset + kParamBound2;
-		pagePtr[2] = offset + kParamInput;
-		pagePtr[3] = offset + kParamOverrideGlobalAtten;
-		pagePtr[4] = offset + kParamInputScale;
-		pagePtr[5] = offset + kParamInputOffset;
-		pagePtr[6] = offset + kParamInsideWindowGate;
-		pagePtr[7] = offset + kParamOutsideWindowGate;
-		pagePtr[8] = offset + kParamEnterTrigger;
-		pagePtr[9] = offset + kParamExitTrigger;
+		pagePtr[0]  = offset + kParamInput;
+		pagePtr[1]  = offset + kParamWindowLeft;
+		pagePtr[2]  = offset + kParamWindowRight;
+		pagePtr[3]  = offset + kParamWindowCenter;
+		pagePtr[4]  = offset + kParamWindowWidth;
+		pagePtr[5]  = offset + kParamOverrideGlobalAtten;
+		pagePtr[6]  = offset + kParamInputScale;
+		pagePtr[7]  = offset + kParamInputOffset;
+		pagePtr[8]  = offset + kParamInsideWindowGate;
+		pagePtr[9]  = offset + kParamOutsideWindowGate;
+		pagePtr[10] = offset + kParamEnterTrigger;
+		pagePtr[11] = offset + kParamExitTrigger;
 		PageDefs[numPages] = { .name = ChannelPageNames[ch], .numParams = kNumPerChannelParameters, .params = pagePtr };
 		pagePtr += kNumPerChannelParameters;
 		numPages++;
@@ -196,6 +202,8 @@ void WindowComparatorAlg::CalculateRequirements(_NT_algorithmRequirements& req, 
 	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::ChannelOffsets
 	MemoryHelper<bool>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::PreviouslyInside
 	MemoryHelper<float>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::CurrentValues
+	MemoryHelper<bool>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::UpdatingBounds
+	MemoryHelper<bool>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::UpdatingSizePos
 }
 
 
@@ -212,6 +220,8 @@ _NT_algorithm* WindowComparatorAlg::Construct(const _NT_algorithmMemoryPtrs& ptr
 	alg.ChannelOffsets = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.PreviouslyInside = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.CurrentValues = MemoryHelper<float>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.UpdatingBounds = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
+	alg.UpdatingSizePos = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 
 	alg.InjectDependencies(numChannels, &NT_globals);
 
@@ -234,15 +244,51 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			NT_setParameterGrayedOut(algIndex, offset + kParamInputOffset + NT_parameterOffset(), !override);
 		}
 
-		if (p == offset + kParamBound1) {
-			alg.ParameterDefs[offset + kParamBound2].min = alg.v[p];
-			NT_updateParameterDefinition(algIndex, offset + kParamBound2);
+		if (p == offset + kParamWindowLeft) {
+			alg.UpdatingBounds[ch] = true;
+			auto winLeft   = alg.v[offset + kParamWindowLeft];
+			auto winRight  = alg.v[offset + kParamWindowRight];
+			auto winCenter = (winRight + winLeft) / 2;
+			auto winWidth  = winRight - winLeft;
+			if (!alg.UpdatingSizePos[ch]) {
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter);
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth);
+			}
+
+			alg.ParameterDefs[offset + kParamWindowRight].min = alg.v[offset + kParamWindowLeft];
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowRight);
+			alg.UpdatingBounds[ch] = false;
 		}
 
-		if (p == offset + kParamBound2) {
-			alg.ParameterDefs[offset + kParamBound1].max = alg.v[p];
-			NT_updateParameterDefinition(algIndex, offset + kParamBound1);
+		if (p == offset + kParamWindowRight) {
+			alg.UpdatingBounds[ch] = true;
+			auto winLeft   = alg.v[offset + kParamWindowLeft];
+			auto winRight  = alg.v[offset + kParamWindowRight];
+			auto winCenter = (winRight + winLeft) / 2;
+			auto winWidth  = winRight - winLeft;
+			if (!alg.UpdatingSizePos[ch]) {
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter);
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth);
+			}
+
+			alg.ParameterDefs[offset + kParamWindowLeft].max = alg.v[offset + kParamWindowRight];
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowLeft);
+			alg.UpdatingBounds[ch] = false;
 		}
+
+		if (p == offset + kParamWindowCenter || p == offset + kParamWindowWidth) {
+			alg.UpdatingSizePos[ch] = true;
+			auto winCenter = alg.v[offset + kParamWindowCenter];
+			auto winWidth  = alg.v[offset + kParamWindowWidth];
+			auto winLeft   = winCenter - winWidth / 2;
+			auto winRight  = winCenter + winWidth / 2;
+			if (!alg.UpdatingBounds[ch]) {
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowLeft  + NT_parameterOffset(), winLeft);
+				NT_setParameterFromAudio(algIndex, offset + kParamWindowRight + NT_parameterOffset(), winRight);
+			}
+			alg.UpdatingSizePos[ch] = false;
+		}
+
 	}
 }
 
@@ -338,9 +384,8 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		auto inputBusIndex = alg.v[offset + kParamInput] - 1;
 
 		// get the bounds for the window
-		auto bound1 = GetScaledParameterValue(alg, offset + kParamBound1);
-		auto bound2 = GetScaledParameterValue(alg, offset + kParamBound2);
-		lohi(bound1, bound2);
+		auto winLeft  = GetScaledParameterValue(alg, offset + kParamWindowLeft);
+		auto winRight = GetScaledParameterValue(alg, offset + kParamWindowRight);
 
 		// get the value
 		bool override = alg.v[offset + kParamOverrideGlobalAtten] == 1;
@@ -352,7 +397,7 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		alg.CurrentValues[ch] = val;
 
 		// calculate our state(s)
-		bool inside = val >= bound1 && val <= bound2;
+		bool inside = val >= winLeft && val <= winRight;
 		// don't set entered/exited on the very first step, to prevent triggers from firing when loading a preset
 		bool entered = inside && !alg.PreviouslyInside[ch] && !alg.FirstStep;
 		bool exited = !inside && alg.PreviouslyInside[ch] && !alg.FirstStep;

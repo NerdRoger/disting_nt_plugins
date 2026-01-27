@@ -9,11 +9,13 @@ struct WindowComparatorAlg;
 
 struct ComparatorView : ViewBase {
 private:
+
 	WindowComparatorAlg* Algorithm = nullptr;
 
 	uint8_t SelectedComparatorIndex = 0;
-
 	uint8_t FirstLineY = 0;
+	bool BoundsEditMode = true;
+	bool Editable = true;
 
 	void DrawBullet(int x, int y, int color) const;
 	void DrawComparator(uint8_t ch, uint8_t topIndex) const;
@@ -21,8 +23,8 @@ private:
 
 	HIDDEN static void OnDrawHandler(ViewBase* view);
 	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
+	HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
 	HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
-	HIDDEN static void OnPot2TurnHandler(ViewBase* view, float val);
 	HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
 	HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);
 
