@@ -1,3 +1,4 @@
+#include <string.h>
 #include "comparatorView.h"
 #include "windowComparatorAlg.h"
 #include "common.h"
@@ -23,16 +24,24 @@ static const char* const ChannelLabels[] = {
 void ComparatorView::OnDrawHandler(ViewBase* view) {
 	auto& cv = *static_cast<ComparatorView*>(view);
 	cv.DrawComparators();
+	cv.DrawHelpSection();
 }
 
 
 void ComparatorView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
 	auto& cv = *static_cast<ComparatorView*>(view);
 	cv.SelectedComparatorIndex = clamp(cv.SelectedComparatorIndex + x, 0, cv.Algorithm->NumChannels - 1);
+	cv.DisplayBarStatsHelpText();
 }
 
 
 void ComparatorView::OnEncoder2ShortPressHandler(ViewBase* view) {
+	auto& cv = *static_cast<ComparatorView*>(view);
+	cv.Editable = !cv.Editable;
+}
+
+
+void ComparatorView::OnEncoder2LongPressHandler(ViewBase* view) {
 	auto& cv = *static_cast<ComparatorView*>(view);
 	cv.BoundsEditMode = !cv.BoundsEditMode;
 }
@@ -53,6 +62,8 @@ void ComparatorView::OnPot1TurnHandler(ViewBase* view, float val) {
 	cv.Algorithm->PotMgr.UpdateValueWithPot(0, val, paramVal, rmin, rmax);
 	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
 	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
+
+	cv.DisplayBarStatsHelpText();
 }
 
 
@@ -71,6 +82,8 @@ void ComparatorView::OnPot3TurnHandler(ViewBase* view, float val) {
 	cv.Algorithm->PotMgr.UpdateValueWithPot(2, val, paramVal, rmin, rmax);
 	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
 	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
+
+	cv.DisplayBarStatsHelpText();
 }
 
 
@@ -87,6 +100,7 @@ ComparatorView::ComparatorView() {
 	OnDraw = OnDrawHandler;
 	OnEncoder1Turn = OnEncoder1TurnHandler;
 	OnEncoder2ShortPress = OnEncoder2ShortPressHandler;
+	OnEncoder2LongPress = OnEncoder2LongPressHandler;
 	OnPot1Turn = OnPot1TurnHandler;
 	OnPot3Turn = OnPot3TurnHandler;
 	OnFixupPotValues = OnFixupPotValuesHandler;
@@ -95,6 +109,7 @@ ComparatorView::ComparatorView() {
 
 void ComparatorView::InjectDependencies(WindowComparatorAlg* alg) {
 	Algorithm = alg;
+	ViewBase::InjectDependencies(&alg->Timer);
 
   // calculate this once here rather than every draw cycle
 	FirstLineY = 0;
@@ -116,13 +131,17 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	uint8_t barColor = selected ? SelectedBarColor : UnselectedBarColor;
 	uint8_t color = selected ? SelectedColor : UnselectedColor;
 
+	// dim everything if we are not editable
+	barColor = Editable ? barColor : barColor / 2;
+	color = Editable ? color : color / 2;
+
 	// calculate y position for this line
 	uint8_t y = FirstLineY;
 	y += (ch - topIndex) * (BarHeight + LinePadding);
 
 	// draw the selection bullet
 	if (selected) {
-		DrawBullet(0, y + 4, SelectedColor);
+		DrawBullet(0, y + 4, color);
 	}
 
 	// draw the channel label
@@ -161,11 +180,6 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	for (int i = 0; i < 5; i++) {
 		NT_drawShapeI(kNT_line, valuePos, y + i + 1, valuePos, y + BarHeight - i - 1, markerPalette[i]);
 	}
-	// NT_drawShapeI(kNT_line, BarLeft + valuePos, y + 1, BarLeft + valuePos, y + BarHeight - 1, inWindow ? 6 : 2);
-	// NT_drawShapeI(kNT_line, BarLeft + valuePos, y + 2, BarLeft + valuePos, y + BarHeight - 2, inWindow ? 5 : 4);
-	// NT_drawShapeI(kNT_line, BarLeft + valuePos, y + 3, BarLeft + valuePos, y + BarHeight - 3, inWindow ? 4 : 7);
-	// NT_drawShapeI(kNT_line, BarLeft + valuePos, y + 4, BarLeft + valuePos, y + BarHeight - 4, inWindow ? 3 : 10);
-	// NT_drawShapeI(kNT_line, BarLeft + valuePos, y + 5, BarLeft + valuePos, y + BarHeight - 5, inWindow ? 2 : 15);
 }
 
 
@@ -177,4 +191,74 @@ void ComparatorView::DrawComparators() const {
 	for (int i = topIndex; i < topIndex + visibleComparators; i++) {
 		DrawComparator(i, topIndex);
 	}
+}
+
+
+void ComparatorView::DrawHelpSection() const {
+	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
+
+	// draw the transient help text if present
+	if (!Algorithm->HelpText.Draw()) {
+		NT_drawText(2, 58, BoundsEditMode ? "Left" : "Center", 15, kNT_textLeft, kNT_textTiny);
+		NT_drawText(33, 64, "Select Comparator", 15, kNT_textLeft, kNT_textTiny);
+
+		if (Editable) {
+			NT_drawText(170, 58, "Q: Lock", 15, kNT_textLeft, kNT_textTiny);
+		} else {
+			NT_drawText(166, 58, "Q: Unlock", 15, kNT_textLeft, kNT_textTiny);
+		}
+
+		if (BoundsEditMode) {
+			NT_drawText(140, 64, "L: Center/Width Mode", 15, kNT_textLeft, kNT_textTiny);
+		} else {
+			NT_drawText(152, 64, "L: Bounds Mode", 15, kNT_textLeft, kNT_textTiny);
+		}
+
+		NT_drawText(233, 58, BoundsEditMode ? "Right" : "Width", 15, kNT_textLeft, kNT_textTiny);
+	}
+	NT_drawShapeI(kNT_line, 0, 50, 255, 50, 15);
+}
+
+
+void ComparatorView::DisplayBarStatsHelpText() {
+	auto render = [](void* context) {
+		auto& cv = *static_cast<ComparatorView*>(context);
+
+		auto offset = cv.Algorithm->ChannelOffsets[cv.SelectedComparatorIndex];
+		auto left = GetScaledParameterValue(*cv.Algorithm, offset + kParamWindowLeft);
+		auto right = GetScaledParameterValue(*cv.Algorithm, offset + kParamWindowRight);
+		auto center = GetScaledParameterValue(*cv.Algorithm, offset + kParamWindowCenter);
+		auto width = GetScaledParameterValue(*cv.Algorithm, offset + kParamWindowWidth);
+
+		char buffer[11];
+		char* buf = buffer;
+		strncpy(buf, "L: ", 3);
+		buf += 3;
+		buf += NT_floatToString(buf, left, 3);
+		*buf = '\0';
+		NT_drawText(10, 62, buffer);
+
+		buf = buffer;
+		strncpy(buf, "R: ", 3);
+		buf += 3;
+		buf += NT_floatToString(buf, right, 3);
+		*buf = '\0';
+		NT_drawText(70, 62, buffer);
+
+		buf = buffer;
+		strncpy(buf, "C: ", 3);
+		buf += 3;
+		buf += NT_floatToString(buf, center, 3);
+		*buf = '\0';
+		NT_drawText(140, 62, buffer);
+
+		buf = buffer;
+		strncpy(buf, "W: ", 3);
+		buf += 3;
+		buf += NT_floatToString(buf, width, 3);
+		*buf = '\0';
+		NT_drawText(200, 62, buffer);
+	};
+
+	Algorithm->HelpText.DisplayHelpCallback(render, this);
 }

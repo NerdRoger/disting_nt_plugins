@@ -3,6 +3,7 @@
 #include "common.h"
 #include "comparatorView.h"
 #include "potManager.h"
+#include "helpTextHelper.h"
 
 
 enum {
@@ -71,7 +72,6 @@ private:
 	void BuildParameterPages();
 	void InjectDependencies(uint8_t numChannels, const _NT_globals* globals);
 
-
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
 	static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
@@ -92,7 +92,9 @@ public:
 
 	uint8_t NumChannels;
 
+	TimeKeeper Timer;
 	PotManager PotMgr;
+	HelpTextHelper HelpText;
 	ComparatorView View;
 
 };

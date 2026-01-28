@@ -10,6 +10,13 @@ void HelpTextHelper::DisplayHelpText(int xPos, const char* text) {
 }
 
 
+void HelpTextHelper::DisplayHelpCallback(void (*drawCallback)(void*), void* context) {
+	DrawCallback = drawCallback;
+	Context = context;
+	RemainingDuration = DurationFrames;
+}
+
+
 bool HelpTextHelper::Draw() {
 	if (HelpText) {
 		NT_drawText(xPosition, 62, HelpText);
@@ -19,5 +26,15 @@ bool HelpTextHelper::Draw() {
 		}
 		return true;
 	}
+	
+	if (DrawCallback) {
+		DrawCallback(Context);
+		RemainingDuration--;
+		if (RemainingDuration <= 0) {
+			DrawCallback = NULL;
+		}
+		return true;
+	}
+
 	return false;
 }

@@ -20,10 +20,13 @@ private:
 	void DrawBullet(int x, int y, int color) const;
 	void DrawComparator(uint8_t ch, uint8_t topIndex) const;
 	void DrawComparators() const;
+	void DrawHelpSection() const;
+	void DisplayBarStatsHelpText();
 
 	HIDDEN static void OnDrawHandler(ViewBase* view);
 	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
 	HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
+	HIDDEN static void OnEncoder2LongPressHandler(ViewBase* view);
 	HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
 	HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
 	HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);

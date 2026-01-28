@@ -53,6 +53,7 @@ uint8_t WindowComparatorAlg::CountParameters(uint8_t numChannels) {
 void WindowComparatorAlg::InjectDependencies(uint8_t numChannels, const _NT_globals* globals) {
 	NumChannels = numChannels;
 	TriggerSampleLength = globals->sampleRate / 1000;
+	Timer.InjectDependencies(globals);
 	View.InjectDependencies(this);
 }
 
@@ -430,6 +431,10 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
   	writeEventToBusBlock(alg.v[offset + kParamAtLeastNInsideWindowGate]  - 1, insideCount >= ch);
   	writeEventToBusBlock(alg.v[offset + kParamAtLeastNOutsideWindowGate] - 1, outsideCount >= ch);
 	}
+
+	// we can do this tracking outside of the processing loop, because we don't need sample-level accuracy
+	// we are only tracking milliseconds, so block-level accuracy should be fine
+	alg.Timer.CountMilliseconds(numFrames);
 
 	alg.FirstStep = false;
 }
