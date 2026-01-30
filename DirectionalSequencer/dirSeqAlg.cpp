@@ -509,8 +509,10 @@ int DirSeqAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
 		buff[0] = 'A' + h;
 		buff[1] = ':';
 		buff[2] = 0;
+		// return the number of chars to render, i.e. length NOT counting the null terminator
+		return 2;
 	}
-	return 3;
+	return 0;
 }
 
 

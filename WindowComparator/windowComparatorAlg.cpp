@@ -327,7 +327,8 @@ int WindowComparatorAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buf
 			buff[0] = 'A' + ch;
 			buff[1] = ':';
 			buff[2] = 0;
-			return 3;
+			// return the number of chars to render, i.e. length NOT counting the null terminator
+			return 2;
 		}
 	}
 	return 0;
