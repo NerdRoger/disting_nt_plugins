@@ -171,7 +171,16 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	NT_drawShapeI(kNT_box, BarLeft + leftPos, y, BarLeft + rightPos, y + BarHeight, color);
 	NT_drawShapeI(kNT_rectangle, BarLeft + leftPos + 1, y + 1, BarLeft + rightPos - 1, y + BarHeight - 1, inWindow ? color / 2 : 0);
 	if (selected) {
-		NT_drawShapeI(inWindow ? kNT_rectangle : kNT_box, BarLeft + leftPos + 1, y + 1, BarLeft + rightPos - 1, y + BarHeight - 1, color / 2);
+		auto left  = BarLeft + leftPos + 1;
+		auto right = BarLeft + rightPos - 1;
+		if (right >= left)
+			NT_drawShapeI(inWindow ? kNT_rectangle : kNT_box, left, y + 1, right, y + BarHeight - 1, color / 2);
+	}
+	if (!BoundsEditMode) {
+		auto left  = BarLeft + leftPos + 4;
+		auto right = BarLeft + rightPos - 4;
+		if (right >= left)
+			NT_drawShapeI(kNT_rectangle, left, y + 4, right, y + 6, color);
 	}
 
   // draw the value marker
