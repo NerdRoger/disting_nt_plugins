@@ -7,6 +7,8 @@
 
 
 enum {
+	kParamGlobalRangeMin,
+	kParamGlobalRangeMax,
 	kParamGlobalInputScale,
 	kParamGlobalInputOffset,
 
@@ -80,13 +82,16 @@ private:
 	static bool Draw(_NT_algorithm* self);
 	static uint32_t HasCustomUI(_NT_algorithm* self);
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
+	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
+	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
-	static int  ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
+	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
+  static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);
 
 public:
-	static constexpr int8_t RangeMin = -10;
-	static constexpr int8_t RangeMax = 10;
-	static constexpr uint8_t Range = RangeMax - RangeMin;
+	int8_t RangeMin = -5;
+	int8_t RangeMax = 5;
+	uint8_t Range = RangeMax - RangeMin;
 
 	HIDDEN static const _NT_factory Factory;
 

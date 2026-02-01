@@ -1,4 +1,6 @@
 #include <cstring>
+#include <distingnt/api.h>
+#include <distingnt/serialisation.h>
 #include "windowComparatorAlg.h"
 
 
@@ -67,24 +69,27 @@ void WindowComparatorAlg::BuildParameters() {
 	// This way, every parameter is always at the same ordinal position, ergo respecify works as expected
 
 	// Global
+	ParameterDefs[kParamGlobalRangeMin] = { .name = "Range Min", .min = -10, .max = 10, .def = -5, .unit = kNT_unitConfirm, .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[kParamGlobalRangeMax] = { .name = "Range Max", .min = -10, .max = 10, .def =  5, .unit = kNT_unitConfirm, .scaling = kNT_scalingNone, .enumStrings = NULL };
+
 	ParameterDefs[kParamGlobalInputScale]  = { .name = "Atten Input",  .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[kParamGlobalInputOffset] = { .name = "Offset Input", .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,   .scaling = kNT_scaling100, .enumStrings = NULL };
 	
 	// Comparator A
 	int idx = kNumCommonParameters;
 	ChannelOffsets[0] = idx;
-	ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
-	ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-	ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-	ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -10000, .max = 10000, .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -5000,  .max = 5000,  .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -5000,  .max = 5000,  .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -5000,  .max = 5000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[idx + kParamWindowWidth]         = { .name = "Window Width",          .min = 0,      .max = 20000, .def = 2000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 	ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 	ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
-	ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-	ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-	ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-	ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+	ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+	ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 	
 	// Common Aggregate Parameters
 	if (NumChannels > 1) {
@@ -96,18 +101,18 @@ void WindowComparatorAlg::BuildParameters() {
 	for (uint8_t ch = 1; ch < NumChannels; ch++) {
 		// Comparator
 		ChannelOffsets[ch] = idx;
-		ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = 0,               .enumStrings = NULL };
-		ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -10000, .max = 10000, .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-		ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
-		ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -10000, .max = 10000, .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamInput]               = { .name = "Input",                 .min = 0,      .max = 28,    .def = 1,     .unit = kNT_unitCvInput,  .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowLeft]          = { .name = "Window Left",           .min = -5000,  .max = 5000,  .def = -1000, .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowRight]         = { .name = "Window Right",          .min = -5000,  .max = 5000,  .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamWindowCenter]        = { .name = "Window Center",         .min = -5000,  .max = 5000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 		ParameterDefs[idx + kParamWindowWidth]         = { .name = "Window Width",          .min = 0,      .max = 20000, .def = 2000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 		ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 		ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 		ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
-		ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-		ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-		ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
-		ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = 0,               .enumStrings = NULL };
+		ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[idx + kParamExitTrigger]         = { .name = "Exit Trig",             .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 
 		// Aggregate Parameters
 		ParameterDefs[idx + kNumPerChannelParameters + kParamExactlyNInsideWindowGate]  = { .name = ExactlyInside[ch - 1],  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
@@ -125,8 +130,10 @@ void WindowComparatorAlg::BuildParameterPages() {
 	uint8_t* pagePtr = PageLayout;
 
 	// global page
-	pagePtr[0] = kParamGlobalInputScale;
-	pagePtr[1] = kParamGlobalInputOffset;
+	pagePtr[0] = kParamGlobalRangeMin;
+	pagePtr[1] = kParamGlobalRangeMax;
+	pagePtr[2] = kParamGlobalInputScale;
+	pagePtr[3] = kParamGlobalInputOffset;
 	PageDefs[numPages] = { .name = "Global", .numParams = kNumCommonParameters, .group = 1, .params = pagePtr };
 	pagePtr += kNumCommonParameters;
 	numPages++;
@@ -237,6 +244,20 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	auto& alg = *static_cast<WindowComparatorAlg*>(self);
 	auto algIndex = NT_algorithmIndex(self);
 
+	if (p == kParamGlobalRangeMin) {
+		alg.RangeMin = GetScaledParameterValue(alg, kParamGlobalRangeMin);
+		alg.ParameterDefs[kParamGlobalRangeMax].min = alg.v[kParamGlobalRangeMin];
+		NT_updateParameterDefinition(algIndex, kParamGlobalRangeMax);
+		alg.Range = alg.RangeMax - alg.RangeMin;
+	}
+
+	if (p == kParamGlobalRangeMax) {
+		alg.RangeMax = GetScaledParameterValue(alg, kParamGlobalRangeMax);
+		alg.ParameterDefs[kParamGlobalRangeMin].max = alg.v[kParamGlobalRangeMax];
+		NT_updateParameterDefinition(algIndex, kParamGlobalRangeMin);
+		alg.Range = alg.RangeMax - alg.RangeMin;
+	}
+
 	for (uint8_t ch = 0; ch < alg.NumChannels; ch++) {
 		auto offset = alg.ChannelOffsets[ch];
 		if (p == offset + kParamOverrideGlobalAtten) {
@@ -288,6 +309,24 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 				NT_setParameterFromAudio(algIndex, offset + kParamWindowRight + NT_parameterOffset(), winRight);
 			}
 			alg.UpdatingSizePos[ch] = false;
+		}
+
+		if (p == kParamGlobalRangeMin || p == kParamGlobalRangeMax) {
+			int8_t min = GetScaledParameterValue(alg, kParamGlobalRangeMin);
+			int8_t max = GetScaledParameterValue(alg, kParamGlobalRangeMax);
+
+			alg.ParameterDefs[offset + kParamWindowLeft].min = UnscaleValueForParameter(alg, offset + kParamWindowLeft, min);
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowLeft);
+
+			alg.ParameterDefs[offset + kParamWindowRight].max = UnscaleValueForParameter(alg, offset + kParamWindowRight, max);
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowRight);
+			
+			alg.ParameterDefs[offset + kParamWindowCenter].min = UnscaleValueForParameter(alg, offset + kParamWindowCenter, min);
+			alg.ParameterDefs[offset + kParamWindowCenter].max = UnscaleValueForParameter(alg, offset + kParamWindowCenter, max);
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowCenter);
+
+			alg.ParameterDefs[offset + kParamWindowWidth].max = UnscaleValueForParameter(alg, offset + kParamWindowWidth, max - min);
+			NT_updateParameterDefinition(algIndex, offset + kParamWindowWidth);
 		}
 
 	}
@@ -395,7 +434,7 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		auto valOffset = override ? GetScaledParameterValue(alg, offset + kParamInputOffset) : GetScaledParameterValue(alg, kParamGlobalInputOffset);
 		auto val = (inputBusIndex < 0) ? 0.0f : busFrames[inputBusIndex * numFrames];
 		val = val * valScale / 100.0f + valOffset;
-		val = clamp(val, static_cast<float>(RangeMin), static_cast<float>(RangeMax));
+		val = clamp(val, static_cast<float>(alg.RangeMin), static_cast<float>(alg.RangeMax));
 		alg.CurrentValues[ch] = val;
 
 		// calculate our state(s)
@@ -441,6 +480,61 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 }
 
 
+int WindowComparatorAlg::ParameterString(_NT_algorithm* self, int p, int v, char* buff)
+{
+	memset(buff, 0, kNT_parameterStringSize);
+	if (p == kParamGlobalRangeMin || p == kParamGlobalRangeMax) {
+		auto idx = NT_intToString(buff, v);
+		buff[idx] = 'V';
+		buff[idx + 1] = '\0';
+	}
+	return strlen(buff);
+}
+
+
+void WindowComparatorAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+
+	stream.addMemberName("BoundsEditMode");
+	stream.addBoolean(alg.View.BoundsEditMode);
+
+	stream.addMemberName("Editable");
+	stream.addBoolean(alg.View.Editable);
+}
+
+
+bool WindowComparatorAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
+	auto& alg = *static_cast<WindowComparatorAlg*>(self);
+
+	int num;
+	if (!parse.numberOfObjectMembers(num)) {
+		return false;
+	}
+
+	for (int i = 0; i < num; i++) {
+		if (parse.matchName("BoundsEditMode")) {
+			bool val;
+			if (!parse.boolean(val)) {
+				return false;
+			}
+			alg.View.BoundsEditMode = val;
+		} else if (parse.matchName("Editable")) {
+			bool val;
+			if (!parse.boolean(val)) {
+				return false;
+			}
+			alg.View.Editable = val;
+		} else {
+			if (!parse.skipMember()) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+
 const _NT_factory WindowComparatorAlg::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'w', 'c' ),
@@ -457,5 +551,8 @@ const _NT_factory WindowComparatorAlg::Factory =
 	.hasCustomUi = HasCustomUI,
 	.customUi = CustomUI,
 	.setupUi = SetupUI,
+	.serialise = Serialise,
+	.deserialise = Deserialise,
 	.parameterUiPrefix = ParameterUiPrefix,
+	.parameterString = ParameterString,
 };

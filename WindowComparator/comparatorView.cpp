@@ -13,7 +13,6 @@ static constexpr uint8_t SelectedBarColor = 6;
 static constexpr uint8_t UnselectedBarColor = 2;
 static constexpr uint8_t SelectedColor = 15;
 static constexpr uint8_t UnselectedColor = 4;
-static constexpr float   Scale = static_cast<float>(BarWidth) / static_cast<float>(WindowComparatorAlg::Range);
 
 
 static const char* const ChannelLabels[] = {
@@ -131,6 +130,8 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	uint8_t barColor = selected ? SelectedBarColor : UnselectedBarColor;
 	uint8_t color = selected ? SelectedColor : UnselectedColor;
 
+  auto scale = static_cast<float>(BarWidth) / static_cast<float>(Algorithm->Range);
+
 	// dim everything if we are not editable
 	barColor = Editable ? barColor : barColor / 2;
 	color = Editable ? color : color / 2;
@@ -152,7 +153,7 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 
 	// draw some ruler ticks
 	for (int i = 1; i < Algorithm->Range; i++) {
-		int x = i * Scale;
+		int x = i * scale;
 		uint8_t tickLen = (Algorithm->RangeMin + i == 0) ? 2 : 1;
 		NT_drawShapeI(kNT_line, BarLeft + x, y + 1, BarLeft + x, y + tickLen, 1);
 		NT_drawShapeI(kNT_line, BarLeft + x, y + BarHeight - tickLen, BarLeft + x, y + BarHeight - 1, 1);
@@ -166,8 +167,8 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	auto inWindow = (val >= winLeft && val <= winRight);
 
 	// draw the window
-	auto leftPos = static_cast<int>((winLeft - Algorithm->RangeMin) * Scale);
-	auto rightPos = static_cast<int>((winRight - Algorithm->RangeMin) * Scale);
+	auto leftPos = static_cast<int>((winLeft - Algorithm->RangeMin) * scale);
+	auto rightPos = static_cast<int>((winRight - Algorithm->RangeMin) * scale);
 	NT_drawShapeI(kNT_box, BarLeft + leftPos, y, BarLeft + rightPos, y + BarHeight, color);
 	NT_drawShapeI(kNT_rectangle, BarLeft + leftPos + 1, y + 1, BarLeft + rightPos - 1, y + BarHeight - 1, inWindow ? color / 2 : 0);
 	if (selected) {
@@ -184,7 +185,7 @@ void ComparatorView::DrawComparator(uint8_t ch, uint8_t topIndex) const {
 	}
 
   // draw the value marker
-	auto valuePos = BarLeft + static_cast<int>((val - Algorithm->RangeMin) * Scale);
+	auto valuePos = BarLeft + static_cast<int>((val - Algorithm->RangeMin) * scale);
 	const int* markerPalette = inWindow ? (const int[]){6, 5, 4, 3, 2} : (const int[]){2, 4, 7, 10, 15};
 	for (int i = 0; i < 5; i++) {
 		NT_drawShapeI(kNT_line, valuePos, y + i + 1, valuePos, y + BarHeight - i - 1, markerPalette[i]);

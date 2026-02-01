@@ -10,6 +10,8 @@ struct WindowComparatorAlg;
 struct ComparatorView : ViewBase {
 private:
 
+	friend struct WindowComparatorAlg;
+
 	WindowComparatorAlg* Algorithm = nullptr;
 
 	uint8_t SelectedComparatorIndex = 0;
