@@ -86,6 +86,9 @@ void WindowComparatorAlg::BuildParameters() {
 	ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 	ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 	ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
+	ParameterDefs[idx + kParamValueXContribution]  = { .name = "Value X Contribution",  .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamValueYContribution]  = { .name = "Value Y Contribution",  .min = -10000, .max = 10000, .def = 500,   .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+	ParameterDefs[idx + kParamValueZContribution]  = { .name = "Value Z Contribution",  .min = -10000, .max = 10000, .def = 100,   .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 	ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 	ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
@@ -93,8 +96,20 @@ void WindowComparatorAlg::BuildParameters() {
 	
 	// Common Aggregate Parameters
 	if (NumChannels > 1) {
-		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllInsideWindowGate]  = { .name = "All Inside Gate",   .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
-		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllOutsideWindowGate] = { .name = "All Outside Gate",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = 0, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueXInsideTotal]    = { .name = "Value X Total Inside",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueXOutsideTotal]   = { .name = "Value X Total Outside", .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueXInsideAverage]  = { .name = "Value X Avg Inside",    .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueXOutsideAverage] = { .name = "Value X Avg Outside",   .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueYInsideTotal]    = { .name = "Value Y Total Inside",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueYOutsideTotal]   = { .name = "Value Y Total Outside", .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueYInsideAverage]  = { .name = "Value Y Avg Inside",    .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueYOutsideAverage] = { .name = "Value Y Avg Outside",   .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueZInsideTotal]    = { .name = "Value Z Total Inside",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueZOutsideTotal]   = { .name = "Value Z Total Outside", .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueZInsideAverage]  = { .name = "Value Z Avg Inside",    .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamValueZOutsideAverage] = { .name = "Value Z Avg Outside",   .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllInsideWindowGate]  = { .name = "All Inside Gate",  .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
+		ParameterDefs[0 + kNumCommonParameters + kNumPerChannelParameters + kParamAllOutsideWindowGate] = { .name = "All Outside Gate", .min = 0, .max = 28, .def = 0, .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 	}
 
 	idx = 0 + kNumCommonParameters + kNumPerChannelParameters + kNumCommonAggregateParameters;
@@ -109,6 +124,9 @@ void WindowComparatorAlg::BuildParameters() {
 		ParameterDefs[idx + kParamOverrideGlobalAtten] = { .name = "Override Global Atten", .min = 0,      .max = 1,     .def = 0,     .unit = kNT_unitEnum,     .scaling = kNT_scalingNone, .enumStrings = EnumStringsOverrideGlobalAtten };
 		ParameterDefs[idx + kParamInputScale]          = { .name = "Atten Input",           .min = -20000, .max = 20000, .def = 10000, .unit = kNT_unitPercent,  .scaling = kNT_scaling100,  .enumStrings = NULL };
 		ParameterDefs[idx + kParamInputOffset]         = { .name = "Offset Input",          .min = -1000,  .max = 1000,  .def = 0,     .unit = kNT_unitVolts,    .scaling = kNT_scaling100,  .enumStrings = NULL };
+		ParameterDefs[idx + kParamValueXContribution]  = { .name = "Value X Contribution",  .min = -10000, .max = 10000, .def = 1000,  .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamValueYContribution]  = { .name = "Value Y Contribution",  .min = -10000, .max = 10000, .def = 500,   .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
+		ParameterDefs[idx + kParamValueZContribution]  = { .name = "Value Z Contribution",  .min = -10000, .max = 10000, .def = 100,   .unit = kNT_unitVolts,    .scaling = kNT_scaling1000, .enumStrings = NULL };
 		ParameterDefs[idx + kParamInsideWindowGate]    = { .name = "Inside Gate",           .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[idx + kParamOutsideWindowGate]   = { .name = "Outside Gate",          .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[idx + kParamEnterTrigger]        = { .name = "Enter Trig",            .min = 0,      .max = 28,    .def = 0,     .unit = kNT_unitCvOutput, .scaling = kNT_scalingNone, .enumStrings = NULL };
@@ -149,17 +167,20 @@ void WindowComparatorAlg::BuildParameterPages() {
 		pagePtr[5]  = offset + kParamOverrideGlobalAtten;
 		pagePtr[6]  = offset + kParamInputScale;
 		pagePtr[7]  = offset + kParamInputOffset;
-		pagePtr[8]  = offset + kParamInsideWindowGate;
-		pagePtr[9]  = offset + kParamOutsideWindowGate;
-		pagePtr[10] = offset + kParamEnterTrigger;
-		pagePtr[11] = offset + kParamExitTrigger;
+		pagePtr[8]  = offset + kParamValueXContribution;
+		pagePtr[9]  = offset + kParamValueYContribution;
+		pagePtr[10] = offset + kParamValueZContribution;
+		pagePtr[11] = offset + kParamInsideWindowGate;
+		pagePtr[12] = offset + kParamOutsideWindowGate;
+		pagePtr[13] = offset + kParamEnterTrigger;
+		pagePtr[14] = offset + kParamExitTrigger;
 		PageDefs[numPages] = { .name = ChannelPageNames[ch], .numParams = kNumPerChannelParameters, .group = 2, .params = pagePtr };
 		pagePtr += kNumPerChannelParameters;
 		numPages++;
 	}
 
-	// aggregate page
 	if (NumChannels > 1) {
+		// aggregate gates page
 		auto aggPagePtr = pagePtr;
 		uint8_t cnt = 0;
 		for (uint8_t ch = 1; ch < NumChannels; ch++) {
@@ -179,11 +200,32 @@ void WindowComparatorAlg::BuildParameterPages() {
 		int offset = 0 + kNumCommonParameters + kNumPerChannelParameters;
 		pagePtr[0] = offset + kParamAllInsideWindowGate;
 		pagePtr[1] = offset + kParamAllOutsideWindowGate;
-		pagePtr += kNumCommonAggregateParameters;
-		cnt += kNumCommonAggregateParameters;
+		pagePtr += 2;
+		cnt += 2;
 
-		PageDefs[numPages] = { .name = "Aggregate", .numParams = cnt, .group = 3, .params = aggPagePtr };
+		PageDefs[numPages] = { .name = "Agg. Gate", .numParams = cnt, .group = 3, .params = aggPagePtr };
 		numPages++;
+
+		// aggregate values page
+		aggPagePtr = pagePtr;
+		offset = 0 + kNumCommonParameters + kNumPerChannelParameters;
+		pagePtr[0]  = offset + kParamValueXInsideTotal;
+		pagePtr[1]  = offset + kParamValueXOutsideTotal;
+		pagePtr[2]  = offset + kParamValueXInsideAverage;
+		pagePtr[3]  = offset + kParamValueXOutsideAverage;
+		pagePtr[4]  = offset + kParamValueYInsideTotal;
+		pagePtr[5]  = offset + kParamValueYOutsideTotal;
+		pagePtr[6]  = offset + kParamValueYInsideAverage;
+		pagePtr[7]  = offset + kParamValueYOutsideAverage;
+		pagePtr[8]  = offset + kParamValueZInsideTotal;
+		pagePtr[9]  = offset + kParamValueZOutsideTotal;
+		pagePtr[10] = offset + kParamValueZInsideAverage;
+		pagePtr[11] = offset + kParamValueZOutsideAverage;
+		pagePtr += 12;
+		cnt = 12;
+		PageDefs[numPages] = { .name = "Agg. Value", .numParams = cnt, .group = 4, .params = aggPagePtr };
+		numPages++;
+
 	}
 
 	PagesDefs.numPages = numPages;
@@ -205,7 +247,7 @@ void WindowComparatorAlg::CalculateRequirements(_NT_algorithmRequirements& req, 
 	// THIS MUST STAY IN SYNC WITH THE CONSTRUCTION REQUIREMENTS IN Construct() BELOW
 	MemoryHelper<WindowComparatorAlg>::AlignAndIncrementMemoryRequirement(req.sram, 1); // WindowComparatorAlg
 	MemoryHelper<_NT_parameter>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WindowComparatorAlg::ParameterDefs
-	MemoryHelper<_NT_parameterPage>::AlignAndIncrementMemoryRequirement(req.sram, numChannels + 2); // WindowComparatorAlg::PageDefs
+	MemoryHelper<_NT_parameterPage>::AlignAndIncrementMemoryRequirement(req.sram, numChannels + 3); // WindowComparatorAlg::PageDefs
 	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, req.numParameters); // WindowComparatorAlg::PageLayout
 	MemoryHelper<uint8_t>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::ChannelOffsets
 	MemoryHelper<bool>::AlignAndIncrementMemoryRequirement(req.sram, numChannels); // WindowComparatorAlg::PreviouslyInside
@@ -223,7 +265,7 @@ _NT_algorithm* WindowComparatorAlg::Construct(const _NT_algorithmMemoryPtrs& ptr
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<WindowComparatorAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
 	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
-	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 2);
+	alg.PageDefs = MemoryHelper<_NT_parameterPage>::InitializeDynamicDataAndIncrementPointer(mem, numChannels + 3);
 	alg.PageLayout = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
 	alg.ChannelOffsets = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.PreviouslyInside = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
@@ -391,7 +433,7 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		}
 	};
 
-	// a lambda to write a block to a bus
+	// a lambda to write an event block to a bus
 	auto writeEventToBusBlock = [&](int8_t busIndex, bool high, uint16_t* remainingSamplesPtr = nullptr) {
 		if (busIndex < 0)
 			return;
@@ -418,8 +460,26 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		}
 	};
 
+	// a lambda to write a value block to a bus
+	auto writeValueToBusBlock = [&](int8_t busIndex, float val) {
+		if (busIndex < 0)
+			return;
+
+		float* busBuffer = busFrames + (busIndex * numFrames);
+		for (int i = 0; i < numFrames; i++) {
+			busBuffer[i] = val;
+		}
+	};
+
 	uint8_t insideCount = 0;
 	uint8_t outsideCount = 0;
+	float insideXTotal = 0;
+	float outsideXTotal = 0;
+	float insideYTotal = 0;
+	float outsideYTotal = 0;
+	float insideZTotal = 0;
+	float outsideZTotal = 0;
+
 	for (uint8_t ch = 0; ch < alg.NumChannels; ch++) {
 		auto offset = alg.ChannelOffsets[ch];
 		auto inputBusIndex = alg.v[offset + kParamInput] - 1;
@@ -445,8 +505,14 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		alg.PreviouslyInside[ch] = inside;
 		if (inside) {
 			insideCount++;
+			insideXTotal += GetScaledParameterValue(alg, offset + kParamValueXContribution);
+			insideYTotal += GetScaledParameterValue(alg, offset + kParamValueYContribution);
+			insideZTotal += GetScaledParameterValue(alg, offset + kParamValueZContribution);
 		} else {
 			outsideCount++;
+			outsideXTotal += GetScaledParameterValue(alg, offset + kParamValueXContribution);
+			outsideYTotal += GetScaledParameterValue(alg, offset + kParamValueYContribution);
+			outsideZTotal += GetScaledParameterValue(alg, offset + kParamValueZContribution);
 		}
 
 		// write the triggers/gates
@@ -461,6 +527,19 @@ void WindowComparatorAlg::Step(_NT_algorithm* self, float* busFrames, int numFra
 		auto offset = 0 + kNumCommonParameters + kNumPerChannelParameters;
   	writeEventToBusBlock(alg.v[offset + kParamAllInsideWindowGate]  - 1, insideCount  == alg.NumChannels);
   	writeEventToBusBlock(alg.v[offset + kParamAllOutsideWindowGate] - 1, outsideCount == alg.NumChannels);
+
+		writeValueToBusBlock(alg.v[offset + kParamValueXInsideTotal]    - 1, insideXTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueXOutsideTotal]   - 1, outsideXTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueXInsideAverage]  - 1, insideXTotal / static_cast<float>(insideCount));
+		writeValueToBusBlock(alg.v[offset + kParamValueXOutsideAverage] - 1, outsideXTotal / static_cast<float>(outsideCount));
+		writeValueToBusBlock(alg.v[offset + kParamValueYInsideTotal]    - 1, insideYTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueYOutsideTotal]   - 1, outsideYTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueYInsideAverage]  - 1, insideYTotal / static_cast<float>(insideCount));
+		writeValueToBusBlock(alg.v[offset + kParamValueYOutsideAverage] - 1, outsideYTotal / static_cast<float>(outsideCount));
+		writeValueToBusBlock(alg.v[offset + kParamValueZInsideTotal]    - 1, insideZTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueZOutsideTotal]   - 1, outsideZTotal);
+		writeValueToBusBlock(alg.v[offset + kParamValueZInsideAverage]  - 1, insideZTotal / static_cast<float>(insideCount));
+		writeValueToBusBlock(alg.v[offset + kParamValueZOutsideAverage] - 1, outsideZTotal / static_cast<float>(outsideCount));
 	}
 
 	// per-channel aggregate parameters

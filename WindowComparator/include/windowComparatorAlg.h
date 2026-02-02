@@ -25,6 +25,9 @@ enum {
 	kParamOverrideGlobalAtten,
 	kParamInputScale,
 	kParamInputOffset,
+	kParamValueXContribution,
+	kParamValueYContribution,
+	kParamValueZContribution,
 	kParamInsideWindowGate,
 	kParamOutsideWindowGate,
 	kParamEnterTrigger,
@@ -35,6 +38,18 @@ enum {
 
 
 enum {
+	kParamValueXInsideTotal,
+	kParamValueXOutsideTotal,
+	kParamValueXInsideAverage,
+	kParamValueXOutsideAverage,
+	kParamValueYInsideTotal,
+	kParamValueYOutsideTotal,
+	kParamValueYInsideAverage,
+	kParamValueYOutsideAverage,
+	kParamValueZInsideTotal,
+	kParamValueZOutsideTotal,
+	kParamValueZInsideAverage,
+	kParamValueZOutsideAverage,
 	kParamAllInsideWindowGate,
 	kParamAllOutsideWindowGate,
 
