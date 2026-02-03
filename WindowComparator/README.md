@@ -97,3 +97,13 @@ When multiple channels are specified, the following CV outputs become available,
 | `Value Z Total Outside` | The disting NT output/bus to send a CV value representing the total of all `Value Z Contribution` values for channels that are currently outside their windows. |
 | `Value Z Avg Inside` | The disting NT output/bus to send a CV value representing the average of all `Value Z Contribution` values for channels that are currently within their windows. |
 | `Value Z Avg Outside` | The disting NT output/bus to send a CV value representing the average of all `Value Z Contribution` values for channels that are currently outside their windows. |
+
+## Housekeeping
+
+This plugin utilizes features in API version 12 of the Disting NT API.  This version is first supported in NT firmware version 1.13.
+
+Here is a video I made covering most of the functionality described above.
+
+[Video](https://www.youtube.com/watch?v=qR0PpqoUycM)
+
+Bugs, PRs, etc on [GitHub](https://github.com/NerdRoger/disting_nt_plugins) or find me (AgentTerror) on the Expert Sleepers Discord.
