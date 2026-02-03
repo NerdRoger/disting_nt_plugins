@@ -1,0 +1,26 @@
+name: WindowComparator Build
+
+on:
+  push:
+    tags:
+      - 'window-comparator/v*'
+  workflow_dispatch:
+
+jobs:
+  call_build_workflow:
+    name: Call Base Plugin Build Workflow
+
+    # Set permissions needed by the called workflow
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      
+    uses: ./.github/workflows/BasePluginBuild.yaml
+
+    with:
+      plugin_name: WindowComparator
+      artifact_file: WindowComparator.o
+      artifact_base_name: windowComparator
+      source_path: /src/WindowComparator
+      tag_ref: ${{ github.ref }}
