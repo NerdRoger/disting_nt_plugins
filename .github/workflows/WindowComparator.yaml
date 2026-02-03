@@ -20,7 +20,7 @@ jobs:
 
     with:
       plugin_name: WindowComparator
-      artifact_file: WindowComparator.o
+      artifact_file: windowComparator.o
       artifact_base_name: windowComparator
       source_path: /src/WindowComparator
       tag_ref: ${{ github.ref }}
