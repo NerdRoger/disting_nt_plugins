@@ -1,5 +1,5 @@
 ifndef FINAL_OUTPUT
-    $(error FINAL_OUTPUT is not defined. Please define it before including plugin_base.mk)
+    $(error FINAL_OUTPUT is not defined. Please define it before including buildPlugin.mk)
 endif
 
 ifndef NT_API_PATH
