@@ -1,2 +1,3 @@
 *.o
 *.bat
+.unity_master.cpp
