@@ -77,7 +77,7 @@ void QuantizerView::OnEncoder2ShortPressHandler(ViewBase* view) {
 	auto algIndex = NT_algorithmIndex(qv.Algorithm);
 	auto& param = qv.Algorithm->parameters[kWQParamBankScanPosition];
 	auto val = (qv.SelectedBankIndex + 1) * CalculateScaling(param.scaling);
-	NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val);
+	SetParameterValue(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val, CallingContext::UiThread);
 
 	qv.Algorithm->Banks.LoadNotesFromBank(qv.SelectedBankIndex);
 	qv.LoadKeyControlForEditing();
@@ -102,7 +102,7 @@ void QuantizerView::OnPot1TurnHandler(ViewBase* view, float val) {
 			auto parameterIndex = KeyControls[qv.SelectedKeyIndex].ParameterIndex;
 			auto& param = qv.Algorithm->parameters[parameterIndex];
 			qv.Algorithm->PotMgr.UpdateValueWithPot(0, val, qv.SelectedKeyValueRaw, param.min, param.max);
-			NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), qv.SelectedKeyValueRaw);
+			SetParameterValue(algIndex, parameterIndex + NT_parameterOffset(), qv.SelectedKeyValueRaw, CallingContext::UiThread);
 			qv.Algorithm->HelpText.DisplayHelpText(10, KeyControls[qv.SelectedKeyIndex].HelpText);
 		}
 	}
@@ -121,7 +121,7 @@ void QuantizerView::OnPot3TurnHandler(ViewBase* view, float val) {
 			auto max = param.max / scaling;
 			qv.Algorithm->PotMgr.UpdateValueWithPot(2, val, scanPos, min, max);
 			auto paramVal = scanPos * scaling;
-			NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), paramVal);
+			SetParameterValue(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), paramVal, CallingContext::UiThread);
 		} else {
 			qv.Algorithm->HelpText.DisplayHelpText(45, "Push to enable bank scanning");
 		}
@@ -134,7 +134,7 @@ void QuantizerView::OnPot3ShortPressHandler(ViewBase* view) {
 	if (!qv.BankPeeking) {
 		qv.Algorithm->Banks.ScanningLocked = !qv.Algorithm->Banks.ScanningLocked;
 		if (!qv.Algorithm->Banks.ScanningLocked) {
-			qv.Algorithm->Banks.DoBankScan(qv.Algorithm->v[kWQParamBankScanPosition]);
+			qv.Algorithm->Banks.DoBankScan(qv.Algorithm->v[kWQParamBankScanPosition], CallingContext::UiThread);
 			qv.Algorithm->HelpText.DisplayHelpText(80, "Bank scanning on");
 		} else {
 			qv.Algorithm->HelpText.DisplayHelpText(80, "Bank scanning off");

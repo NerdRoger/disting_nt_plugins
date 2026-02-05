@@ -47,18 +47,18 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 }
 
 
-void StepDataRegion::SetDefaultCellValues() {
+void StepDataRegion::SetDefaultCellValues(CallingContext ctx) {
 	// set the default cell values
 	for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
 		auto cd = CellDefinition::All[i];
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.ScaledDefault(), true);
+				SetBaseCellValue(x, y, static_cast<CellDataType>(i), cd.ScaledDefault(), true, ctx);
 			}
 		}
 	}
 	// default state for direction should give us an initial direction (east)
-	SetBaseCellValue(0, 0, CellDataType::Direction, 3, true);
+	SetBaseCellValue(0, 0, CellDataType::Direction, 3, true, ctx);
 }
 
 
@@ -116,7 +116,7 @@ float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct
 }
 
 
-void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix) {
+void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.ScaledMin(), cd.ScaledMax());
@@ -151,13 +151,13 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 			auto matrixIndex = NT_algorithmIndex(matrix);
 			auto cellIndex = y * GridSizeX + x;
 			auto idx = paramTargetIndex + 1 + cellIndex + NT_parameterOffset();
-			NT_setParameterFromAudio(matrixIndex, idx, ival);
+			SetParameterValue(matrixIndex, idx, ival, ctx);
 		}
 	}
 }
 
 
-void StepDataRegion::ScrambleAllCellValues(CellDataType ct) {
+void StepDataRegion::ScrambleAllCellValues(CellDataType ct, CallingContext ctx) {
 	const int totalCells = GridSizeX * GridSizeY;
 	for (int i = totalCells - 1; i > 0; --i) {
 		int j = Algorithm->Random.Next(0, i);
@@ -173,14 +173,14 @@ void StepDataRegion::ScrambleAllCellValues(CellDataType ct) {
 
 		float valI = GetBaseCellValue(x1, y1, ct);
 		float valJ = GetBaseCellValue(x2, y2, ct);
-		SetBaseCellValue(x1, y1, ct, valJ, true);
-		SetBaseCellValue(x2, y2, ct, valI, true);
+		SetBaseCellValue(x1, y1, ct, valJ, true, ctx);
+		SetBaseCellValue(x2, y2, ct, valI, true, ctx);
 	}
 	DoDataChanged();
 }
 
 
-void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct) {
+void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	float val = GetBaseCellValue(x, y, ct);
 
@@ -195,34 +195,34 @@ void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct) {
 		val = cd.ScaledMax() - delta;
 	}
 
-	SetBaseCellValue(x, y, ct, val, true);
+	SetBaseCellValue(x, y, ct, val, true, ctx);
 	DoDataChanged();
 }
 
 
-void StepDataRegion::InvertAllCellValues(CellDataType ct) {
+void StepDataRegion::InvertAllCellValues(CellDataType ct, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			InvertCellValue(x, y, ct);
+			InvertCellValue(x, y, ct, ctx);
 		}
 	}
 }
 
 
-void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellDataType ct) {
+void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx) {
 	int8_t xOff = Algorithm->Random.Next(0, 2) - 1;
 	int8_t yOff = Algorithm->Random.Next(0, 2) - 1;
 	uint8_t x2 = wrap(x + xOff, 0, GridSizeX - 1);
 	uint8_t y2 = wrap(y + yOff, 0, GridSizeY - 1);
 	float v = GetBaseCellValue(x, y, ct);
 	float v2 = GetBaseCellValue(x2, y2, ct);
-	SetBaseCellValue(x, y, ct, v2, true);
-	SetBaseCellValue(x2, y2, ct, v, true);
+	SetBaseCellValue(x, y, ct, v2, true, ctx);
+	SetBaseCellValue(x2, y2, ct, v, true, ctx);
 	DoDataChanged();
 }
 
 
-void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max) {
+void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	int scaledMin = cd.ScaleValue(min);
 	int scaledMax = cd.ScaleValue(max);
@@ -230,21 +230,21 @@ void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, f
 	auto hi = scaledMax - scaledMin;
 	auto scaledRnd = static_cast<int>(Algorithm->Random.Next(lo, hi)) + scaledMin;
 	auto val = cd.UnscaleValue(scaledRnd);
-	SetBaseCellValue(x, y, ct, val, true);
+	SetBaseCellValue(x, y, ct, val, true, ctx);
 	DoDataChanged();
 }
 
 
-void StepDataRegion::RandomizeAllCellValues(CellDataType ct, float min, float max) {
+void StepDataRegion::RandomizeAllCellValues(CellDataType ct, float min, float max, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			RandomizeCellValue(x, y, ct, min, max);
+			RandomizeCellValue(x, y, ct, min, max, ctx);
 		}
 	}
 }
 
 
-void StepDataRegion::RotateCellValuesInRow(uint8_t row, CellDataType ct, int8_t rotateBy) {
+void StepDataRegion::RotateCellValuesInRow(uint8_t row, CellDataType ct, int8_t rotateBy, CallingContext ctx) {
 	// buffer to store rotated values
 	float buf[GridSizeX];
 	for (int x = 0; x < GridSizeX; x++) {
@@ -254,13 +254,13 @@ void StepDataRegion::RotateCellValuesInRow(uint8_t row, CellDataType ct, int8_t 
 	}
 	// move values from rotated buffer into cells
 	for (int x = 0; x < GridSizeX; x++) {
-		SetBaseCellValue(x, row, ct, buf[x], true);
+		SetBaseCellValue(x, row, ct, buf[x], true, ctx);
 	}
 	DoDataChanged();
 }
 
 
-void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8_t rotateBy) {
+void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8_t rotateBy, CallingContext ctx) {
 	// buffer to store rotated values
 	float buf[GridSizeY];
 	for (int y = 0; y < GridSizeY; y++) {
@@ -270,27 +270,27 @@ void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8
 	}
 	// move values from rotated buffer into cells
 	for (int y = 0; y < GridSizeY; y++) {
-		SetBaseCellValue(col, y, ct, buf[y], true);
+		SetBaseCellValue(col, y, ct, buf[y], true, ctx);
 	}
 	DoDataChanged();
 }
 
 
-void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent) {
+void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	auto rnd = static_cast<float>(Algorithm->Random.Next(0, deltaPercent * 100.0f) / 100.0f) * (Algorithm->Random.Next(0, 1) == 1 ? -1.0f : 1.0f);
 	float delta = (cd.ScaledMax() - cd.ScaledMin()) * rnd / 100.0f;
 	float oldVal = GetBaseCellValue(x, y, ct);
 	float newVal = oldVal + delta;
-	SetBaseCellValue(x, y, ct, newVal, true);
+	SetBaseCellValue(x, y, ct, newVal, true, ctx);
 	DoDataChanged();
 }
 
 
-void StepDataRegion::RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent) {
+void StepDataRegion::RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			RandomlyChangeCellValue(x, y, ct, deltaPercent);
+			RandomlyChangeCellValue(x, y, ct, deltaPercent, ctx);
 		}
 	}
 }

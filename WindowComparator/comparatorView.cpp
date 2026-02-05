@@ -60,7 +60,7 @@ void ComparatorView::OnPot1TurnHandler(ViewBase* view, float val) {
 	auto paramVal = GetScaledParameterValue(*cv.Algorithm, paramIdx);
 	cv.Algorithm->PotMgr.UpdateValueWithPot(0, val, paramVal, rmin, rmax);
 	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
-	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
+	SetParameterValue(algIndex, paramIdx + NT_parameterOffset(), unscaled, CallingContext::UiThread);
 
 	cv.DisplayBarStatsHelpText();
 }
@@ -80,7 +80,7 @@ void ComparatorView::OnPot3TurnHandler(ViewBase* view, float val) {
 	auto paramVal = GetScaledParameterValue(*cv.Algorithm, paramIdx);
 	cv.Algorithm->PotMgr.UpdateValueWithPot(2, val, paramVal, rmin, rmax);
 	auto unscaled = UnscaleValueForParameter(*cv.Algorithm, paramIdx, paramVal);
-	NT_setParameterFromAudio(algIndex, paramIdx + NT_parameterOffset(), unscaled);
+	SetParameterValue(algIndex, paramIdx + NT_parameterOffset(), unscaled, CallingContext::UiThread);
 
 	cv.DisplayBarStatsHelpText();
 }

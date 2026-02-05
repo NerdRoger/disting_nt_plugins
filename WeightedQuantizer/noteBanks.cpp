@@ -117,7 +117,7 @@ const NoteBanks::Bank& NoteBanks::operator[](size_t index) const {
 }
 
 
-void NoteBanks::DoBankScan(int16_t val) {
+void NoteBanks::DoBankScan(int16_t val, CallingContext ctx) {
 	if (ScanningLocked) {
 		return;
 	}
@@ -134,7 +134,7 @@ void NoteBanks::DoBankScan(int16_t val) {
 		auto bWeight = val % scaling;
 		auto aWeight = scaling - bWeight;
 		auto c = (a * aWeight + b * bWeight) / scaling;
-		NT_setParameterFromAudio(algIndex, kWQParamQuantWeightC + n + NT_parameterOffset(), c);
+		SetParameterValue(algIndex, kWQParamQuantWeightC + n + NT_parameterOffset(), c, ctx);
 	}
 }
 
@@ -143,7 +143,7 @@ void NoteBanks::LoadNotesFromBank(size_t bankNum) {
 	auto& bank = Banks[bankNum];
 	auto algIndex = NT_algorithmIndex(Algorithm);
 	for (size_t i = 0; i < ARRAY_SIZE(bank.NoteValues); i++) {
-		NT_setParameterFromAudio(algIndex, kWQParamQuantWeightC + i + NT_parameterOffset(), bank.NoteValues[i]);
+		SetParameterValue(algIndex, kWQParamQuantWeightC + i + NT_parameterOffset(), bank.NoteValues[i], CallingContext::UiThread);
 	}
 }
 

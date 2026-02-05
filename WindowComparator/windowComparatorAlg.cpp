@@ -315,8 +315,8 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			auto winCenter = (winRight + winLeft) / 2;
 			auto winWidth  = winRight - winLeft;
 			if (!alg.UpdatingSizePos[ch]) {
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter);
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth);
+				SetParameterValue(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter, CallingContext::AudioThread);
+				SetParameterValue(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth, CallingContext::AudioThread);
 			}
 
 			alg.ParameterDefs[offset + kParamWindowRight].min = alg.v[offset + kParamWindowLeft];
@@ -331,8 +331,8 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			auto winCenter = (winRight + winLeft) / 2;
 			auto winWidth  = winRight - winLeft;
 			if (!alg.UpdatingSizePos[ch]) {
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter);
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth);
+				SetParameterValue(algIndex, offset + kParamWindowCenter + NT_parameterOffset(), winCenter, CallingContext::AudioThread);
+				SetParameterValue(algIndex, offset + kParamWindowWidth  + NT_parameterOffset(), winWidth, CallingContext::AudioThread);
 			}
 
 			alg.ParameterDefs[offset + kParamWindowLeft].max = alg.v[offset + kParamWindowRight];
@@ -347,8 +347,8 @@ void WindowComparatorAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			auto winLeft   = winCenter - winWidth / 2;
 			auto winRight  = winCenter + winWidth / 2;
 			if (!alg.UpdatingBounds[ch]) {
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowLeft  + NT_parameterOffset(), winLeft);
-				NT_setParameterFromAudio(algIndex, offset + kParamWindowRight + NT_parameterOffset(), winRight);
+				SetParameterValue(algIndex, offset + kParamWindowLeft  + NT_parameterOffset(), winLeft, CallingContext::AudioThread);
+				SetParameterValue(algIndex, offset + kParamWindowRight + NT_parameterOffset(), winRight, CallingContext::AudioThread);
 			}
 			alg.UpdatingSizePos[ch] = false;
 		}

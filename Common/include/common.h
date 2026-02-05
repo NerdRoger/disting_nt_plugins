@@ -15,6 +15,12 @@
 constexpr uint8_t MAX_BUS_COUNT = 28;
 
 
+enum class CallingContext {
+	AudioThread,
+	UiThread
+};
+
+
 struct Point {
 	uint8_t x;
 	uint8_t y;
@@ -73,6 +79,19 @@ INLINE constexpr uint16_t CalculateScaling(int scale) {
 		case kNT_scaling100:  return 100;
 		case kNT_scaling1000: return 1000;
 		default: return 1;
+	}
+}
+
+
+// I use this version to set parameter values for consistency.  Some methods/functions won't know which is appropriate to
+// call without a calling context passed along the call stack, because they can run from either thread.  Thus this function,
+// used to put the choice of which NT_ version to call in a single place.
+
+INLINE void SetParameterValue(uint32_t algorithmIndex, uint32_t parameter, int16_t value, CallingContext ctx) {
+	if (ctx == CallingContext::AudioThread) {
+		NT_setParameterFromAudio(algorithmIndex, parameter, value);
+	} else {
+		NT_setParameterFromUi(algorithmIndex, parameter, value);
 	}
 }
 

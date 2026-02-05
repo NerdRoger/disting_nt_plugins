@@ -143,7 +143,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads * kNumPerPlayheadParameters);
 
 	alg.BuildParameters();
-	alg.StepData.SetDefaultCellValues();
+	alg.StepData.SetDefaultCellValues(CallingContext::UiThread);
 	alg.Grid.Activate();
 	alg.Random.Seed(NT_getCpuCycleCount());
 
@@ -171,7 +171,7 @@ void DirSeqAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			alg.ParameterDefs[idx + kParamClockOffset].max = newMax;
 			NT_updateParameterDefinition(algIndex, idx + kParamClockOffset);
 			auto newVal = clamp(alg.v[idx + kParamClockOffset], static_cast<int16_t>(0), static_cast<int16_t>(newMax));
-			NT_setParameterFromAudio(algIndex, idx + kParamClockOffset + NT_parameterOffset(), newVal);
+			SetParameterValue(algIndex, idx + kParamClockOffset + NT_parameterOffset(), newVal, CallingContext::AudioThread);
 		}
 	}
 
@@ -410,12 +410,12 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 						if (!parse.number(fval)) {
 							return false;
 						}
-						alg.StepData.SetBaseCellValue(x, y, cdt, fval, true);
+						alg.StepData.SetBaseCellValue(x, y, cdt, fval, true, CallingContext::UiThread);
 					} else {
 						if (!parse.number(ival)) {
 							return false;
 						}
-						alg.StepData.SetBaseCellValue(x, y, cdt, ival, true);
+						alg.StepData.SetBaseCellValue(x, y, cdt, ival, true, CallingContext::UiThread);
 					}
 					found = true;
 					break;

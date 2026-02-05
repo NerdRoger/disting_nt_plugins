@@ -27,7 +27,7 @@ public:
 
 	Bank& operator[](size_t index);
 	const Bank& operator[](size_t index) const;
-	void DoBankScan(int16_t val);
+	void DoBankScan(int16_t val, CallingContext ctx);
 	void LoadNotesFromBank(size_t bankNum);
 	void SaveNotesToBank(size_t bankNum);
 

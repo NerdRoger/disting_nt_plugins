@@ -96,7 +96,7 @@ void GridView::OnPot3TurnHandler(ViewBase* view, float val) {
 	if (grid.Editable) {
 		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
 		grid.Algorithm->PotMgr.UpdateValueWithPot(2, val, grid.ParamEditRaw, cd.ScaledMin(), cd.ScaledMax() + cd.Epsilon());
-		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true, CallingContext::UiThread);
 		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 	}
 }
@@ -108,7 +108,7 @@ void GridView::OnPot3ShortPressHandler(ViewBase* view) {
 	if (grid.Editable) {
 		auto cd = CellDefinition::All[static_cast<size_t>(grid.SelectedParameterIndex)];
 		grid.ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
-		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+		grid.Algorithm->StepData.SetBaseCellValue(grid.SelectedCell.x, grid.SelectedCell.y, grid.SelectedParameterIndex, grid.ParamEditRaw, true, CallingContext::UiThread);
 		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);
 		grid.LoadParamForEditing();
 	}
@@ -122,7 +122,7 @@ void GridView::OnPot3LongPressHandler(ViewBase* view) {
 		grid.ParamEditRaw = cd.ScaledDefault() + cd.Epsilon();
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				grid.Algorithm->StepData.SetBaseCellValue(x, y, grid.SelectedParameterIndex, grid.ParamEditRaw, true);
+				grid.Algorithm->StepData.SetBaseCellValue(x, y, grid.SelectedParameterIndex, grid.ParamEditRaw, true, CallingContext::UiThread);
 			}
 		}
 		grid.Algorithm->HelpText.DisplayHelpText(cd.HelpTextX, cd.HelpText);

@@ -164,7 +164,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 		_NT_slot slot;
 		NT_getSlot(slot, algIndex);
 		auto val = cd.NTValueToCellValue(slot.parameterPresetValue(p + NT_parameterOffset()));
-		seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false);
+		seq->StepData.SetBaseCellValue(cellNum % GridSizeX, cellNum / GridSizeX, ct, val, false, CallingContext::AudioThread);
 		return;
 	}
 
@@ -180,34 +180,34 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 
 	switch (idx) {
 		case kParamModTargetScrambleAllValuesTrigger:
-			seq->StepData.ScrambleAllCellValues(ct);
+			seq->StepData.ScrambleAllCellValues(ct, CallingContext::AudioThread);
 			break;
 		case kParamModTargetInvertAllValuesTrigger:
-			seq->StepData.InvertAllCellValues(ct);
+			seq->StepData.InvertAllCellValues(ct, CallingContext::AudioThread);
 			break;
 		case kParamModTargetRandomizeAllValuesTrigger:
-			seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b));
+			seq->StepData.RandomizeAllCellValues(ct, min(a, b), max(a, b), CallingContext::AudioThread);
 			break;
 		case kParamModTargetRandomlyChangeAllValuesTrigger:
-			seq->StepData.RandomlyChangeAllCellValues(ct, changeBy);
+			seq->StepData.RandomlyChangeAllCellValues(ct, changeBy, CallingContext::AudioThread);
 			break;
 		case kParamModTargetInvertCellValueTrigger:
-			seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+			seq->StepData.InvertCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, CallingContext::AudioThread);
 			break;
 		case kParamModTargetRandomizeCellValueTrigger:
-			seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b));
+			seq->StepData.RandomizeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, min(a, b), max(a, b), CallingContext::AudioThread);
 			break;
 		case kParamModTargetRandomlyChangeCellValueTrigger:
-			seq->StepData.RandomlyChangeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, changeBy);
+			seq->StepData.RandomlyChangeCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, changeBy, CallingContext::AudioThread);
 			break;
 		case kParamModTargetSwapWithSurroundingCellValueTrigger:
-			seq->StepData.SwapWithSurroundingCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct);
+			seq->StepData.SwapWithSurroundingCellValue(cellIndex % GridSizeX, cellIndex / GridSizeX, ct, CallingContext::AudioThread);
 			break;
 		case kParamModTargetRotateValuesInRowAboutCellTrigger:
-			seq->StepData.RotateCellValuesInRow(cellIndex / GridSizeX, ct, 1);
+			seq->StepData.RotateCellValuesInRow(cellIndex / GridSizeX, ct, 1, CallingContext::AudioThread);
 			break;
 		case kParamModTargetRotateValuesInColumnAboutCellTrigger:
-			seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1);
+			seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1, CallingContext::AudioThread);
 			break;
 	}
 }
@@ -305,11 +305,11 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			ParameterDefs[modTargetParamIndex + 1 + i].scaling = kNT_scalingNone;
 			ParameterDefs[modTargetParamIndex + 1 + i].enumStrings = NULL;
 			NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
-			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), 0);
+			SetParameterValue(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), 0, CallingContext::AudioThread);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), true);
 		}
 		for (int i = kParamModTargetRandomizeRangeA; i < kParamModTargetStride; i++) {
-			NT_setParameterFromAudio(algIndex, modTargetParamIndex + i + NT_parameterOffset(), 0);
+			SetParameterValue(algIndex, modTargetParamIndex + i + NT_parameterOffset(), 0, CallingContext::AudioThread);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + i + NT_parameterOffset(), true);
 		}
 	} else {
@@ -359,7 +359,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 			NT_updateParameterDefinition(algIndex, modTargetParamIndex + 1 + i);
 			
 			// set the parameter value to match the cell's value we captured above
-			NT_setParameterFromAudio(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val);
+			SetParameterValue(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), val, CallingContext::AudioThread);
 			NT_setParameterGrayedOut(algIndex, modTargetParamIndex + 1 + i + NT_parameterOffset(), false);
 		}
 
@@ -374,7 +374,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].scaling = cd.Scaling;
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeA].enumStrings = enums;
 		NT_updateParameterDefinition(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeA);
-		NT_setParameterFromAudio(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeA + NT_parameterOffset(), min);
+		SetParameterValue(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeA + NT_parameterOffset(), min, CallingContext::AudioThread);
 
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].min = min;
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].max = max;
@@ -383,7 +383,7 @@ void DirSeqModMatrixAlg::SetupParametersForTarget(int modTargetParamIndex) {
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].scaling = cd.Scaling;
 		ParameterDefs[modTargetParamIndex + kParamModTargetRandomizeRangeB].enumStrings = enums;
 		NT_updateParameterDefinition(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeB);
-		NT_setParameterFromAudio(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeB + NT_parameterOffset(), max);
+		SetParameterValue(algIndex, modTargetParamIndex + kParamModTargetRandomizeRangeB + NT_parameterOffset(), max, CallingContext::AudioThread);
 
 	}
 }

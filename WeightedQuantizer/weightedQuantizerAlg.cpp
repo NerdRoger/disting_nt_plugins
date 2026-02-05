@@ -161,7 +161,7 @@ void WeightedQuantizerAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	// if the bank scanning position changed, we need to adjust the weightings
 	if (p == kWQParamBankScanPosition) {
 		auto val = alg.v[p];
-		alg.Banks.DoBankScan(val);
+		alg.Banks.DoBankScan(val, CallingContext::AudioThread);
 	}
 }
 
