@@ -37,8 +37,15 @@ private:
 		friend class StepDataRegion;
 	};
 
+	struct ModMatrixBinding {
+		DirSeqModMatrixAlg* Matrix;
+		uint32_t AlgorithmIndex;
+		int ParamTargetIndex;
+	};
+
 	DirSeqAlg* Algorithm = nullptr;
-	SingleCellData Cells[GridSizeX][GridSizeY];	
+	SingleCellData Cells[GridSizeX][GridSizeY];
+	ModMatrixBinding ModMatrixBindings[static_cast<size_t>(CellDataType::NumCellDataTypes)];
 
 	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
 	void DoDataChanged();
@@ -47,6 +54,7 @@ public:
 
 	StepDataRegion();
 	void InjectDependencies(DirSeqAlg* alg);
+	void RefreshModMatrixBindings();
 
 	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;

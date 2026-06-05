@@ -22,28 +22,44 @@ void StepDataRegion::DoDataChanged() {
 }
 
 
-DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const {
-	paramTargetIndex = -1;
+void StepDataRegion::RefreshModMatrixBindings() {
+	for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
+		ModMatrixBindings[i].Matrix = nullptr;
+		ModMatrixBindings[i].AlgorithmIndex = 0;
+		ModMatrixBindings[i].ParamTargetIndex = -1;
+	}
+
 	auto algIndex = NT_algorithmIndex(Algorithm);
 	_NT_slot slot;
 	for (uint32_t idx = algIndex + 1; idx < NT_algorithmCount(); idx++) {
 		if (!NT_getSlot(slot, idx))
-			return nullptr;
-		if (slot.guid() == DirSeqModMatrixAlg::Guid) {
-			auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
-
-			for (int m = 0; m < DirSeqModMatrixAlg::NumMatrices; m++) {
-				if (matrix->v[m * kParamModTargetStride + kParamModTarget] - 1 == static_cast<int>(ct)) {
-					paramTargetIndex = m * kParamModTargetStride + kParamModTarget;
-					return matrix;
-				}
-			}
-		} else {
+			return;
+		if (slot.guid() != DirSeqModMatrixAlg::Guid) {
 			// the first non-matrix algorithm we encounter, bail out, as we need them to be contiguous
-			return nullptr;
+			return;
+		}
+
+		auto matrix = static_cast<DirSeqModMatrixAlg*>(slot.plugin());
+		for (int m = 0; m < DirSeqModMatrixAlg::NumMatrices; m++) {
+			auto target = matrix->v[m * kParamModTargetStride + kParamModTarget] - 1;
+			if (target < 0 || target >= static_cast<int>(CellDataType::NumCellDataTypes))
+				continue;
+
+			auto& binding = ModMatrixBindings[target];
+			if (binding.Matrix == nullptr) {
+				binding.Matrix = matrix;
+				binding.AlgorithmIndex = idx;
+				binding.ParamTargetIndex = m * kParamModTargetStride + kParamModTarget;
+			}
 		}
 	}
-	return nullptr;
+}
+
+
+DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const {
+	auto& binding = ModMatrixBindings[static_cast<size_t>(ct)];
+	paramTargetIndex = binding.ParamTargetIndex;
+	return binding.Matrix;
 }
 
 
@@ -98,17 +114,16 @@ float StepDataRegion::GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) co
 
 float StepDataRegion::GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
+	auto& binding = ModMatrixBindings[static_cast<size_t>(ct)];
 
 	// if we have a mod matrix assigned to this cell type, get the value from there...
-	int paramTargetIndex;
-	auto matrix = GetModMatrixAlgorithm(ct, paramTargetIndex);
-	if (matrix != nullptr) {
-		auto matrixIndex = NT_algorithmIndex(matrix);
+	if (binding.Matrix != nullptr) {
 		_NT_slot slot;
-		NT_getSlot(slot, matrixIndex);
-		auto cellIndex = y * GridSizeX + x;
-		auto idx = paramTargetIndex + 1 + cellIndex + NT_parameterOffset();
-		return cd.NTValueToCellValue(slot.parameterValue(idx));
+		if (NT_getSlot(slot, binding.AlgorithmIndex)) {
+			auto cellIndex = y * GridSizeX + x;
+			auto idx = binding.ParamTargetIndex + 1 + cellIndex + NT_parameterOffset();
+			return cd.NTValueToCellValue(slot.parameterValue(idx));
+		}
 	}
 
 	// otherwise take it from our internal cell data
@@ -145,6 +160,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 
 	// and if we have an NT parameter mapped to the value we are changing in a mod matrix sidecar, also change it's parameter value
 	if (updateMatrix)	{
+		RefreshModMatrixBindings();
 		int paramTargetIndex;
 		auto matrix = GetModMatrixAlgorithm(ct, paramTargetIndex);
 		if (matrix != nullptr) {

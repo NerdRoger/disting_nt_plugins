@@ -185,6 +185,7 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	alg.Loaded = true;
 	auto numFrames = numFramesBy4 * 4;
+	alg.StepData.RefreshModMatrixBindings();
 
 	// a lambda to get the value of a parameter for a particular playhead
 	auto getPlayheadParamVal = [&alg](size_t headIdx, size_t offset) {
@@ -261,6 +262,7 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 
 bool DirSeqAlg::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
+	alg.StepData.RefreshModMatrixBindings();
 	alg.Grid.Draw();
 	return true;
 }
