@@ -289,12 +289,12 @@ void Playhead::MoveToNextCell() {
 		}
 
 		// change the selected position, and wrap it to the other side if it goes off the grid
-		uint8_t xOffset = (Direction == 6 || Direction == 7 || Direction == 8) ? -1 : 0;
+		int8_t xOffset = (Direction == 6 || Direction == 7 || Direction == 8) ? -1 : 0;
 		xOffset = (Direction == 2 || Direction == 3 || Direction == 4) ? 1 : xOffset;
 		xOffset = (xOffset * nSteps) + (xOffset * skip);
 		CurrentStep.x = wrap(CurrentStep.x + xOffset, 0, GridSizeX - 1);
 
-		uint8_t yOffset = (Direction == 1 || Direction == 2 || Direction == 8) ? -1 : 0;
+		int8_t yOffset = (Direction == 1 || Direction == 2 || Direction == 8) ? -1 : 0;
 		yOffset = (Direction == 4 || Direction == 5 || Direction == 6) ? 1 : yOffset;
 		yOffset = (yOffset * nSteps) + (yOffset * skip);
 		CurrentStep.y = wrap(CurrentStep.y + yOffset, 0, GridSizeY - 1);
