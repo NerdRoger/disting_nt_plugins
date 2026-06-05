@@ -8,6 +8,13 @@
 static constexpr uint16_t InactiveTime = 10000;
 static constexpr float GateHigh = 5.0;
 static constexpr float GateLow = 0.0;
+// Timing margins used to preserve retriggers and ties despite ms-level timing, rounding, and small clock-rate fluctuations.
+static constexpr uint8_t NearLegatoGatePctMax = 95;
+static constexpr uint8_t TieMaxGateOvershootPct = 105;
+static constexpr uint8_t TieClockGatePct = 101;
+static constexpr uint8_t ClockGateRoundingLeewayMs = 2;
+static constexpr uint8_t GateRetriggerDipMs = 2;
+static constexpr float NearFullAttenuationPctMax = 98.0f;
 
 
 Playhead::Playhead() {
@@ -443,8 +450,8 @@ void Playhead::CalculateGateLength() {
 	}
 
 	// if we are not playing legato, cheat a little bit to make sure there is always a gap, to make sure gates don't overlap
-	if (GatePct > 95 && GatePct < 100) {
-		GatePct = 95;
+	if (GatePct > NearLegatoGatePctMax && GatePct < 100) {
+		GatePct = NearLegatoGatePctMax;
 	}
 
 	// calculate the gate length for the step
@@ -454,16 +461,16 @@ void Playhead::CalculateGateLength() {
 		// if this is a tie step, play legato.  calc the percentage, using about 5% leeway.
 		// It's ok to overshoot because it will be recalculated next step.  But wa don't want to overshoot by much, so the gate stops if we stop the clock
 		// We don't, however, want to undershoot, because then we will not play legato
-		GatePct = (Tie != TieMode::None) ? EffectiveClockRate() * 105 / maxLen : GatePct;
+		GatePct = (Tie != TieMode::None) ? EffectiveClockRate() * TieMaxGateOvershootPct / maxLen : GatePct;
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == GateLengthSource::Clock) {
 		// if this is a tie step, play legato, again overshooting by a small amount to account for rounding errors
-		GatePct = (Tie != TieMode::None) ? 101 : GatePct;
+		GatePct = (Tie != TieMode::None) ? TieClockGatePct : GatePct;
 		GateLen = EffectiveClockRate() * GatePct / 100;
 		// this cheat helps ensure that the gate will play legato if the gatelen is 100%
 		// floating point math and/or slight clock fluctuations could make it not work out that way otherwise
 		if (GateLen > 0) {
-			GateLen+=2;
+			GateLen += ClockGateRoundingLeewayMs;
 		}
 	}
 }
@@ -490,7 +497,7 @@ void Playhead::DipIfNeccessary() {
 	// unless we are playing legato (last step gate len = 100), we have to briefly dip to end the previous gate,
 	// no matter the calculated length, unless of course we are already low
 	if (LastGatePct < 100 && Outputs.Gate > 0.0) {
-		Dip = 2;
+		Dip = GateRetriggerDipMs;
 	}
 }
 
@@ -567,8 +574,8 @@ void Playhead::AttenuateGateLength() {
 	}
 
 	// this cheat allows us to attenuate 100% gate lengths down and ensure they are not played legato due to floating point math issues
-	if (atten > 98 && atten < 100) {
-		atten = 98;
+	if (atten > NearFullAttenuationPctMax && atten < 100) {
+		atten = NearFullAttenuationPctMax;
 	}
 
 	// attenuate the gate length, but not below 2
