@@ -50,6 +50,7 @@ void Playhead::InitVisitCounts() {
 void Playhead::ProcessClockTrigger() {
 
 	LastClockTriggerTime = Algorithm->Timer.TotalMs;
+	InactiveResetApplied = false;
 
 	// we can't calculate the clock rate without knowing the time of the last clock
 	if (LastClock > 0) {
@@ -89,10 +90,11 @@ void Playhead::ProcessResetTrigger() {
 void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
 	bool resetWhenInactive = (Algorithm->v[ParamOffset + kParamResetWhenInactive] == 1);
-	if (resetWhenInactive) {
+	if (resetWhenInactive && !InactiveResetApplied) {
 		auto inactiveFor = Algorithm->Timer.TotalMs - LastClockTriggerTime;
 		if (inactiveFor > InactiveTime) {
 			Reset();
+			InactiveResetApplied = true;
 		}
 	}
 

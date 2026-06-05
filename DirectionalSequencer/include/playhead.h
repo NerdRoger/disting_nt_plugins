@@ -60,6 +60,7 @@ private:
 	bool IsRepeat;
 	RatchetInfo Ratchets;
 	bool ResetQueued;
+	bool InactiveResetApplied;
 	uint32_t LastClockTriggerTime;
 	uint32_t GateStart;
 	uint32_t GateEnd;
