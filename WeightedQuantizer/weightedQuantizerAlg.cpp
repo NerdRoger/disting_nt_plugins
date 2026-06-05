@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
 #include "common.h"
@@ -129,6 +130,7 @@ void WeightedQuantizerAlg::CalculateRequirements(_NT_algorithmRequirements& req,
 _NT_algorithm* WeightedQuantizerAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto numChannels = specifications[0];
 	auto mem = ptrs.sram;
+	memset(mem, 0, req.sram);
 
 	// initialize arrays that depend on number of channels
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE

@@ -128,6 +128,7 @@ void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int3
 _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto numPlayheads = specifications[0];
 	auto mem = ptrs.sram;
+	memset(mem, 0, req.sram);
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);

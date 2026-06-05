@@ -260,6 +260,7 @@ void WindowComparatorAlg::CalculateRequirements(_NT_algorithmRequirements& req, 
 _NT_algorithm* WindowComparatorAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	uint8_t numChannels = specifications[0];
 	auto mem = ptrs.sram;
+	memset(mem, 0, req.sram);
 
 	// initialize arrays that depend on number of channels
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
