@@ -40,6 +40,8 @@ void Playhead::Reset() {
 	RepeatCount = 0;
 	IsRepeat = false;
 	Ratchets.Active = false;
+	TieCount = 0;
+	Tie = TieMode::None;
 	InitVisitCounts();
 	// TODO:  anything else need to happen when resetting the sequencer?
 }
