@@ -370,6 +370,9 @@ bool DirSeqAlg::DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse,
 		}
 	}
 
+	coords.x = clamp(coords.x, static_cast<int8_t>(0), static_cast<int8_t>(GridSizeX - 1));
+	coords.y = clamp(coords.y, static_cast<int8_t>(0), static_cast<int8_t>(GridSizeY - 1));
+
 	return true;
 }
 
@@ -480,6 +483,7 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 			if (!parse.number(val)) {
 				return false;
 			}
+			val = clamp(val, 0, static_cast<int>(CellDataType::NumCellDataTypes) - 1);
 			alg.Grid.SelectedParameterIndex = static_cast<CellDataType>(val);
 			alg.Grid.SelectedParameterIndexRaw = val + 0.5f;
 		} else if (parse.matchName("SelectedPlayheadIndex")) {
@@ -487,6 +491,7 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 			if (!parse.number(val)) {
 				return false;
 			}
+			val = clamp(val, 0, alg.Playheads.Count - 1);
 			alg.Grid.SelectedPlayheadIndex = val;
 			alg.Grid.SelectedPlayheadIndexRaw = val + 0.5f;
 		} else if (parse.matchName("Editable")) {
