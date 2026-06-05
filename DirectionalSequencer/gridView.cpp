@@ -267,15 +267,16 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 
 	auto idx = static_cast<CellDataType>(paramIndex);
 	auto cd = CellDefinition::All[paramIndex];
+	auto headParamOffset = kNumCommonParameters + (kNumPerPlayheadParameters * SelectedPlayheadIndex);
 	char buf[15];
 	auto len = strlen(cd.DisplayName);
 	strncpy(buf, cd.DisplayName, len);
 
-	if (idx == CellDataType::Value && (Algorithm->v[kParamAttenValue] != 1000 || Algorithm->v[kParamOffsetValue] != 0)) {
+	if (idx == CellDataType::Value && (Algorithm->v[headParamOffset + kParamAttenValue] != 1000 || Algorithm->v[headParamOffset + kParamOffsetValue] != 0)) {
 		buf[len++] = '*';
-	} else if (idx == CellDataType::Velocity && (Algorithm->v[kParamVelocityAttenuate] != 1000 || Algorithm->v[kParamVelocityOffset] != 0)) {
+	} else if (idx == CellDataType::Velocity && (Algorithm->v[headParamOffset + kParamVelocityAttenuate] != 1000 || Algorithm->v[headParamOffset + kParamVelocityOffset] != 0)) {
 		buf[len++] = '*';
-	} else if (idx == CellDataType::GateLength && Algorithm->v[kParamGateLengthAttenuate] != 1000) {
+	} else if (idx == CellDataType::GateLength && Algorithm->v[headParamOffset + kParamGateLengthAttenuate] != 1000) {
 		buf[len++] = '*';
 	}
 	buf[len] = 0;
