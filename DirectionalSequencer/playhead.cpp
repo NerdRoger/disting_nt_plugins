@@ -24,7 +24,12 @@ Playhead::Playhead() {
 
 void Playhead::InjectDependencies(DirSeqAlg* alg, size_t idx) {
 	Algorithm = alg;
-	ParamOffset = kNumCommonParameters + (idx * kNumPerPlayheadParameters);
+	Index = idx;
+}
+
+
+void Playhead::SetConfig(const PlayheadConfig& config) {
+	Config = config;
 }
 
 
@@ -98,8 +103,7 @@ void Playhead::ProcessResetTrigger() {
 
 void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
-	bool resetWhenInactive = (Algorithm->v[ParamOffset + kParamResetWhenInactive] == 1);
-	if (resetWhenInactive && !InactiveResetApplied) {
+	if (Config.ResetWhenInactive && !InactiveResetApplied) {
 		auto inactiveFor = Algorithm->Timer.TotalMs - LastClockTriggerTime;
 		if (inactiveFor > InactiveTime) {
 			Reset();
@@ -144,9 +148,7 @@ void Playhead::Process() {
 
 
 	// velocity range is 0-10, velo gate range is x-5
-	auto& param = Algorithm->parameters[ParamOffset + kParamVelocityGateMin];
-	float scaling = CalculateScaling(param.scaling);
-	auto veloGateMin = Algorithm->v[ParamOffset + kParamVelocityGateMin] / scaling;
+	auto veloGateMin = Config.VelocityGateMin;
 	auto veloGate = veloGateMin + (velocity * (GateHigh - veloGateMin) / 10.0f);
 
 
@@ -165,7 +167,7 @@ void Playhead::Process() {
 
 
 uint32_t Playhead::EffectiveClockRate(){
-	uint32_t divisor = Algorithm->v[ParamOffset + kParamClockDivisor];
+	uint32_t divisor = Config.ClockDivisor;
 	return ClockRate * divisor;
 }
 
@@ -233,8 +235,8 @@ void Playhead::ProcessTies() {
 
 
 bool Playhead::ShouldAdvance() {
-	uint32_t divisor = Algorithm->v[ParamOffset + kParamClockDivisor];
-	uint32_t offset = Algorithm->v[ParamOffset + kParamClockOffset];
+	uint32_t divisor = Config.ClockDivisor;
+	uint32_t offset = Config.ClockOffset;
 	return (((ClockCount - 1) % divisor) == offset);
 }
 
@@ -247,7 +249,7 @@ void Playhead::ResetIfNecessary() {
 		return;
 	}
 
-	uint32_t resetAfter = Algorithm->v[ParamOffset + kParamResetAfterNSteps];
+	uint32_t resetAfter = Config.ResetAfterNSteps;
 	if (resetAfter > 0) {
 		if (AdvanceCount >= resetAfter) {
 			Reset();
@@ -276,10 +278,10 @@ void Playhead::MoveToNextCell() {
 		}
 
 		// we want to move forward in the given direction this many times
-		auto nSteps = Algorithm->v[ParamOffset + kParamMoveNCells];
+		auto nSteps = Config.MoveNCells;
 
 		// also we want to skip forward in the sequence, in the direction of travel, by one step every so often, but only counting non-repeated steps
-		auto skipAfterN = Algorithm->v[ParamOffset + kParamSkipAfterNSteps];
+		auto skipAfterN = Config.SkipAfterNSteps;
 
 		uint8_t skip = 0;
 		if (skipAfterN > 0) {
@@ -358,9 +360,7 @@ void Playhead::AttenuateValue() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto& param = Algorithm->parameters[ParamOffset + kParamAttenValue];
-	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[ParamOffset + kParamAttenValue] / scaling;
+	auto atten = Config.AttenValue;
 	StepVal *= (atten / 100.0f);
 }
 
@@ -370,9 +370,7 @@ void Playhead::OffsetValue() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto& param = Algorithm->parameters[ParamOffset + kParamOffsetValue];
-	float scaling = CalculateScaling(param.scaling);
-	auto offset = Algorithm->v[ParamOffset + kParamOffsetValue] / scaling;
+	auto offset = Config.OffsetValue;
 	StepVal += offset;
 }
 
@@ -407,7 +405,7 @@ void Playhead::ProcessRest() {
 	}
 
 	// calculate if we should apply the global rest
-	auto restAfterN = Algorithm->v[ParamOffset + kParamRestAfterNSteps];
+	auto restAfterN = Config.RestAfterNSteps;
 	if (restAfterN > 0) {
 		if (AdvanceCount % (restAfterN + 1) == 0) {
 			EmitGate = false;
@@ -442,7 +440,7 @@ void Playhead::RecordCellVisit() {
 
 void Playhead::CalculateGateLength() {
 	GatePct = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
-	auto gateLengthSource = static_cast<GateLengthSource>(Algorithm->v[ParamOffset + kParamGateLengthSource]);
+	auto gateLengthSource = Config.GateSource;
 
 	// if we are processing a tie, always play legato.  100% if we are using clocked gates, otherwise calc the percentage
 
@@ -459,7 +457,7 @@ void Playhead::CalculateGateLength() {
 	// calculate the gate length for the step
   // if we are processing a tie, always play legato.  100% if we are using clocked gates, otherwise calc the percentage
 	if (gateLengthSource == GateLengthSource::MaxGateLength) {
-		auto maxLen = Algorithm->v[ParamOffset + kParamMaxGateLength];
+		auto maxLen = Config.MaxGateLength;
 		// if this is a tie step, play legato.  calc the percentage, using about 5% leeway.
 		// It's ok to overshoot because it will be recalculated next step.  But wa don't want to overshoot by much, so the gate stops if we stop the clock
 		// We don't, however, want to undershoot, because then we will not play legato
@@ -557,14 +555,12 @@ void Playhead::AttenuateGateLength() {
 		return;
 
 	// if we are using a defined max gate length, we change that to attenuate.  We don't want to double attenuate here
-	auto gateLengthSource = Algorithm->v[ParamOffset + kParamGateLengthSource];
-	if (gateLengthSource == 0) {
+	auto gateLengthSource = Config.GateSource;
+	if (gateLengthSource == GateLengthSource::MaxGateLength) {
 		return;
 	}
 
-	auto& param = Algorithm->parameters[ParamOffset + kParamGateLengthAttenuate];
-	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[ParamOffset + kParamGateLengthAttenuate] / scaling;
+	auto atten = Config.GateLengthAttenuate;
 
 	// if we've attenuated down to zero, don't even calculate
 	if (atten == 0) {
@@ -605,9 +601,7 @@ void Playhead::CalculateGate() {
 void Playhead::HumanizeGate() {
 	// only humanize non-legato gates
 	if (GatePct < 100) {
-		auto& param = Algorithm->parameters[ParamOffset + kParamHumanizeValue];
-		float scaling = CalculateScaling(param.scaling);
-		auto human = Algorithm->v[ParamOffset + kParamHumanizeValue] / scaling;
+		auto human = Config.HumanizeValue;
 		human *= 1000;
 		float pct1 = Algorithm->Random.Next(0, human) / 1000.0f;
 		float pct2 = Algorithm->Random.Next(0, human) / 1000.0f;
@@ -627,10 +621,8 @@ void Playhead::CalculateVelocity() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto& param = Algorithm->parameters[ParamOffset + kParamVelocityAttenuate];
-	float scaling = CalculateScaling(param.scaling);
-	auto atten = Algorithm->v[ParamOffset + kParamVelocityAttenuate] / scaling;
-	auto offset = Algorithm->v[ParamOffset + kParamVelocityOffset];
+	auto atten = Config.VelocityAttenuate;
+	auto offset = Config.VelocityOffset;
 	auto velo = Algorithm->StepData.GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
 	velo = velo * atten / 100.0f;
 	velo += offset;
@@ -643,9 +635,7 @@ void Playhead::HumanizeVelocity() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto& param = Algorithm->parameters[ParamOffset + kParamHumanizeValue];
-	float scaling = CalculateScaling(param.scaling);
-	auto human = Algorithm->v[ParamOffset + kParamHumanizeValue] / scaling;
+	auto human = Config.HumanizeValue;
 	human *= 1000;
 	float pct = Algorithm->Random.Next(0, human) / 1000.0f;
 	auto off = Velocity * pct / 100.0f;

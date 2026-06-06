@@ -8,6 +8,31 @@
 
 struct DirSeqAlg;
 
+enum class GateLengthSource {
+	MaxGateLength,
+	Clock
+};
+
+
+struct PlayheadConfig {
+	uint32_t ClockDivisor = 1;
+	uint32_t ClockOffset = 0;
+	uint32_t MoveNCells = 1;
+	uint32_t RestAfterNSteps = 0;
+	uint32_t SkipAfterNSteps = 0;
+	uint32_t ResetAfterNSteps = 0;
+	bool ResetWhenInactive = true;
+	GateLengthSource GateSource = GateLengthSource::Clock;
+	uint32_t MaxGateLength = 100;
+	float GateLengthAttenuate = 100.0f;
+	float HumanizeValue = 0.0f;
+	float AttenValue = 100.0f;
+	float OffsetValue = 0.0f;
+	float VelocityAttenuate = 100.0f;
+	int16_t VelocityOffset = 0;
+	float VelocityGateMin = 5.0f;
+};
+
 
 // this class represents a single playhead moving thru the sequencer field
 struct Playhead {
@@ -45,7 +70,8 @@ private:
 	};
 
 	DirSeqAlg* Algorithm = nullptr;
-	int ParamOffset;
+	size_t Index;
+	PlayheadConfig Config;
 
 	uint32_t LastClock;
 	uint32_t ClockRate = 500; // 500ms = 120BPM
@@ -122,6 +148,7 @@ public:
 
 	Playhead();
 	void InjectDependencies(DirSeqAlg* alg, size_t idx);
+	void SetConfig(const PlayheadConfig& config);
 
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();

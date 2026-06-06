@@ -39,6 +39,39 @@ void DirSeqAlg::StepDataChangedHandler() {
 }
 
 
+PlayheadConfig DirSeqAlg::GetPlayheadConfig(size_t idx) const {
+	auto offset = kNumCommonParameters + (kNumPerPlayheadParameters * idx);
+	auto scaledParamValue = [this, offset](size_t paramOffset) {
+		auto& param = parameters[offset + paramOffset];
+		return static_cast<float>(v[offset + paramOffset]) / CalculateScaling(param.scaling);
+	};
+
+	PlayheadConfig config;
+	config.ClockDivisor = v[offset + kParamClockDivisor];
+	config.ClockOffset = v[offset + kParamClockOffset];
+	config.MoveNCells = v[offset + kParamMoveNCells];
+	config.RestAfterNSteps = v[offset + kParamRestAfterNSteps];
+	config.SkipAfterNSteps = v[offset + kParamSkipAfterNSteps];
+	config.ResetAfterNSteps = v[offset + kParamResetAfterNSteps];
+	config.ResetWhenInactive = (v[offset + kParamResetWhenInactive] == 1);
+	config.GateSource = static_cast<GateLengthSource>(v[offset + kParamGateLengthSource]);
+	config.MaxGateLength = v[offset + kParamMaxGateLength];
+	config.GateLengthAttenuate = scaledParamValue(kParamGateLengthAttenuate);
+	config.HumanizeValue = scaledParamValue(kParamHumanizeValue);
+	config.AttenValue = scaledParamValue(kParamAttenValue);
+	config.OffsetValue = scaledParamValue(kParamOffsetValue);
+	config.VelocityAttenuate = scaledParamValue(kParamVelocityAttenuate);
+	config.VelocityOffset = v[offset + kParamVelocityOffset];
+	config.VelocityGateMin = scaledParamValue(kParamVelocityGateMin);
+	return config;
+}
+
+
+void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
+	Playheads[idx].SetConfig(GetPlayheadConfig(idx));
+}
+
+
 void DirSeqAlg::InjectDependencies(const _NT_globals* globals) {
 	Timer.InjectDependencies(globals);
 	StepData.InjectDependencies(this);
@@ -144,6 +177,9 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.PageParams = MemoryHelper<uint8_t>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads * kNumPerPlayheadParameters);
 
 	alg.BuildParameters();
+	for (int h = 0; h < alg.Playheads.Count; h++) {
+		alg.RefreshPlayheadConfig(h);
+	}
 	alg.StepData.SetDefaultCellValues(CallingContext::UiThread);
 	alg.Grid.Activate();
 	alg.Random.Seed(NT_getCpuCycleCount());
@@ -158,6 +194,9 @@ void DirSeqAlg::ParameterChanged(_NT_algorithm* self, int p) {
 
 	for (int h = 0; h < alg.Playheads.Count; h++) {
 		int idx = kNumCommonParameters + (kNumPerPlayheadParameters * h);
+		if (p >= idx && p < idx + kNumPerPlayheadParameters) {
+			alg.RefreshPlayheadConfig(h);
+		}
 		
 		// Max Gate Length is only relevant if we are using it to source the gate length
 		if (p == idx + kParamGateLengthSource) {

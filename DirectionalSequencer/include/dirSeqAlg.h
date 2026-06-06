@@ -49,12 +49,6 @@ enum {
 };
 
 
-enum class GateLengthSource {
-	MaxGateLength,
-	Clock
-};
-
-
 struct DirSeqAlg : public _NT_algorithm{
 private:
 	// NT Parameter Data
@@ -98,6 +92,9 @@ public:
 	GridView Grid;
 
 	PlayheadList Playheads;
+
+	PlayheadConfig GetPlayheadConfig(size_t idx) const;
+	void RefreshPlayheadConfig(size_t idx);
 
 	DirSeqAlg();
 	~DirSeqAlg();
