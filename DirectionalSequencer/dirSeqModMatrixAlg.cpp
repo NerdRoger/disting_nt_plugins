@@ -78,7 +78,7 @@ void DirSeqModMatrixAlg::BuildParameters() {
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeA]    = { .name = "Randomize Range A", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[matrixIndex + kParamModTargetRandomizeRangeB]    = { .name = "Randomize Range B", .min = 0, .max =   0, .def = 0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL };
 		ParameterDefs[matrixIndex + kParamModTargetChangeByPercentMax] = { .name = "Change By Max",     .min = 0, .max = 100, .def = 0, .unit = kNT_unitPercent, .scaling = kNT_scalingNone, .enumStrings = NULL };
-		ParameterDefs[matrixIndex + kParamModTargetActionCellIndex]    = { .name = "Action Cell",       .min = 1, .max =  32, .def = 0, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = CellCoordStrings };
+		ParameterDefs[matrixIndex + kParamModTargetActionCellIndex]    = { .name = "Action Cell",       .min = 1, .max =  32, .def = 1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = CellCoordStrings };
 
 		ParameterDefs[matrixIndex + kParamModTargetScrambleAllValuesTrigger]       = { .name = "Scramble All",        .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
 		ParameterDefs[matrixIndex + kParamModTargetInvertAllValuesTrigger]         = { .name = "Invert All",          .min = 0, .max = 1, .def = 0, .unit = kNT_unitEnum, .scaling = kNT_scalingNone, .enumStrings = TriggerValues };
@@ -177,7 +177,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 	auto a = cd.NTValueToCellValue(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeA]);
 	auto b = cd.NTValueToCellValue(alg.v[modTargetParamIndex + kParamModTargetRandomizeRangeB]);
 	auto changeBy = static_cast<float>(alg.v[modTargetParamIndex + kParamModTargetChangeByPercentMax]);
-	auto cellIndex = alg.v[modTargetParamIndex + kParamModTargetActionCellIndex] - 1;
+	auto cellIndex = clamp(alg.v[modTargetParamIndex + kParamModTargetActionCellIndex], static_cast<int16_t>(1), static_cast<int16_t>(GridSizeX * GridSizeY)) - 1;
 
 	switch (idx) {
 		case kParamModTargetScrambleAllValuesTrigger:

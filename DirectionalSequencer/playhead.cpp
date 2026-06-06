@@ -24,7 +24,7 @@ Playhead::Playhead() {
 
 void Playhead::InjectDependencies(DirSeqAlg* alg, size_t idx) {
 	Algorithm = alg;
-	ParamOffset = idx * kNumPerPlayheadParameters;
+	ParamOffset = kNumCommonParameters + (idx * kNumPerPlayheadParameters);
 }
 
 
