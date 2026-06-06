@@ -52,10 +52,10 @@ uint8_t WindowComparatorAlg::CountParameters(uint8_t numChannels) {
 }
 
 
-void WindowComparatorAlg::InjectDependencies(uint8_t numChannels, const _NT_globals* globals) {
-	NumChannels = numChannels;
-	TriggerSampleLength = globals->sampleRate / 1000;
-	Timer.InjectDependencies(globals);
+void WindowComparatorAlg::InjectDependencies(const Dependencies& dependencies) {
+	NumChannels = dependencies.NumChannels;
+	TriggerSampleLength = dependencies.Globals->sampleRate / 1000;
+	Timer.InjectDependencies({ .Globals = dependencies.Globals });
 	View.InjectDependencies(this);
 }
 
@@ -274,7 +274,7 @@ _NT_algorithm* WindowComparatorAlg::Construct(const _NT_algorithmMemoryPtrs& ptr
 	alg.UpdatingBounds = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 	alg.UpdatingSizePos = MemoryHelper<bool>::InitializeDynamicDataAndIncrementPointer(mem, numChannels);
 
-	alg.InjectDependencies(numChannels, &NT_globals);
+	alg.InjectDependencies({ .NumChannels = static_cast<uint8_t>(numChannels), .Globals = &NT_globals });
 
 	alg.BuildParameters();
 	alg.BuildParameterPages();

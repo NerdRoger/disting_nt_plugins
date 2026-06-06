@@ -8,8 +8,8 @@ TimeKeeper::TimeKeeper() {
 }
 
 
-void TimeKeeper::InjectDependencies(const _NT_globals* globals) {
-	SamplesPerMs = globals->sampleRate / 1000;
+void TimeKeeper::InjectDependencies(const TimeKeeper::Dependencies& dependencies) {
+	SamplesPerMs = dependencies.Globals->sampleRate / 1000;
 }
 
 

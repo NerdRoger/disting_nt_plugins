@@ -72,8 +72,8 @@ void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
 }
 
 
-void DirSeqAlg::InjectDependencies(const _NT_globals* globals) {
-	Timer.InjectDependencies(globals);
+void DirSeqAlg::InjectDependencies(const Dependencies& dependencies) {
+	Timer.InjectDependencies({ .Globals = dependencies.Globals });
 	StepDataRegion::Dependencies stepDataDependencies { .Algorithm = this };
 	StepData.InjectDependencies(stepDataDependencies);
 
@@ -170,7 +170,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
-	alg.InjectDependencies(&NT_globals);
+	alg.InjectDependencies({ .Globals = &NT_globals });
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
 	Playhead::Dependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };

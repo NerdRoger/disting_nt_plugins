@@ -41,6 +41,12 @@ enum {
 
 
 struct WeightedQuantizerAlg : public _NT_algorithm {
+public:
+	struct Dependencies {
+		uint16_t NumChannels = 0;
+		const _NT_globals* Globals = nullptr;
+	};
+
 private:
 	// NT Parameter Data
 	_NT_parameter* ParameterDefs;
@@ -49,7 +55,7 @@ private:
 	uint8_t* PageParams;
 	void BuildParameters();
 
-	void InjectDependencies(uint16_t numChannels, const _NT_globals* globals);
+	void InjectDependencies(const Dependencies& dependencies);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);

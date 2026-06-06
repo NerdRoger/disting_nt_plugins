@@ -68,6 +68,12 @@ enum {
 
 
 struct WindowComparatorAlg : public _NT_algorithm {
+public:
+	struct Dependencies {
+		uint8_t NumChannels = 0;
+		const _NT_globals* Globals = nullptr;
+	};
+
 private:
 
 	friend struct ComparatorView;
@@ -87,7 +93,7 @@ private:
 	static uint8_t CountParameters(uint8_t numChannels);
 	void BuildParameters();
 	void BuildParameterPages();
-	void InjectDependencies(uint8_t numChannels, const _NT_globals* globals);
+	void InjectDependencies(const Dependencies& dependencies);
 
 	// NT factory "methods"
 	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
