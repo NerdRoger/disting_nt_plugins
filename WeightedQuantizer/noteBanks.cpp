@@ -1,5 +1,4 @@
-#include <distingnt/api.h>
-#include "common.h"
+#include "ntCommon.h"
 #include "noteBanks.h"
 #include "weightedQuantizerAlg.h"
 

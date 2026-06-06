@@ -1,6 +1,5 @@
 #pragma once
 
-#include <distingnt/api.h>
 #include "common.h"
 #include "gridInfo.h"
 #include "cellDefinition.h"

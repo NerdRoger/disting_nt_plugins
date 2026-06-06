@@ -1,4 +1,3 @@
-#include <cstring>
 #include <distingnt/api.h>
 #include "viewBase.h"
 

@@ -1,5 +1,6 @@
 #pragma once
-#include <stdint.h>
+#include "common.h"
+
 #include <distingnt/api.h>
 
 

@@ -34,7 +34,7 @@ void Quantizer::Quantize(Quantizer::QuantRequest& req, Quantizer::QuantResult& r
 	float bestScore = -FLT_MAX;
 	float bestCandidate = val;
 	int bestNoteIndex = -1;
-	for (size_t i = 0; i < ARRAY_SIZE(Notes); i++) {
+	for (size_t i = 0; i < NumberOfNotes; i++) {
 		auto& note = Notes[i];
 		auto weight = NoteWeights[i];
 		if (weight > 0) {

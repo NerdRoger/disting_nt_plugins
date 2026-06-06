@@ -1,9 +1,6 @@
-#include <stdio.h>
-#include <distingnt/api.h>
+#include "ntCommon.h"
 #include <distingnt/slot.h>
-#include "common.h"
 #include "stepDataRegion.h"
-#include "cellDefinition.h"
 #include "dirSeqAlg.h"
 
 

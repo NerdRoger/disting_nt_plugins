@@ -1,6 +1,4 @@
 #pragma once
-#include <new>
-#include <distingnt/api.h>
 #include "cellDefinition.h"
 
 

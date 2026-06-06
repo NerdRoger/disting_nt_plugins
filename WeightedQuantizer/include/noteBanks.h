@@ -1,7 +1,5 @@
 #pragma once
-#include <stdint.h>
-#include <stdio.h>
-#include <distingnt/api.h>
+#include "common.h"
 
 
 struct WeightedQuantizerAlg;
@@ -17,10 +15,12 @@ public:
 		int16_t NoteValues[12];
 	};
 
+	static constexpr size_t Count = 10;
+
 private:
 	WeightedQuantizerAlg* Algorithm = nullptr;
 
-	Bank Banks[10];
+	Bank Banks[Count];
 
 public:
 
@@ -34,7 +34,4 @@ public:
 	void DoBankScan(int16_t val, CallingContext ctx);
 	void LoadNotesFromBank(size_t bankNum);
 	void SaveNotesToBank(size_t bankNum);
-
-
-	const size_t Count = ARRAY_SIZE(Banks);
 };

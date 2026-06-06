@@ -1,5 +1,5 @@
 #pragma once
-#include <math.h>
+#include <stddef.h>
 
 struct HelpTextHelper {
 	static constexpr int DurationFrames = 90;

@@ -1,4 +1,3 @@
-#include <distingnt/api.h>
 #include "dirSeqAlg.h"
 #include "dirSeqModMatrixAlg.h"
 

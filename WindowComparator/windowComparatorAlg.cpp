@@ -1,6 +1,6 @@
-#include <cstring>
-#include <distingnt/api.h>
 #include <distingnt/serialisation.h>
+#include <cstring>
+#include "ntCommon.h"
 #include "windowComparatorAlg.h"
 
 

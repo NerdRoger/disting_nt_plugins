@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <distingnt/api.h>
 #include "helpTextHelper.h"
 

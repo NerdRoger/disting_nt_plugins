@@ -1,11 +1,6 @@
-#include <new>
 #include <string.h>
-#include <distingnt/api.h>
-#include <distingnt/serialisation.h>
-#include "common.h"
+#include "ntCommon.h"
 #include "dirSeqAlg.h"
-#include "stepDataRegion.h"
-#include "playhead.h"
 
 
 static const char* const HeadOptionsPageNamesDef[] = {

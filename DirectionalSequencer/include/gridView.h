@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "gridInfo.h"
 #include "viewBase.h"
 #include "cellDefinition.h"
 #include "stepDataRegion.h"

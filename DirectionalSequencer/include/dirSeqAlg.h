@@ -1,6 +1,4 @@
 #pragma once
-#include <new>
-#include <distingnt/api.h>
 #include <distingnt/serialisation.h>
 #include "potManager.h"
 #include "helpTextHelper.h"

@@ -1,11 +1,8 @@
-#include <new>
 #include <string.h>
-#include <distingnt/api.h>
+#include "ntCommon.h"
 #include <distingnt/slot.h>
-#include "common.h"
 #include "dirSeqAlg.h"
 #include "dirSeqModMatrixAlg.h"
-#include "cellDefinition.h"
 
 
 static uint8_t ModTargetPageDefs[DirSeqModMatrixAlg::NumMatrices][kParamModTargetStride];

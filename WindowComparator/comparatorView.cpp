@@ -1,7 +1,7 @@
 #include <string.h>
 #include "comparatorView.h"
 #include "windowComparatorAlg.h"
-#include "common.h"
+#include "ntCommon.h"
 
 
 static constexpr uint8_t MaxDisplayedLines = 4;

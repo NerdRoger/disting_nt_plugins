@@ -1,6 +1,5 @@
 #include <cstdarg>
 #include <cstring>
-#include "common.h"
 
 void StringConcat(char* dest, int maxLen, ...) {
     if (dest == nullptr || maxLen <= 0) return;

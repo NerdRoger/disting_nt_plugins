@@ -1,6 +1,6 @@
 #pragma once
-
 #include <stdint.h>
+
 
 
 constexpr uint8_t GridSizeX = 8;

@@ -1,9 +1,6 @@
-#include <stdio.h>
 #include <string.h>
-#include <distingnt/api.h>
-#include "common.h"
+#include "ntCommon.h"
 #include "gridView.h"
-#include "helpTextHelper.h"
 #include "dirSeqAlg.h"
 
 

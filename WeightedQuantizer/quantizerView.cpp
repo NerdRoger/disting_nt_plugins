@@ -1,7 +1,7 @@
 #include <string.h>
 #include "quantizerView.h"
 #include "weightedQuantizerAlg.h"
-#include "common.h"
+#include "ntCommon.h"
 
 
 static constexpr int KeyWidth = 13;

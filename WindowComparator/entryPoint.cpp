@@ -1,4 +1,3 @@
-#include <distingnt/api.h>
 #include "windowComparatorAlg.h"
 
 

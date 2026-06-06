@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <distingnt/api.h>
-#include <distingnt/slot.h>
+#include <math.h>
 #include "playhead.h"
 #include "stepDataRegion.h"
 #include "timeKeeper.h"

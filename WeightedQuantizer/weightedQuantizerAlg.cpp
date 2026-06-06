@@ -1,10 +1,6 @@
-#include <math.h>
 #include <string.h>
-#include <distingnt/api.h>
-#include <distingnt/serialisation.h>
-#include "common.h"
+#include "ntCommon.h"
 #include "weightedQuantizerAlg.h"
-#include "quantizer.h"
 
 
 static const uint8_t GeneralPageDef[] = {

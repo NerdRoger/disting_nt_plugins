@@ -1,6 +1,5 @@
 #pragma once
 #include <distingnt/api.h>
-#include "common.h"
 
 
 struct PotManager {
