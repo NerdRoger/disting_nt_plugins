@@ -3,7 +3,7 @@
 #include "viewBase.h"
 
 
-void ViewBase::InjectDependencies(const ViewBase::Dependencies& dependencies) {
+void ViewBase::InjectDependencies(const Dependencies& dependencies) {
 	Timer = dependencies.Timer;
 }
 

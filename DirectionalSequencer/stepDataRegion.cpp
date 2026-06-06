@@ -12,7 +12,7 @@ StepDataRegion::StepDataRegion() {
 }
 
 
-void StepDataRegion::InjectDependencies(const StepDataRegion::Dependencies& dependencies) {
+void StepDataRegion::InjectDependencies(const Dependencies& dependencies) {
 	Algorithm = dependencies.Algorithm;
 }
 
