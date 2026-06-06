@@ -276,7 +276,6 @@ uint32_t DirSeqAlg::HasCustomUI(_NT_algorithm* self) {
 void DirSeqAlg::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	alg.Grid.FixupPotValues(pots);
-	alg.Grid.LoadParamForEditing();
 }
 
 
