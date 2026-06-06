@@ -6,7 +6,8 @@
 #include "cellDefinition.h"
 
 
-struct DirSeqAlg;
+struct StepDataRegion;
+struct TimeKeeper;
 
 enum class GateLengthSource {
 	MaxGateLength,
@@ -31,6 +32,13 @@ struct PlayheadConfig {
 	float VelocityAttenuate = 100.0f;
 	int16_t VelocityOffset = 0;
 	float VelocityGateMin = 5.0f;
+};
+
+
+struct PlayheadDependencies {
+	StepDataRegion* StepData = nullptr;
+	RandomGenerator* Random = nullptr;
+	TimeKeeper* Timer = nullptr;
 };
 
 
@@ -69,7 +77,7 @@ private:
 		Continuation
 	};
 
-	DirSeqAlg* Algorithm = nullptr;
+	PlayheadDependencies Dependencies;
 	size_t Index;
 	PlayheadConfig Config;
 
@@ -147,7 +155,7 @@ public:
 	Trigger ClockTrigger;
 
 	Playhead();
-	void InjectDependencies(DirSeqAlg* alg, size_t idx);
+	void InjectDependencies(size_t idx, const PlayheadDependencies& dependencies);
 	void SetConfig(const PlayheadConfig& config);
 
 	void ProcessClockTrigger();

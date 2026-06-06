@@ -168,8 +168,9 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.InjectDependencies(&NT_globals);
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
+	PlayheadDependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };
 	for (int h = 0; h < alg.Playheads.Count; h++) {
-		alg.Playheads[h].InjectDependencies(&alg, h);
+		alg.Playheads[h].InjectDependencies(h, playheadDependencies);
 	}
 
 	alg.ParameterDefs = MemoryHelper<_NT_parameter>::InitializeDynamicDataAndIncrementPointer(mem, req.numParameters);
