@@ -202,7 +202,7 @@ QuantizerView::QuantizerView() {
 
 void QuantizerView::InjectDependencies(WeightedQuantizerAlg* alg) {
 	Algorithm = alg;
-	ViewBase::InjectDependencies(&alg->Timer);
+	ViewBase::InjectDependencies({ .Timer = &alg->Timer });
 }
 
 

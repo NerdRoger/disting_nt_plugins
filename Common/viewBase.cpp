@@ -3,8 +3,8 @@
 #include "viewBase.h"
 
 
-void ViewBase::InjectDependencies(TimeKeeper* timer) {
-	Timer = timer;
+void ViewBase::InjectDependencies(const ViewDependencies& dependencies) {
+	Timer = dependencies.Timer;
 }
 
 

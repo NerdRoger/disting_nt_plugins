@@ -108,7 +108,7 @@ ComparatorView::ComparatorView() {
 
 void ComparatorView::InjectDependencies(WindowComparatorAlg* alg) {
 	Algorithm = alg;
-	ViewBase::InjectDependencies(&alg->Timer);
+	ViewBase::InjectDependencies({ .Timer = &alg->Timer });
 
   // calculate this once here rather than every draw cycle
 	FirstLineY = 0;
