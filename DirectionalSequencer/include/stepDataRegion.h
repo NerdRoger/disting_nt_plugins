@@ -9,6 +9,11 @@ struct DirSeqAlg;
 
 // this class represents all of the steps and their values
 struct StepDataRegion {
+public:
+	struct Dependencies {
+		DirSeqAlg* Algorithm = nullptr;
+	};
+
 private:
 
 	struct SingleCellData {
@@ -56,7 +61,7 @@ private:
 public:
 
 	StepDataRegion();
-	void InjectDependencies(DirSeqAlg* alg);
+	void InjectDependencies(const Dependencies& dependencies);
 	void RefreshModMatrixBindings();
 
 	bool  CellTypeHasMapping(CellDataType ct) const;

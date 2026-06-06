@@ -14,6 +14,11 @@ struct DirSeqAlg;
 
 
 struct GridView : ViewBase {
+public:
+	struct Dependencies : ViewBase::Dependencies {
+		DirSeqAlg* Algorithm = nullptr;
+	};
+
 private:
 
 	friend struct DirSeqAlg;
@@ -72,7 +77,7 @@ public:
 	CellCoords SelectedCell;
 
 	GridView();
-	void InjectDependencies(DirSeqAlg* alg);
+	void InjectDependencies(const Dependencies& dependencies);
 
 	void LoadParamForEditing();
 };

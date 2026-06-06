@@ -12,8 +12,8 @@ StepDataRegion::StepDataRegion() {
 }
 
 
-void StepDataRegion::InjectDependencies(DirSeqAlg* alg) {
-	Algorithm = alg;
+void StepDataRegion::InjectDependencies(const StepDataRegion::Dependencies& dependencies) {
+	Algorithm = dependencies.Algorithm;
 }
 
 

@@ -74,8 +74,13 @@ void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
 
 void DirSeqAlg::InjectDependencies(const _NT_globals* globals) {
 	Timer.InjectDependencies(globals);
-	StepData.InjectDependencies(this);
-	Grid.InjectDependencies(this);
+	StepDataRegion::Dependencies stepDataDependencies { .Algorithm = this };
+	StepData.InjectDependencies(stepDataDependencies);
+
+	GridView::Dependencies gridDependencies;
+	gridDependencies.Timer = &Timer;
+	gridDependencies.Algorithm = this;
+	Grid.InjectDependencies(gridDependencies);
 }
 
 
@@ -168,7 +173,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.InjectDependencies(&NT_globals);
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
-	PlayheadDependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };
+	Playhead::Dependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };
 	for (int h = 0; h < alg.Playheads.Count; h++) {
 		alg.Playheads[h].InjectDependencies(h, playheadDependencies);
 	}

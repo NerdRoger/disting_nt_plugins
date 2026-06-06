@@ -170,9 +170,9 @@ GridView::GridView() {
 }
 
 
-void GridView::InjectDependencies(DirSeqAlg* alg) {
-	Algorithm = alg;
-	ViewBase::InjectDependencies({ .Timer = &alg->Timer });
+void GridView::InjectDependencies(const Dependencies& dependencies) {
+	Algorithm = dependencies.Algorithm;
+	ViewBase::InjectDependencies(dependencies);
 }
 
 

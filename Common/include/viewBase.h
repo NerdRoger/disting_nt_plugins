@@ -4,12 +4,12 @@
 #include "timeKeeper.h"
 
 
-struct ViewDependencies {
-	TimeKeeper* Timer = nullptr;
-};
-
-
 struct ViewBase {
+public:
+	struct Dependencies {
+		TimeKeeper* Timer = nullptr;
+	};
+
 private:
 	static constexpr int EditBoxUnselectedBackgroundColor = 1;
 	static constexpr int EditBoxSelectedBackgroundColor = 1;
@@ -34,7 +34,7 @@ protected:
 	mutable char NumToStrBuf[20]; // for storing conversion results
 
 	void DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const;
-	void InjectDependencies(const ViewDependencies& dependencies);
+	void InjectDependencies(const Dependencies& dependencies);
 
 public:
 

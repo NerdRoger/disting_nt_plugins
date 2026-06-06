@@ -23,9 +23,9 @@ Playhead::Playhead() {
 }
 
 
-void Playhead::InjectDependencies(size_t idx, const PlayheadDependencies& dependencies) {
+void Playhead::InjectDependencies(size_t idx, const Dependencies& dependencies) {
 	Index = idx;
-	Dependencies = dependencies;
+	Deps = dependencies;
 }
 
 
@@ -40,7 +40,7 @@ void Playhead::Reset() {
 	AdvanceCount = 0;
 	UniqueAdvanceCount = 0;
 	// if there is no direction on the initial step, set us moving to the right
-	auto dir = Dependencies.StepData->GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
+	auto dir = Deps.StepData->GetAdjustedCellValue(InitialStep.x, InitialStep.y, CellDataType::Direction);
 	dir = (dir == 0 ? 3 : dir);
 	Direction = dir;
 	RepeatCount = 0;
@@ -64,19 +64,19 @@ void Playhead::InitVisitCounts() {
 
 void Playhead::ProcessClockTrigger() {
 
-	LastClockTriggerTime = Dependencies.Timer->TotalMs;
+	LastClockTriggerTime = Deps.Timer->TotalMs;
 	InactiveResetApplied = false;
 
 	// we can't calculate the clock rate without knowing the time of the last clock
 	if (LastClock > 0) {
 		// if the clock rate has been stable, but we are now longer by more than 10x, assume this is because the clock was stopped,
 		// and continue to use the old clock rate instead of calculating a new one.
-		auto newRate = Dependencies.Timer->TotalMs - LastClock;
+		auto newRate = Deps.Timer->TotalMs - LastClock;
 		bool wayOff = newRate > (ClockRate * 10);
 		if (StableClock && wayOff) {
 			// don't change the clock rate
 		} else {
-			ClockRate = Dependencies.Timer->TotalMs - LastClock;
+			ClockRate = Deps.Timer->TotalMs - LastClock;
 		}
 	}
 
@@ -92,7 +92,7 @@ void Playhead::ProcessClockTrigger() {
 	float percentOff = fabsf(delta) / static_cast<float>(PrevClockRate);
 	StableClock = (percentOff <= 0.05f);
 
-	LastClock = Dependencies.Timer->TotalMs;
+	LastClock = Deps.Timer->TotalMs;
 	PrevClockRate = ClockRate;
 }
 
@@ -105,7 +105,7 @@ void Playhead::ProcessResetTrigger() {
 void Playhead::Process() {
 	// check to see if we have been inactive long enough to reset the sequencer
 	if (Config.ResetWhenInactive && !InactiveResetApplied) {
-		auto inactiveFor = Dependencies.Timer->TotalMs - LastClockTriggerTime;
+		auto inactiveFor = Deps.Timer->TotalMs - LastClockTriggerTime;
 		if (inactiveFor > InactiveTime) {
 			Reset();
 			InactiveResetApplied = true;
@@ -125,7 +125,7 @@ void Playhead::Process() {
 				Ratchets.AccumulatedTime += Ratchets.Substep;
 				Ratchets.RemainingDuration = static_cast<int>(Ratchets.AccumulatedTime);
 				Ratchets.AccumulatedTime -= static_cast<int>(Ratchets.AccumulatedTime);
-				GateStart = Dependencies.Timer->TotalMs;
+				GateStart = Deps.Timer->TotalMs;
 				GateEnd = GateStart + Ratchets.GateLen;
 			}
 		}
@@ -153,7 +153,7 @@ void Playhead::Process() {
 	auto veloGate = veloGateMin + (velocity * (GateHigh - veloGateMin) / 10.0f);
 
 
-	float gate = ((Dependencies.Timer->TotalMs >= GateStart) && (Dependencies.Timer->TotalMs < GateEnd)) ? veloGate : GateLow;
+	float gate = ((Deps.Timer->TotalMs >= GateStart) && (Deps.Timer->TotalMs < GateEnd)) ? veloGate : GateLow;
 
 	if (Dip > 0) {
 		Dip -= 1;
@@ -225,7 +225,7 @@ void Playhead::ProcessTies() {
 	if (TieCount == 0) {
 		// only start a tie if we are not resting or muted
 		if (EmitGate) {
-			TieCount = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
+			TieCount = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::TieSteps);
 			Tie = (TieCount > 0) ? TieMode::Start : TieMode::None;
 		}
 	} else {
@@ -271,7 +271,7 @@ void Playhead::MoveToNextCell() {
 		RepeatCount--;
 	} else {
 		// if we have a new direction, change to that, otherwise keep going in the direction we had, or right if we have no initial direction
-		uint8_t dir = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
+		uint8_t dir = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Direction);
 		if (dir > 0) {
 			Direction = dir;
 		} else if (Direction == 0) {
@@ -310,7 +310,7 @@ void Playhead::CalculateStepValue() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	StepVal = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
+	StepVal = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Value);
 }
 
 
@@ -319,8 +319,8 @@ void Playhead::ProcessAccumulator() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto accumAdd = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
-	auto accumTimes = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
+	auto accumAdd = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumAdd);
+	auto accumTimes = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::AccumTimes);
 
 	// add the accumulation amount as many times as specified
 	if (accumTimes > 0) {
@@ -337,20 +337,20 @@ void Playhead::ProcessDrift() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto driftProb = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
-	if (Dependencies.Random->Next(1, 100) <= driftProb) {
+	auto driftProb = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::DriftProb);
+	if (Deps.Random->Next(1, 100) <= driftProb) {
 		// we are going to drift the value, now let's figure out by how much
 		// we want a much higher likelihood of the drift amount being small vs. large, so use an exponential scale
 		// this gives us a scaling factor from 0 to 1
 		// don't use UINT32_MAX here because I'm not sure of the uniformity of the randomness distribution.
 		// Instead use a smaller number, which gives us less resolution, but hopefully better uniformity due to modulo distribution
 		static constexpr uint32_t res = 987654;
-		auto driftScale = static_cast<float>(Dependencies.Random->Next(0, res)) / res;
+		auto driftScale = static_cast<float>(Deps.Random->Next(0, res)) / res;
 		driftScale = sqrt(driftScale);
 		// calculate the drift range from the max
-		auto driftRange = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
+		auto driftRange = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::MaxDrift);
 		// scale the drift range to get the actual drift, and make it negative half of the time
-		auto actualDrift = driftRange * driftScale * (Dependencies.Random->Next(0, 1) == 1 ? -1 : 1);
+		auto actualDrift = driftRange * driftScale * (Deps.Random->Next(0, 1) == 1 ? -1 : 1);
 		StepVal += actualDrift;
 	}
 }
@@ -389,7 +389,7 @@ void Playhead::QuantizeValue()	{
 
 
 void Playhead::ProcessMute() {
-	auto mute = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Mute);
+	auto mute = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Mute);
 	if (mute) {
 		EmitGate = false;
 	}
@@ -398,7 +398,7 @@ void Playhead::ProcessMute() {
 
 void Playhead::ProcessRest() {
 	// calculate if we should rest this cell this time around
-	uint8_t restAfter = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
+	uint8_t restAfter = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::RestAfter);
 	if (restAfter > 0) {
 		if (CellVisitCounts[CurrentStep.x][CurrentStep.y] % (restAfter + 1) == restAfter) {
 			EmitGate = false;
@@ -417,8 +417,8 @@ void Playhead::ProcessRest() {
 
 void Playhead::ProcessProbability() {
 	// apply probability to see if we should emit a gate for this step
-	auto prob = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
-	if (Dependencies.Random->Next(1, 100) > prob) {
+	auto prob = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Probability);
+	if (Deps.Random->Next(1, 100) > prob) {
 		EmitGate = false;
 	}
 }
@@ -427,7 +427,7 @@ void Playhead::ProcessProbability() {
 void Playhead::ProcessRepeats() {
 	// if we're not already playing a repeated cell, set the repeat counter.  If we are repeating, this will tick down above
 	if (!IsRepeat) {
-		RepeatCount = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
+		RepeatCount = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Repeats);
 		if (Tie != TieMode::None)
 			TieCount += RepeatCount;
 	}
@@ -440,7 +440,7 @@ void Playhead::RecordCellVisit() {
 
 
 void Playhead::CalculateGateLength() {
-	GatePct = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
+	GatePct = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::GateLength);
 	auto gateLengthSource = Config.GateSource;
 
 	// if we are processing a tie, always play legato.  100% if we are using clocked gates, otherwise calc the percentage
@@ -508,7 +508,7 @@ void Playhead::ProcessGlide() {
 	if (Tie == TieMode::Continuation)
 		return;
 	
-	auto glidePct = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
+	auto glidePct = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Glide);
 	if (glidePct > 0) {
 		// If we're starting a tie, spread the glide across all tied steps
 		auto totalGateLen = GateLen;
@@ -532,7 +532,7 @@ void Playhead::ProcessRatchets() {
 	if (Tie != TieMode::None)
 		return;
 	
-	auto ratchets = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
+	auto ratchets = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Ratchets);
 	// only ratchet when our clock is stable, otherwise it will sound weird
 	if (ratchets > 0 && StableClock) {
 		auto divisions = ratchets + 1;
@@ -594,7 +594,7 @@ void Playhead::AttenuateGateLength() {
 
 
 void Playhead::CalculateGate() {
-	GateStart = Dependencies.Timer->TotalMs;
+	GateStart = Deps.Timer->TotalMs;
 	GateEnd = GateStart + GateLen;
 }
 
@@ -604,14 +604,14 @@ void Playhead::HumanizeGate() {
 	if (GatePct < 100) {
 		auto human = Config.HumanizeValue;
 		human *= 1000;
-		float pct1 = Dependencies.Random->Next(0, human) / 1000.0f;
-		float pct2 = Dependencies.Random->Next(0, human) / 1000.0f;
+		float pct1 = Deps.Random->Next(0, human) / 1000.0f;
+		float pct2 = Deps.Random->Next(0, human) / 1000.0f;
 		auto off1 = GateLen * pct1 / 100.0f;
 		auto off2 = GateLen * pct2 / 100.0f;
 		// we always have to start late, because we can't read the future...
 		GateStart += off1;
 		// but we can end early or late
-		off2 = off2 * (Dependencies.Random->Next(0, 1) == 1 ? -1 : 1);
+		off2 = off2 * (Deps.Random->Next(0, 1) == 1 ? -1 : 1);
 		GateEnd -= off2;
 	}
 }
@@ -624,7 +624,7 @@ void Playhead::CalculateVelocity() {
 	
 	auto atten = Config.VelocityAttenuate;
 	auto offset = Config.VelocityOffset;
-	auto velo = Dependencies.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
+	auto velo = Deps.StepData->GetAdjustedCellValue(CurrentStep.x, CurrentStep.y, CellDataType::Velocity);
 	velo = velo * atten / 100.0f;
 	velo += offset;
 	Velocity = clamp(static_cast<int>(velo), 1, 127);
@@ -638,10 +638,10 @@ void Playhead::HumanizeVelocity() {
 	
 	auto human = Config.HumanizeValue;
 	human *= 1000;
-	float pct = Dependencies.Random->Next(0, human) / 1000.0f;
+	float pct = Deps.Random->Next(0, human) / 1000.0f;
 	auto off = Velocity * pct / 100.0f;
 	// we can move up or down in velocity
-	off = off * (Dependencies.Random->Next(0, 1) == 1 ? -1 : 1);
+	off = off * (Deps.Random->Next(0, 1) == 1 ? -1 : 1);
 	auto velo = Velocity + off;
 	// clamp the result to the velocity range
 	Velocity = clamp(static_cast<int>(velo), 1, 127);

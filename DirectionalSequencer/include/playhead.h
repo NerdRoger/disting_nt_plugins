@@ -35,15 +35,15 @@ struct PlayheadConfig {
 };
 
 
-struct PlayheadDependencies {
-	StepDataRegion* StepData = nullptr;
-	RandomGenerator* Random = nullptr;
-	TimeKeeper* Timer = nullptr;
-};
-
-
 // this class represents a single playhead moving thru the sequencer field
 struct Playhead {
+public:
+	struct Dependencies {
+		StepDataRegion* StepData = nullptr;
+		RandomGenerator* Random = nullptr;
+		TimeKeeper* Timer = nullptr;
+	};
+
 private:
 
 	friend struct GridView;
@@ -77,7 +77,7 @@ private:
 		Continuation
 	};
 
-	PlayheadDependencies Dependencies;
+	Dependencies Deps;
 	size_t Index;
 	PlayheadConfig Config;
 
@@ -155,7 +155,7 @@ public:
 	Trigger ClockTrigger;
 
 	Playhead();
-	void InjectDependencies(size_t idx, const PlayheadDependencies& dependencies);
+	void InjectDependencies(size_t idx, const Dependencies& dependencies);
 	void SetConfig(const PlayheadConfig& config);
 
 	void ProcessClockTrigger();
