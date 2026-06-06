@@ -102,8 +102,8 @@ NoteBanks::NoteBanks() {
 }
 
 
-void NoteBanks::InjectDependencies(WeightedQuantizerAlg* alg) {
-	Algorithm = alg;
+void NoteBanks::InjectDependencies(const Dependencies& dependencies) {
+	Algorithm = dependencies.Algorithm;
 }
 
 

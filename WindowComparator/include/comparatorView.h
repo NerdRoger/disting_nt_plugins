@@ -8,6 +8,11 @@ struct WindowComparatorAlg;
 
 
 struct ComparatorView : ViewBase {
+public:
+	struct Dependencies : ViewBase::Dependencies {
+		WindowComparatorAlg* Algorithm = nullptr;
+	};
+
 private:
 
 	friend struct WindowComparatorAlg;
@@ -35,5 +40,5 @@ private:
 
 public:
 	ComparatorView();
-	void InjectDependencies(WindowComparatorAlg* alg);
+	void InjectDependencies(const Dependencies& dependencies);
 };

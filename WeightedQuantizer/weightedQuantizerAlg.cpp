@@ -45,8 +45,12 @@ WeightedQuantizerAlg::~WeightedQuantizerAlg() {
 void WeightedQuantizerAlg::InjectDependencies(const Dependencies& dependencies) {
 	NumChannels = dependencies.NumChannels;
 	Timer.InjectDependencies({ .Globals = dependencies.Globals });
-	Banks.InjectDependencies(this);
-	QuantView.InjectDependencies(this);
+	Banks.InjectDependencies({ .Algorithm = this });
+
+	QuantizerView::Dependencies viewDependencies;
+	viewDependencies.Timer = &Timer;
+	viewDependencies.Algorithm = this;
+	QuantView.InjectDependencies(viewDependencies);
 }
 
 

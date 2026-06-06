@@ -10,6 +10,11 @@ struct WeightedQuantizerAlg;
 
 // TODO:  derive from ViewBase also
 struct QuantizerView : ViewBase {
+public:
+	struct Dependencies : ViewBase::Dependencies {
+		WeightedQuantizerAlg* Algorithm = nullptr;
+	};
+
 private:
 	WeightedQuantizerAlg* Algorithm = nullptr;
 
@@ -49,6 +54,6 @@ private:
 
 public:
 	QuantizerView();
-	void InjectDependencies(WeightedQuantizerAlg* alg);
+	void InjectDependencies(const Dependencies& dependencies);
 
 };

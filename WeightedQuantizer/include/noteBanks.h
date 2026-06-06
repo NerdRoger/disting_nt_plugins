@@ -9,6 +9,10 @@ struct WeightedQuantizerAlg;
 
 struct NoteBanks {
 public:
+	struct Dependencies {
+		WeightedQuantizerAlg* Algorithm = nullptr;
+	};
+
 	struct Bank {
 		int16_t NoteValues[12];
 	};
@@ -23,7 +27,7 @@ public:
 	bool ScanningLocked;
 
 	NoteBanks();
-	void InjectDependencies(WeightedQuantizerAlg* alg);
+	void InjectDependencies(const Dependencies& dependencies);
 
 	Bank& operator[](size_t index);
 	const Bank& operator[](size_t index) const;

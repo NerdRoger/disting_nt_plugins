@@ -56,7 +56,10 @@ void WindowComparatorAlg::InjectDependencies(const Dependencies& dependencies) {
 	NumChannels = dependencies.NumChannels;
 	TriggerSampleLength = dependencies.Globals->sampleRate / 1000;
 	Timer.InjectDependencies({ .Globals = dependencies.Globals });
-	View.InjectDependencies(this);
+	ComparatorView::Dependencies viewDependencies;
+	viewDependencies.Timer = &Timer;
+	viewDependencies.Algorithm = this;
+	View.InjectDependencies(viewDependencies);
 }
 
 
