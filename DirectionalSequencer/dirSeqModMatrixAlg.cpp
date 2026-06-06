@@ -157,6 +157,7 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 
 	auto ct = static_cast<CellDataType>(target);
 	auto cd = CellDefinition::All[target];
+	seq->StepData.RefreshModMatrixBindings();
 
 	if (idx >= kParamModTargetCell1 && idx <= kParamModTargetCell32) {
 		auto cellNum = idx - 1;

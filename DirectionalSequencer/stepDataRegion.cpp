@@ -160,7 +160,6 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 
 	// and if we have an NT parameter mapped to the value we are changing in a mod matrix sidecar, also change it's parameter value
 	if (updateMatrix)	{
-		RefreshModMatrixBindings();
 		int paramTargetIndex;
 		auto matrix = GetModMatrixAlgorithm(ct, paramTargetIndex);
 		if (matrix != nullptr) {
@@ -196,7 +195,7 @@ void StepDataRegion::ScrambleAllCellValues(CellDataType ct, CallingContext ctx) 
 }
 
 
-void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx) {
+void StepDataRegion::InvertCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	float val = GetBaseCellValue(x, y, ct);
 
@@ -212,6 +211,11 @@ void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, Call
 	}
 
 	SetBaseCellValue(x, y, ct, val, true, ctx);
+}
+
+
+void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx) {
+	InvertCellValueInternal(x, y, ct, ctx);
 	DoDataChanged();
 }
 
@@ -219,9 +223,10 @@ void StepDataRegion::InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, Call
 void StepDataRegion::InvertAllCellValues(CellDataType ct, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			InvertCellValue(x, y, ct, ctx);
+			InvertCellValueInternal(x, y, ct, ctx);
 		}
 	}
+	DoDataChanged();
 }
 
 
@@ -238,7 +243,7 @@ void StepDataRegion::SwapWithSurroundingCellValue(uint8_t x, uint8_t y, CellData
 }
 
 
-void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max, CallingContext ctx) {
+void StepDataRegion::RandomizeCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, float min, float max, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	int scaledMin = cd.ScaleValue(min);
 	int scaledMax = cd.ScaleValue(max);
@@ -247,6 +252,11 @@ void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, f
 	auto scaledRnd = static_cast<int>(Algorithm->Random.Next(lo, hi)) + scaledMin;
 	auto val = cd.UnscaleValue(scaledRnd);
 	SetBaseCellValue(x, y, ct, val, true, ctx);
+}
+
+
+void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, float min, float max, CallingContext ctx) {
+	RandomizeCellValueInternal(x, y, ct, min, max, ctx);
 	DoDataChanged();
 }
 
@@ -254,9 +264,10 @@ void StepDataRegion::RandomizeCellValue(uint8_t x, uint8_t y, CellDataType ct, f
 void StepDataRegion::RandomizeAllCellValues(CellDataType ct, float min, float max, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			RandomizeCellValue(x, y, ct, min, max, ctx);
+			RandomizeCellValueInternal(x, y, ct, min, max, ctx);
 		}
 	}
+	DoDataChanged();
 }
 
 
@@ -292,13 +303,18 @@ void StepDataRegion::RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8
 }
 
 
-void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
+void StepDataRegion::RandomlyChangeCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
 	auto cd = CellDefinition::All[static_cast<size_t>(ct)];
 	auto rnd = static_cast<float>(Algorithm->Random.Next(0, deltaPercent * 100.0f) / 100.0f) * (Algorithm->Random.Next(0, 1) == 1 ? -1.0f : 1.0f);
 	float delta = (cd.ScaledMax() - cd.ScaledMin()) * rnd / 100.0f;
 	float oldVal = GetBaseCellValue(x, y, ct);
 	float newVal = oldVal + delta;
 	SetBaseCellValue(x, y, ct, newVal, true, ctx);
+}
+
+
+void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
+	RandomlyChangeCellValueInternal(x, y, ct, deltaPercent, ctx);
 	DoDataChanged();
 }
 
@@ -306,7 +322,8 @@ void StepDataRegion::RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType 
 void StepDataRegion::RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent, CallingContext ctx) {
 	for (int x = 0; x < GridSizeX; x++) {
 		for (int y = 0; y < GridSizeY; y++) {
-			RandomlyChangeCellValue(x, y, ct, deltaPercent, ctx);
+			RandomlyChangeCellValueInternal(x, y, ct, deltaPercent, ctx);
 		}
 	}
+	DoDataChanged();
 }

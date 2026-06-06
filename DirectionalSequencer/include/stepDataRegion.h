@@ -47,6 +47,9 @@ private:
 	SingleCellData Cells[GridSizeX][GridSizeY];
 	ModMatrixBinding ModMatrixBindings[static_cast<size_t>(CellDataType::NumCellDataTypes)];
 
+	void InvertCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx);
+	void RandomizeCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, float min, float max, CallingContext ctx);
+	void RandomlyChangeCellValueInternal(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx);
 	DirSeqModMatrixAlg* GetModMatrixAlgorithm(CellDataType ct, int& paramTargetIndex) const;
 	void DoDataChanged();
 

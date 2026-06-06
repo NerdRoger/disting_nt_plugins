@@ -281,6 +281,7 @@ void DirSeqAlg::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 
 void DirSeqAlg::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
+	alg.StepData.RefreshModMatrixBindings();
 	alg.Grid.ProcessControlInput(data);
 	alg.PotMgr.RecordPreviousPotValues(data);
 }
