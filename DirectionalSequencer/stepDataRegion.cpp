@@ -133,6 +133,7 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 	auto& cell = Cells[x][y];
 	val = clamp(val, cd.ScaledMin(), cd.ScaledMax());
 	int16_t ival = cd.CellValueToCellStorage(val);
+	int16_t oldVal = cd.CellValueToCellStorage(GetBaseCellValue(x, y, ct));
 
 	// always update our internal cell data...
 	switch (ct)
@@ -153,6 +154,10 @@ void StepDataRegion::SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, flo
 		case CellDataType::TieSteps:    cell.TieStepCount = ival;     break;
 		case CellDataType::Mute:        cell.Mute = ival;             break;
 		default: break;  // do nothing
+	}
+
+	if (oldVal != ival && OnCellValueChanged != nullptr) {
+		OnCellValueChanged(Algorithm, x, y, ct);
 	}
 
 	// and if we have an NT parameter mapped to the value we are changing in a mod matrix sidecar, also change it's parameter value

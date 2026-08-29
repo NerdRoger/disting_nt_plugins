@@ -79,4 +79,6 @@ public:
 	void  RotateCellValuesInColumn(uint8_t col, CellDataType ct, int8_t rotateBy, CallingContext ctx);
 	void  RandomlyChangeCellValue(uint8_t x, uint8_t y, CellDataType ct, uint8_t deltaPercent, CallingContext ctx);
 	void  RandomlyChangeAllCellValues(CellDataType ct, uint8_t deltaPercent, CallingContext ctx);
+
+	void (*OnCellValueChanged)(void* context, uint8_t x, uint8_t y, CellDataType ct) = nullptr;
 };

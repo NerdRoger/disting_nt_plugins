@@ -75,8 +75,17 @@ public:
 
 	CellCoords SelectedCell;
 
+	void (*OnInitialCellChanged)(void* context, uint8_t playheadIndex, CellCoords cell) = nullptr;
+
 	GridView();
 	void InjectDependencies(const Dependencies& dependencies);
 
 	void LoadParamForEditing();
+	void LoadParamForEditingIfSelected(CellCoords cell, CellDataType attr) {
+		if (SelectedCell.x == cell.x
+			&& SelectedCell.y == cell.y
+			&& SelectedParameterIndex == attr) {
+			LoadParamForEditing();
+		}
+	}
 };

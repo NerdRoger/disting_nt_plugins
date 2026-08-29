@@ -56,6 +56,9 @@ void GridView::OnEncoder2LongPressHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	if (grid.Editable) {
 		grid.Algorithm->Playheads[grid.SelectedPlayheadIndex].InitialStep = grid.SelectedCell;
+		if (grid.OnInitialCellChanged != nullptr) {
+			grid.OnInitialCellChanged(grid.Algorithm, grid.SelectedPlayheadIndex, grid.SelectedCell);
+		}
 	}
 }
 

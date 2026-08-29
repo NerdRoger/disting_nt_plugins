@@ -34,6 +34,11 @@ void DirSeqAlg::StepDataChangedHandler() {
 }
 
 
+void DirSeqAlg::CellValueChangedHandler(uint8_t x, uint8_t y, CellDataType ct) {
+	MarkMidiCellChanged(x, y, ct);
+}
+
+
 PlayheadConfig DirSeqAlg::GetPlayheadConfig(size_t idx) const {
 	auto offset = kNumCommonParameters + (kNumPerPlayheadParameters * idx);
 	auto scaledParamValue = [this, offset](size_t paramOffset) {
@@ -64,6 +69,42 @@ PlayheadConfig DirSeqAlg::GetPlayheadConfig(size_t idx) const {
 
 void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
 	Playheads[idx].SetConfig(GetPlayheadConfig(idx));
+}
+
+
+void DirSeqAlg::MarkMidiCellChanged(uint8_t x, uint8_t y, CellDataType ct, bool force) {
+	Midi.MarkCellChanged(*this, x, y, ct, force);
+}
+
+
+void DirSeqAlg::MarkMidiPlayheadsDirty() {
+	Midi.MarkPlayheadsDirty();
+}
+
+
+void DirSeqAlg::ProcessMidi() {
+	Midi.Process(*this);
+}
+
+
+void DirSeqAlg::MidiSysEx(const uint8_t* message, uint32_t count) {
+	DirSeqMidiController::HandleSysEx(message, count);
+}
+
+
+void DirSeqAlg::StepDataCellValueChangedHandler(void* context, uint8_t x, uint8_t y, CellDataType ct) {
+	auto alg = static_cast<DirSeqAlg*>(context);
+	if (alg != nullptr) {
+		alg->CellValueChangedHandler(x, y, ct);
+	}
+}
+
+
+void DirSeqAlg::GridInitialCellChangedHandler(void* context, uint8_t, CellCoords) {
+	auto alg = static_cast<DirSeqAlg*>(context);
+	if (alg != nullptr) {
+		alg->MarkMidiPlayheadsDirty();
+	}
 }
 
 
@@ -166,6 +207,8 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
 	alg.InjectDependencies({ .Globals = &NT_globals });
+	alg.StepData.OnCellValueChanged = StepDataCellValueChangedHandler;
+	alg.Grid.OnInitialCellChanged = GridInitialCellChangedHandler;
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
 	Playhead::Dependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };
@@ -184,6 +227,7 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.StepData.SetDefaultCellValues(CallingContext::UiThread);
 	alg.Grid.Activate();
 	alg.Random.Seed(NT_getCpuCycleCount());
+	alg.Midi.Init(alg);
 
 	return &alg;
 }
@@ -295,8 +339,10 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 		for (int h = 0; h < alg.Playheads.Count; h++) {
 			alg.Playheads[h].Process();
 		}
+		alg.Midi.CheckPlayheadChanges(alg);
 	}
 
+	alg.ProcessMidi();
 }
 
 
@@ -381,6 +427,9 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 
 	stream.addMemberName("Editable");
 	stream.addBoolean(alg.Grid.Editable);
+
+	stream.addMemberName("MidiInstanceToken");
+	stream.addNumber(static_cast<int>(alg.Midi.InstanceToken()));
 
 }
 
@@ -540,6 +589,14 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 				return false;
 			}
 			alg.Grid.Editable = val;
+		} else if (parse.matchName("MidiInstanceToken")) {
+			int val;
+			if (!parse.number(val)) {
+				return false;
+			}
+			if (val > 0 && val <= 0x3FFF) {
+				alg.Midi.SetInstanceToken(static_cast<uint16_t>(val));
+			}
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -582,5 +639,6 @@ const _NT_factory DirSeqAlg::Factory =
 	.setupUi = SetupUI,
 	.serialise = Serialise,
 	.deserialise = Deserialise,
+	.midiSysEx = MidiSysEx,
 	.parameterUiPrefix = ParameterUiPrefix,
 };
