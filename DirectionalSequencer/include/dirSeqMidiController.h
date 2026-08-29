@@ -4,6 +4,10 @@
 #include "cellDefinition.h"
 #include "gridInfo.h"
 
+#ifndef DIRSEQ_ENABLE_CUSTOM_MIDI
+#define DIRSEQ_ENABLE_CUSTOM_MIDI 0
+#endif
+
 struct DirSeqAlg;
 
 class DirSeqMidiController {
@@ -12,6 +16,7 @@ public:
 	static constexpr size_t MaxPlayheads = 8;
 	static constexpr uint8_t InvalidCell = 0x7F;
 
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	void Init(DirSeqAlg& alg);
 	void SetInstanceToken(uint16_t token);
 	void MarkCellChanged(DirSeqAlg& alg, uint8_t x, uint8_t y, CellDataType ct, bool force = false);
@@ -59,4 +64,17 @@ private:
 	void CheckAdjustedCellChanges(DirSeqAlg& alg);
 	void SendChangedCells(DirSeqAlg& alg);
 	void SendPlayheadsChanged(DirSeqAlg& alg);
+#else
+	void Init(DirSeqAlg&) {}
+	void SetInstanceToken(uint16_t) {}
+	void MarkCellChanged(DirSeqAlg&, uint8_t, uint8_t, CellDataType, bool = false) {}
+	void MarkPlayheadsDirty() {}
+	void RequestAdvertise() {}
+	void CheckPlayheadChanges(DirSeqAlg&) {}
+	void Process(DirSeqAlg&) {}
+
+	static void HandleSysEx(const uint8_t*, uint32_t) {}
+
+	uint16_t InstanceToken() const { return 0; }
+#endif
 };

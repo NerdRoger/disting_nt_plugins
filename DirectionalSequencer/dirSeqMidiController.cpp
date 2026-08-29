@@ -1,7 +1,10 @@
+#include "dirSeqMidiController.h"
+
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
+
 #include <distingnt/slot.h>
 #include "ntCommon.h"
 #include "dirSeqAlg.h"
-#include "dirSeqMidiController.h"
 
 
 namespace DirSeqMidi {
@@ -806,3 +809,5 @@ void DirSeqMidiController::HandleSysEx(const uint8_t* message, uint32_t count) {
 			return;
 	}
 }
+
+#endif

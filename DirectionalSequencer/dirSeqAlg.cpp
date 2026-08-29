@@ -34,9 +34,11 @@ void DirSeqAlg::StepDataChangedHandler() {
 }
 
 
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 void DirSeqAlg::CellValueChangedHandler(uint8_t x, uint8_t y, CellDataType ct) {
 	MarkMidiCellChanged(x, y, ct);
 }
+#endif
 
 
 PlayheadConfig DirSeqAlg::GetPlayheadConfig(size_t idx) const {
@@ -72,6 +74,7 @@ void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
 }
 
 
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 void DirSeqAlg::MarkMidiCellChanged(uint8_t x, uint8_t y, CellDataType ct, bool force) {
 	Midi.MarkCellChanged(*this, x, y, ct, force);
 }
@@ -106,6 +109,7 @@ void DirSeqAlg::GridInitialCellChangedHandler(void* context, uint8_t, CellCoords
 		alg->MarkMidiPlayheadsDirty();
 	}
 }
+#endif
 
 
 void DirSeqAlg::InjectDependencies(const Dependencies& dependencies) {
@@ -207,8 +211,10 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	// THIS MUST STAY IN SYNC WITH THE REQUIREMENTS OF CALCULATION IN CalculateRequirements() ABOVE
 	auto& alg = *MemoryHelper<DirSeqAlg>::InitializeDynamicDataAndIncrementPointer(mem, 1);
 	alg.InjectDependencies({ .Globals = &NT_globals });
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	alg.StepData.OnCellValueChanged = StepDataCellValueChangedHandler;
 	alg.Grid.OnInitialCellChanged = GridInitialCellChangedHandler;
+#endif
 	auto heads = MemoryHelper<Playhead>::InitializeDynamicDataAndIncrementPointer(mem, numPlayheads);
 	alg.Playheads.Init(numPlayheads, heads);
 	Playhead::Dependencies playheadDependencies { .StepData = &alg.StepData, .Random = &alg.Random, .Timer = &alg.Timer };
@@ -227,7 +233,9 @@ _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _
 	alg.StepData.SetDefaultCellValues(CallingContext::UiThread);
 	alg.Grid.Activate();
 	alg.Random.Seed(NT_getCpuCycleCount());
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	alg.Midi.Init(alg);
+#endif
 
 	return &alg;
 }
@@ -339,10 +347,14 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 		for (int h = 0; h < alg.Playheads.Count; h++) {
 			alg.Playheads[h].Process();
 		}
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 		alg.Midi.CheckPlayheadChanges(alg);
+#endif
 	}
 
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	alg.ProcessMidi();
+#endif
 }
 
 
@@ -428,8 +440,10 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	stream.addMemberName("Editable");
 	stream.addBoolean(alg.Grid.Editable);
 
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	stream.addMemberName("MidiInstanceToken");
 	stream.addNumber(static_cast<int>(alg.Midi.InstanceToken()));
+#endif
 
 }
 
@@ -589,6 +603,7 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 				return false;
 			}
 			alg.Grid.Editable = val;
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 		} else if (parse.matchName("MidiInstanceToken")) {
 			int val;
 			if (!parse.number(val)) {
@@ -597,6 +612,7 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 			if (val > 0 && val <= 0x3FFF) {
 				alg.Midi.SetInstanceToken(static_cast<uint16_t>(val));
 			}
+#endif
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -639,6 +655,8 @@ const _NT_factory DirSeqAlg::Factory =
 	.setupUi = SetupUI,
 	.serialise = Serialise,
 	.deserialise = Deserialise,
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	.midiSysEx = MidiSysEx,
+#endif
 	.parameterUiPrefix = ParameterUiPrefix,
 };

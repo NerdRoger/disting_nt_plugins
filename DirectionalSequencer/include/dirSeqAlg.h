@@ -78,9 +78,11 @@ private:
 	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	static void MidiSysEx(const uint8_t* message, uint32_t count);
 	HIDDEN static void StepDataCellValueChangedHandler(void* context, uint8_t x, uint8_t y, CellDataType ct);
 	HIDDEN static void GridInitialCellChangedHandler(void* context, uint8_t playheadIndex, CellCoords cell);
+#endif
 
 public:
 	static constexpr uint32_t Guid = NT_MULTICHAR( 'A', 'T', 'd', 's' );
@@ -108,8 +110,10 @@ public:
 	DirSeqAlg();
 	~DirSeqAlg();
 	void StepDataChangedHandler();
+#if DIRSEQ_ENABLE_CUSTOM_MIDI
 	void CellValueChangedHandler(uint8_t x, uint8_t y, CellDataType ct);
 	void MarkMidiCellChanged(uint8_t x, uint8_t y, CellDataType ct, bool force = false);
 	void MarkMidiPlayheadsDirty();
 	void ProcessMidi();
+#endif
 };

@@ -1,3 +1,13 @@
 FINAL_OUTPUT := ../plugins/directionalSequencer.o
+DIRSEQ_ENABLE_CUSTOM_MIDI ?= 0
 
 include ../Common/buildPlugin.mk
+
+CPP_FLAGS += -DDIRSEQ_ENABLE_CUSTOM_MIDI=$(DIRSEQ_ENABLE_CUSTOM_MIDI)
+CPP_FLAGS_STATS += -DDIRSEQ_ENABLE_CUSTOM_MIDI=$(DIRSEQ_ENABLE_CUSTOM_MIDI)
+
+controller:
+	$(MAKE) clean
+	$(MAKE) DIRSEQ_ENABLE_CUSTOM_MIDI=1 all
+
+.PHONY: controller
