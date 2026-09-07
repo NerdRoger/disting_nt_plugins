@@ -56,8 +56,9 @@ private:
 	void BuildParameters();
 
 	// NT factory "methods"
-	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
-	static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
+	_NT_DRAM_SECTION static void CalculateStaticRequirements(_NT_staticRequirements& req);
+	_NT_DRAM_SECTION static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
+	_NT_DRAM_SECTION static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static bool Draw(_NT_algorithm* self);
 	static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);

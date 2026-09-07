@@ -100,6 +100,13 @@ void DirSeqModMatrixAlg::BuildParameters() {
 }
 
 
+_NT_DRAM_SECTION
+void DirSeqModMatrixAlg::CalculateStaticRequirements(_NT_staticRequirements& req) {
+	req.dram = 0;
+}
+
+
+_NT_DRAM_SECTION
 void DirSeqModMatrixAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = NumMatrices * kParamModTargetStride;
 	req.sram = 0;
@@ -114,6 +121,7 @@ void DirSeqModMatrixAlg::CalculateRequirements(_NT_algorithmRequirements& req, c
 }
 
 
+_NT_DRAM_SECTION
 _NT_algorithm* DirSeqModMatrixAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto mem = ptrs.sram;
 	memset(mem, 0, req.sram);
@@ -394,6 +402,7 @@ const _NT_factory DirSeqModMatrixAlg::Factory =
 	// TODO:  flesh this out
 	.description = "Mod Matrix for Directional Sequencer",
 	.numSpecifications = 0,
+	.calculateStaticRequirements = CalculateStaticRequirements,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.parameterChanged = ParameterChanged,

@@ -17,7 +17,7 @@ define STATS_DISPLAY_LOGIC
     @echo "=========================================================="
     @echo "  BINARY STATISTICS (Decimal) for $(notdir $(STATS_OUTPUT))"
     @echo "=========================================================="
-    @arm-none-eabi-size -A $(STATS_OUTPUT) | grep -E '\.text|\.rodata|\.data|\.bss'
+    @arm-none-eabi-size -A $(STATS_OUTPUT) | grep -E '\.text|\._nt_dram|\.rodata|\.data|\.bss'
     @echo "----------------------------------------------------------"
     @echo "Total Symbols: $$(arm-none-eabi-nm $(STATS_OUTPUT) | wc -l)"
     @echo "  Local (t): $$(arm-none-eabi-nm $(STATS_OUTPUT) | grep -c ' t ')"

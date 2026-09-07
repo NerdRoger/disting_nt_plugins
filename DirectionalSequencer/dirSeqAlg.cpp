@@ -139,6 +139,13 @@ void DirSeqAlg::BuildParameters() {
 }
 
 
+_NT_DRAM_SECTION
+void DirSeqAlg::CalculateStaticRequirements(_NT_staticRequirements& req) {
+	req.dram = 0;
+}
+
+
+_NT_DRAM_SECTION
 void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	int32_t numPlayheads = specifications[0];
 	req.numParameters = kNumCommonParameters + numPlayheads * kNumPerPlayheadParameters;
@@ -158,6 +165,7 @@ void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int3
 }
 
 
+_NT_DRAM_SECTION
 _NT_algorithm* DirSeqAlg::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto numPlayheads = specifications[0];
 	auto mem = ptrs.sram;
@@ -571,6 +579,7 @@ const _NT_factory DirSeqAlg::Factory =
 	.description = "A 2-D Directional Sequencer",
 	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
 	.specifications = SpecificationsDef,
+	.calculateStaticRequirements = CalculateStaticRequirements,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.parameterChanged = ParameterChanged,
