@@ -146,6 +146,11 @@ void DirSeqAlg::CalculateStaticRequirements(_NT_staticRequirements& req) {
 
 
 _NT_DRAM_SECTION
+void DirSeqAlg::Initialise(_NT_staticMemoryPtrs&, const _NT_staticRequirements&) {
+}
+
+
+_NT_DRAM_SECTION
 void DirSeqAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	int32_t numPlayheads = specifications[0];
 	req.numParameters = kNumCommonParameters + numPlayheads * kNumPerPlayheadParameters;
@@ -335,6 +340,7 @@ void DirSeqAlg::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 }
 
 
+_NT_DRAM_SECTION
 void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 
@@ -489,6 +495,7 @@ bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& pars
 }
 
 
+_NT_DRAM_SECTION
 bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	int num;
@@ -580,6 +587,7 @@ const _NT_factory DirSeqAlg::Factory =
 	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
 	.specifications = SpecificationsDef,
 	.calculateStaticRequirements = CalculateStaticRequirements,
+	.initialise = Initialise,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.parameterChanged = ParameterChanged,

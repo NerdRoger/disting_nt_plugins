@@ -57,11 +57,14 @@ private:
 
 	// NT factory "methods"
 	_NT_DRAM_SECTION static void CalculateStaticRequirements(_NT_staticRequirements& req);
+	_NT_DRAM_SECTION static void Initialise(_NT_staticMemoryPtrs& ptrs, const _NT_staticRequirements& req);
 	_NT_DRAM_SECTION static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
 	_NT_DRAM_SECTION static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static bool Draw(_NT_algorithm* self);
 	static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);
+	_NT_DRAM_SECTION static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
+	_NT_DRAM_SECTION static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 
 	DirSeqAlg* GetSequencerAlgorithm();
 	void SetupParametersForTarget(int modTargetParamIndex);

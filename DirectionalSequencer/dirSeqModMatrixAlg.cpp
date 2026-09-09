@@ -107,6 +107,11 @@ void DirSeqModMatrixAlg::CalculateStaticRequirements(_NT_staticRequirements& req
 
 
 _NT_DRAM_SECTION
+void DirSeqModMatrixAlg::Initialise(_NT_staticMemoryPtrs&, const _NT_staticRequirements&) {
+}
+
+
+_NT_DRAM_SECTION
 void DirSeqModMatrixAlg::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = NumMatrices * kParamModTargetStride;
 	req.sram = 0;
@@ -216,6 +221,17 @@ void DirSeqModMatrixAlg::ParameterChanged(_NT_algorithm* self, int p) {
 			seq->StepData.RotateCellValuesInColumn(cellIndex % GridSizeX, ct, 1, CallingContext::AudioThread);
 			break;
 	}
+}
+
+
+_NT_DRAM_SECTION
+void DirSeqModMatrixAlg::Serialise(_NT_algorithm*, _NT_jsonStream&) {
+}
+
+
+_NT_DRAM_SECTION
+bool DirSeqModMatrixAlg::Deserialise(_NT_algorithm*, _NT_jsonParse&) {
+	return true;
 }
 
 
@@ -403,10 +419,13 @@ const _NT_factory DirSeqModMatrixAlg::Factory =
 	.description = "Mod Matrix for Directional Sequencer",
 	.numSpecifications = 0,
 	.calculateStaticRequirements = CalculateStaticRequirements,
+	.initialise = Initialise,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.parameterChanged = ParameterChanged,
 	.draw = Draw,
 	.tags = kNT_tagUtility,
+	.serialise = Serialise,
+	.deserialise = Deserialise,
 	.parameterString = ParameterString,
 };

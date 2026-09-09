@@ -65,6 +65,7 @@ private:
 
 	// NT factory "methods"
 	_NT_DRAM_SECTION static void CalculateStaticRequirements(_NT_staticRequirements& req);
+	_NT_DRAM_SECTION static void Initialise(_NT_staticMemoryPtrs& ptrs, const _NT_staticRequirements& req);
 	_NT_DRAM_SECTION static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
 	_NT_DRAM_SECTION static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
@@ -73,10 +74,10 @@ private:
 	static uint32_t HasCustomUI(_NT_algorithm* self);
 	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
-	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
+	_NT_DRAM_SECTION static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
 	static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
 	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
-	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
+	_NT_DRAM_SECTION static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
 public:
