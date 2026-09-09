@@ -399,6 +399,7 @@ void DirSeqAlg::Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 }
 
 
+_NT_DRAM_SECTION
 bool DirSeqAlg::DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords) {
 	int numMembers;
 	if (!parse.numberOfObjectMembers(numMembers)) {
@@ -431,6 +432,7 @@ bool DirSeqAlg::DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse,
 }
 
 
+_NT_DRAM_SECTION
 bool DirSeqAlg::DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 

@@ -75,8 +75,8 @@ private:
 	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
 	_NT_DRAM_SECTION static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
-	static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
-	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
+	_NT_DRAM_SECTION static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
+	_NT_DRAM_SECTION static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	_NT_DRAM_SECTION static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
