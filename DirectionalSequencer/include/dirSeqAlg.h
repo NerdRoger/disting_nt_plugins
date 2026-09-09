@@ -59,9 +59,9 @@ private:
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage* PageDefs;
 	uint8_t* PageParams;
-	void BuildParameters();
+	_NT_DRAM_SECTION void BuildParameters();
 
-	void InjectDependencies(const Dependencies& dependencies);
+	_NT_DRAM_SECTION void InjectDependencies(const Dependencies& dependencies);
 
 	// NT factory "methods"
 	_NT_DRAM_SECTION static void CalculateStaticRequirements(_NT_staticRequirements& req);
@@ -101,7 +101,7 @@ public:
 	PlayheadConfig GetPlayheadConfig(size_t idx) const;
 	void RefreshPlayheadConfig(size_t idx);
 
-	DirSeqAlg();
+	_NT_DRAM_SECTION DirSeqAlg();
 	~DirSeqAlg();
 	void StepDataChangedHandler();
 };

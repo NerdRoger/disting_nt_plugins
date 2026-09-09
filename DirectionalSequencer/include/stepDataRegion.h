@@ -60,15 +60,15 @@ private:
 
 public:
 
-	StepDataRegion();
-	void InjectDependencies(const Dependencies& dependencies);
+	_NT_DRAM_SECTION StepDataRegion();
+	_NT_DRAM_SECTION void InjectDependencies(const Dependencies& dependencies);
 	void RefreshModMatrixBindings();
 
 	bool  CellTypeHasMapping(CellDataType ct) const;
 	float GetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	float GetAdjustedCellValue(uint8_t x, uint8_t y, CellDataType ct) const;
 	void  SetBaseCellValue(uint8_t x, uint8_t y, CellDataType ct, float val, bool updateMatrix, CallingContext ctx);
-	void  SetDefaultCellValues(CallingContext ctx);
+	_NT_DRAM_SECTION void  SetDefaultCellValues(CallingContext ctx);
 	void  ScrambleAllCellValues(CellDataType ct, CallingContext ctx);
 	void  InvertCellValue(uint8_t x, uint8_t y, CellDataType ct, CallingContext ctx);
 	void  InvertAllCellValues(CellDataType ct, CallingContext ctx);

@@ -148,6 +148,7 @@ void GridView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
 }
 
 
+_NT_DRAM_SECTION
 GridView::GridView() {
 	SelectedCell = { .x = 0, .y = 0};
 	SelectedParameterIndex = CellDataType::Direction;
@@ -167,6 +168,7 @@ GridView::GridView() {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::InjectDependencies(const Dependencies& dependencies) {
 	Algorithm = dependencies.Algorithm;
 	ViewBase::InjectDependencies(dependencies);

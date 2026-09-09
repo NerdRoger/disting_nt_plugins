@@ -47,13 +47,13 @@ private:
 	static size_t constexpr MaxPageNameLen = 13;
   char PageNames[DirSeqModMatrixAlg::NumMatrices][MaxPageNameLen];
 	
-	static void BuildModTargetPageDefs();
+	_NT_DRAM_SECTION static void BuildModTargetPageDefs();
 
 	_NT_parameter ParameterDefs[NumMatrices * kParamModTargetStride];
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage	PageDefs[NumMatrices];
 
-	void BuildParameters();
+	_NT_DRAM_SECTION void BuildParameters();
 
 	// NT factory "methods"
 	_NT_DRAM_SECTION static void CalculateStaticRequirements(_NT_staticRequirements& req);
@@ -72,7 +72,7 @@ private:
 public:
 	HIDDEN static const _NT_factory Factory;
 
-	DirSeqModMatrixAlg();
+	_NT_DRAM_SECTION DirSeqModMatrixAlg();
 	~DirSeqModMatrixAlg();
 
 };

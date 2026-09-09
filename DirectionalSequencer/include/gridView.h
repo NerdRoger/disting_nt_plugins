@@ -75,8 +75,8 @@ public:
 
 	CellCoords SelectedCell;
 
-	GridView();
-	void InjectDependencies(const Dependencies& dependencies);
+	_NT_DRAM_SECTION GridView();
+	_NT_DRAM_SECTION void InjectDependencies(const Dependencies& dependencies);
 
 	void LoadParamForEditing();
 };

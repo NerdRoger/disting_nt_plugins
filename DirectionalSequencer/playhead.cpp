@@ -16,11 +16,13 @@ static constexpr uint8_t GateRetriggerDipMs = 2;
 static constexpr float NearFullAttenuationPctMax = 98.0f;
 
 
+_NT_DRAM_SECTION
 Playhead::Playhead() {
 
 }
 
 
+_NT_DRAM_SECTION
 void Playhead::InjectDependencies(size_t idx, const Dependencies& dependencies) {
 	Index = idx;
 	Deps = dependencies;
@@ -652,6 +654,7 @@ float Playhead::NormalizeVelocityForOutput() {
 }
 
 
+_NT_DRAM_SECTION
 void PlayheadList::Init(int cnt, Playhead* arr) {
 	Playheads = arr;
 	Count = cnt;

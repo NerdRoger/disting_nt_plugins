@@ -19,6 +19,7 @@ static const _NT_specification SpecificationsDef[] = {
 };
 
 
+_NT_DRAM_SECTION
 DirSeqAlg::DirSeqAlg() {
 
 }
@@ -67,6 +68,7 @@ void DirSeqAlg::RefreshPlayheadConfig(size_t idx) {
 }
 
 
+_NT_DRAM_SECTION
 void DirSeqAlg::InjectDependencies(const Dependencies& dependencies) {
 	Timer.InjectDependencies({ .Globals = dependencies.Globals });
 	StepDataRegion::Dependencies stepDataDependencies { .Algorithm = this };
@@ -79,6 +81,7 @@ void DirSeqAlg::InjectDependencies(const Dependencies& dependencies) {
 }
 
 
+_NT_DRAM_SECTION
 void DirSeqAlg::BuildParameters() {
 	int numPages = 0;
 

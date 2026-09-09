@@ -153,8 +153,8 @@ public:
 	Trigger ResetTrigger;
 	Trigger ClockTrigger;
 
-	Playhead();
-	void InjectDependencies(size_t idx, const Dependencies& dependencies);
+	_NT_DRAM_SECTION Playhead();
+	_NT_DRAM_SECTION void InjectDependencies(size_t idx, const Dependencies& dependencies);
 	void SetConfig(const PlayheadConfig& config);
 
 	void ProcessClockTrigger();
@@ -169,6 +169,6 @@ private:
 public:
 	int Count;
 
-	void Init(int cnt, Playhead* arr);
+	_NT_DRAM_SECTION void Init(int cnt, Playhead* arr);
 	Playhead& operator[](size_t index) const;
 };

@@ -20,6 +20,7 @@ static const char* const RatchetNames[] = {
 };
 
 
+_NT_DRAM_SECTION
 void DirSeqModMatrixAlg::BuildModTargetPageDefs() {
 	for (int m = 0; m < NumMatrices; m++) {
 		for (int i = 0; i < kParamModTargetStride; i++) {
@@ -38,6 +39,7 @@ const char* const CellCoordStrings[] = {
 };
 
 
+_NT_DRAM_SECTION
 DirSeqModMatrixAlg::DirSeqModMatrixAlg() {
 
 }
@@ -51,6 +53,7 @@ DirSeqModMatrixAlg::~DirSeqModMatrixAlg() {
 const char* const TriggerValues[] = { "Low", "High" };
 
 
+_NT_DRAM_SECTION
 void DirSeqModMatrixAlg::BuildParameters() {
 	int numPages = 0;
 

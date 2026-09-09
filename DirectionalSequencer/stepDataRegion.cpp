@@ -4,11 +4,13 @@
 #include "dirSeqAlg.h"
 
 
+_NT_DRAM_SECTION
 StepDataRegion::StepDataRegion() {
 	
 }
 
 
+_NT_DRAM_SECTION
 void StepDataRegion::InjectDependencies(const Dependencies& dependencies) {
 	Algorithm = dependencies.Algorithm;
 }
@@ -60,6 +62,7 @@ DirSeqModMatrixAlg* StepDataRegion::GetModMatrixAlgorithm(CellDataType ct, int& 
 }
 
 
+_NT_DRAM_SECTION
 void StepDataRegion::SetDefaultCellValues(CallingContext ctx) {
 	// set the default cell values
 	for (size_t i = 0; i < static_cast<size_t>(CellDataType::NumCellDataTypes); i++) {
