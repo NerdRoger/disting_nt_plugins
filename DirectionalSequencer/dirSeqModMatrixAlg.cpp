@@ -238,6 +238,7 @@ bool DirSeqModMatrixAlg::Deserialise(_NT_algorithm*, _NT_jsonParse&) {
 }
 
 
+_NT_DRAM_SECTION
 bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirSeqModMatrixAlg*>(self);
 	DirSeqAlg* seq = alg.GetSequencerAlgorithm();

@@ -142,6 +142,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 
 // this method needs to be called regularly in order to measure time and fire the long press
 // generally calling it from draw() is a good idea, because you don't need as frequently as step()
+_NT_DRAM_SECTION
 void ViewBase::ProcessLongPresses() {
 
 	// lambda for handling pots
@@ -190,6 +191,7 @@ void ViewBase::Activate() {
 }
 
 
+_NT_DRAM_SECTION
 void ViewBase::Draw() {
 	ProcessLongPresses();
 	if (OnDraw)

@@ -316,6 +316,7 @@ void DirSeqAlg::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 }
 
 
+_NT_DRAM_SECTION
 bool DirSeqAlg::Draw(_NT_algorithm* self) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	alg.StepData.RefreshModMatrixBindings();

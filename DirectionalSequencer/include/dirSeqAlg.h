@@ -70,7 +70,7 @@ private:
 	_NT_DRAM_SECTION static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
-	static bool Draw(_NT_algorithm* self);
+	_NT_DRAM_SECTION static bool Draw(_NT_algorithm* self);
 	static uint32_t HasCustomUI(_NT_algorithm* self);
 	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
 	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);

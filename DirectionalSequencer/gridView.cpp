@@ -22,6 +22,7 @@ void GridView::OnActivateHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnDrawHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	grid.DrawCells();
@@ -53,6 +54,7 @@ void GridView::OnEncoder2ShortPressHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnEncoder2LongPressHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	if (grid.Editable) {
@@ -113,6 +115,7 @@ void GridView::OnPot3ShortPressHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnPot3LongPressHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	if (grid.Editable) {
@@ -176,6 +179,7 @@ void GridView::InjectDependencies(const Dependencies& dependencies) {
 }
 
 
+_NT_DRAM_SECTION
 Bounds GridView::CellCoordsToBounds(const CellCoords& coords) const {
 	Bounds result; // TODO:  should this be preallocated?
 	result.x1 = coords.x * CellSize + GridPosition.x;
@@ -186,6 +190,7 @@ Bounds GridView::CellCoordsToBounds(const CellCoords& coords) const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCells() const {
 	for(uint8_t x = 0; x < GridSizeX; x++) {
 		for(uint8_t y = 0; y < GridSizeY; y++) {
@@ -217,6 +222,7 @@ void GridView::DrawCells() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawInitialCellBorder() const {
 	auto cb = CellCoordsToBounds(Algorithm->Playheads[SelectedPlayheadIndex].InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
@@ -232,6 +238,7 @@ void GridView::DrawInitialCellBorder() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawSelectedCellBorder() const {
 	auto cb = CellCoordsToBounds(SelectedCell);
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
@@ -244,6 +251,7 @@ void GridView::DrawSelectedCellBorder() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawBullet(int x, int y, int color) const {
 	NT_drawShapeI(kNT_rectangle, x, y, x + 2, y + 2, color * 0.4);
 	NT_drawShapeI(kNT_line, x + 1, y, x + 1, y + 2, color);
@@ -251,6 +259,7 @@ void GridView::DrawBullet(int x, int y, int color) const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawParamLine(int paramIndex, int top) const {
 	auto paramListX = GridPosition.x + (GridSizeX * CellSize) + 5;
 	auto paramNameX = paramListX + 5;
@@ -288,6 +297,7 @@ void GridView::DrawParamLine(int paramIndex, int top) const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd, float fval) const {
 	// if the value is negative, keep it lined up with the others
 	if (fval < 0) {
@@ -363,6 +373,7 @@ void GridView::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawParams() const {
 	auto top = max(static_cast<int>(SelectedParameterIndex) - 2, 0);
 	int paramCount = static_cast<int>(CellDataType::NumCellDataTypes);
@@ -373,6 +384,7 @@ void GridView::DrawParams() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawPlayheadIcon(int x, int y, int width, int color) const {
 	NT_drawShapeI(kNT_rectangle, x,             y - TextLineHeight + 2, x + width,     y,     color);
 	NT_drawShapeI(kNT_rectangle, x + width + 1, y - TextLineHeight + 3, x + width + 1, y - 1, color);
@@ -382,6 +394,7 @@ void GridView::DrawPlayheadIcon(int x, int y, int width, int color) const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
 	if (playheadIndex >= Algorithm->Playheads.Count)
 		return;
@@ -406,6 +419,7 @@ void GridView::DrawPlayheadLine(int playheadIndex, int top) const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawPlayheadList() const {
 	auto top = max(SelectedPlayheadIndex - 2, 0);
 	top = min(top, Algorithm->Playheads.Count - 5);
@@ -416,6 +430,7 @@ void GridView::DrawPlayheadList() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
 	if (!Algorithm->HelpText.Draw()) {
@@ -434,6 +449,7 @@ void GridView::DrawHelpSection() const {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellPercentage(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	auto color = selected ? CellBrightColor : CellDimColor;
 	auto size = CellSize - 3;
@@ -454,17 +470,20 @@ void GridView::DrawCellPercentage(float val, bool selected, int x1, int y1, int 
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	DrawCellPercentage(val * 10, selected, x1, y1, x2, y2);
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	// convert velocity to a percentage
 	DrawCellPercentage(val / 1.27, selected, x1, y1, x2, y2);
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2, int16_t specialCase, const char *specialCaseTxt) const {
 	if (val >= 0 && val <= 9) {
 		auto color = selected ? CellBrightColor : CellDimColor;
@@ -477,6 +496,7 @@ void GridView::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellMute(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val >= 0 && val <= 1) {
 		auto color = selected ? CellBrightColor : CellDimColor;
@@ -486,6 +506,7 @@ void GridView::DrawCellMute(int16_t val, bool selected, int x1, int y1, int x2, 
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val == 0) return;
 	auto color = selected ? CellBrightColor : CellDimColor;
@@ -514,12 +535,14 @@ void GridView::DrawCellBipolarValue(float val, bool selected, int x1, int y1, in
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCellAccumAdd(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	auto cd = CellDefinition::All[static_cast<size_t>(CellDataType::AccumAdd)];
 	DrawCellBipolarValue(val / cd.ScaledMax(), selected, x1, y1, x2, y2);
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, int x2, int y2) const {
 	using enum CellDataType;
 	float val = Algorithm->StepData.GetAdjustedCellValue(cx, cy, SelectedParameterIndex);
@@ -576,6 +599,7 @@ void GridView::DrawCell(uint8_t cx, uint8_t cy, bool selected, int x1, int y1, i
 }
 
 
+_NT_DRAM_SECTION
 void GridView::DrawDirectionArrow(unsigned int dir, int x, int y, int color) const {
 	if (dir < 1 || dir > 8)
 		return;

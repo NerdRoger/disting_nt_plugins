@@ -16,6 +16,7 @@ void HelpTextHelper::DisplayHelpCallback(void (*drawCallback)(void*), void* cont
 }
 
 
+_NT_DRAM_SECTION
 bool HelpTextHelper::Draw() {
 	if (HelpText) {
 		NT_drawText(xPosition, 62, HelpText);
