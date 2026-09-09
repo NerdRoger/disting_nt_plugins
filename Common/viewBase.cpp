@@ -2,6 +2,7 @@
 #include "viewBase.h"
 
 
+_NT_DRAM_SECTION
 void ViewBase::InjectDependencies(const Dependencies& dependencies) {
 	Timer = dependencies.Timer;
 }
@@ -182,6 +183,7 @@ void ViewBase::ProcessLongPresses() {
 }
 
 
+_NT_DRAM_SECTION
 void ViewBase::Activate() {
 	if (OnActivate)
 		OnActivate(this);

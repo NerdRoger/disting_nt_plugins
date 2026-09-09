@@ -2,12 +2,14 @@
 #include "timeKeeper.h"
 
 
+_NT_DRAM_SECTION
 TimeKeeper::TimeKeeper() {
 	InternalFrameCount = 0;
 	TotalMs = 0;
 }
 
 
+_NT_DRAM_SECTION
 void TimeKeeper::InjectDependencies(const Dependencies& dependencies) {
 	SamplesPerMs = dependencies.Globals->sampleRate / 1000;
 }

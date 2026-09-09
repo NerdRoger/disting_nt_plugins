@@ -15,6 +15,7 @@ static constexpr int UnselectedParameterColor = 5;
 static constexpr int TextLineHeight = 10;
 
 
+_NT_DRAM_SECTION
 void GridView::OnActivateHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	grid.LoadParamForEditing();

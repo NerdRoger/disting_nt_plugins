@@ -58,7 +58,7 @@ private:
 	void DrawHelpSection() const;
 	void DrawDirectionArrow(unsigned int dir, int x, int y, int color) const;
 
-	HIDDEN static void OnActivateHandler(ViewBase* view);
+	_NT_DRAM_SECTION HIDDEN static void OnActivateHandler(ViewBase* view);
 	HIDDEN static void OnDrawHandler(ViewBase* view);
 	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
 	HIDDEN static void OnEncoder2TurnHandler(ViewBase* view, int8_t x);
