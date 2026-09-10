@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <distingnt/api.h>
 
 
 struct TimeKeeper {
@@ -15,9 +16,9 @@ struct TimeKeeper {
 	public:
 		uint32_t TotalMs;
 
-		TimeKeeper();
-		void InjectDependencies(const Dependencies& dependencies);
+		_NT_DRAM_SECTION TimeKeeper();
+		_NT_DRAM_SECTION void InjectDependencies(const Dependencies& dependencies);
 		uint32_t CountMilliseconds(int numFrames);
 	};
-	
+
 	

@@ -94,7 +94,7 @@ void DirSeqAlg::BuildParameters() {
 
 		size_t idx = kNumCommonParameters + (kNumPerPlayheadParameters * h);
 
-		auto defineParamAndAddToPage = [this, idx, &pagePtr](size_t offset, const _NT_parameter &param) {
+		auto defineParamAndAddToPage = [this, idx, &pagePtr](size_t offset, const _NT_parameter &param) _NT_DRAM_SECTION {
 			ParameterDefs[idx + offset] = param;
 			pagePtr[0] = idx + offset;
 			pagePtr++;
@@ -325,17 +325,20 @@ bool DirSeqAlg::Draw(_NT_algorithm* self) {
 }
 
 
+_NT_DRAM_SECTION
 uint32_t DirSeqAlg::HasCustomUI(_NT_algorithm* self) {
 	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
 }
 
 
+_NT_DRAM_SECTION
 void DirSeqAlg::SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	alg.Grid.FixupPotValues(pots);
 }
 
 
+_NT_DRAM_SECTION
 void DirSeqAlg::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 	auto& alg = *static_cast<DirSeqAlg*>(self);
 	alg.StepData.RefreshModMatrixBindings();
@@ -572,6 +575,7 @@ bool DirSeqAlg::Deserialise(_NT_algorithm* self, _NT_jsonParse& parse) {
 }
 
 
+_NT_DRAM_SECTION
 int DirSeqAlg::ParameterUiPrefix(_NT_algorithm* self, int p, char* buff) {
 	if (p >= kNumCommonParameters) {
 		auto h = (p - kNumCommonParameters) / kNumPerPlayheadParameters;

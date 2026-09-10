@@ -11,12 +11,6 @@ public:
 	};
 
 private:
-	static constexpr int EditBoxUnselectedBackgroundColor = 1;
-	static constexpr int EditBoxSelectedBackgroundColor = 1;
-	static constexpr int EditBoxUnselectedTextColor = 8;
-	static constexpr int EditBoxSelectedTextColor = 15;
-	static constexpr int EditBoxSelectedBorderColor = 15;
-
 	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press	
 	
 	TimeKeeper* Timer = nullptr;
@@ -28,17 +22,16 @@ private:
 	uint32_t EncoderDownTime[2];
 	bool EncoderLongPressFired[2];
 
-	void ProcessLongPresses();
+	_NT_DRAM_SECTION void ProcessLongPresses();
 
 protected:
 	mutable char NumToStrBuf[20]; // for storing conversion results
 
-	void DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const;
-	void InjectDependencies(const Dependencies& dependencies);
+	_NT_DRAM_SECTION void InjectDependencies(const Dependencies& dependencies);
 
 public:
 
-	void ProcessControlInput(const _NT_uiData& data);
+	_NT_DRAM_SECTION void ProcessControlInput(const _NT_uiData& data);
 
 	void (*OnActivate)(ViewBase* view);
 	void (*OnDraw)(ViewBase* view);
@@ -88,9 +81,9 @@ public:
 	void (*OnFixupPotValues)(ViewBase* view, _NT_float3& pots);
 	void (*OnParameterChanged)(ViewBase* view, int paramIndex);
 
-	void FixupPotValues(_NT_float3& pots);
+	_NT_DRAM_SECTION void FixupPotValues(_NT_float3& pots);
 	void ParameterChanged(int paramIndex);
-	void Activate();
-	void Draw();
+	_NT_DRAM_SECTION void Activate();
+	_NT_DRAM_SECTION void Draw();
 
 };

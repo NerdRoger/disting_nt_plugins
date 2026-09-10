@@ -1,6 +1,7 @@
 #include <cstdarg>
 #include <cstring>
 
+_NT_DRAM_SECTION
 void StringConcat(char* dest, int maxLen, ...) {
     if (dest == nullptr || maxLen <= 0) return;
 

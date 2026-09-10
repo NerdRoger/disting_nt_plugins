@@ -264,6 +264,7 @@ bool DirSeqModMatrixAlg::Draw(_NT_algorithm* self) {
 }
 
 
+_NT_DRAM_SECTION
 int DirSeqModMatrixAlg::ParameterString(_NT_algorithm* self, int p, int v, char* buff)
 {
 	memset(buff, 0, kNT_parameterStringSize);

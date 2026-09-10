@@ -145,4 +145,4 @@ INLINE int16_t UnscaleValueForParameter(_NT_algorithm& alg, uint16_t paramIndex,
 
 
 
-void StringConcat(char* dest, int maxLen, ...);
+_NT_DRAM_SECTION void StringConcat(char* dest, int maxLen, ...);

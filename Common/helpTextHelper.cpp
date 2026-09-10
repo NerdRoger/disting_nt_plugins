@@ -2,6 +2,7 @@
 #include "helpTextHelper.h"
 
 
+_NT_DRAM_SECTION
 void HelpTextHelper::DisplayHelpText(int xPos, const char* text) {
 	HelpText = text;
 	RemainingDuration = DurationFrames;
@@ -9,6 +10,7 @@ void HelpTextHelper::DisplayHelpText(int xPos, const char* text) {
 }
 
 
+_NT_DRAM_SECTION
 void HelpTextHelper::DisplayHelpCallback(void (*drawCallback)(void*), void* context) {
 	DrawCallback = drawCallback;
 	Context = context;

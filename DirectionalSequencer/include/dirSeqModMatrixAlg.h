@@ -62,7 +62,7 @@ private:
 	_NT_DRAM_SECTION static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	_NT_DRAM_SECTION static bool Draw(_NT_algorithm* self);
-	static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);
+	_NT_DRAM_SECTION static int ParameterString(_NT_algorithm* self, int p, int v, char* buff);
 	_NT_DRAM_SECTION static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
 	_NT_DRAM_SECTION static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
 

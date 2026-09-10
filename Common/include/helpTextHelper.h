@@ -10,7 +10,7 @@ struct HelpTextHelper {
 	void (*DrawCallback)(void* context) = NULL;
 	void* Context;
 
-	void DisplayHelpText(int xPos, const char* text);
-	void DisplayHelpCallback(void (*drawCallback)(void*), void* context);
-	bool Draw();
+	_NT_DRAM_SECTION void DisplayHelpText(int xPos, const char* text);
+	_NT_DRAM_SECTION void DisplayHelpCallback(void (*drawCallback)(void*), void* context);
+	_NT_DRAM_SECTION bool Draw();
 };

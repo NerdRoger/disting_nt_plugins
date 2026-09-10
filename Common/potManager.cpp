@@ -2,6 +2,7 @@
 #include "potManager.h"
 
 
+_NT_DRAM_SECTION
 void PotManager::RecordPreviousPotValues(const _NT_uiData& data) {
 	for (size_t i = 0; i < ARRAY_SIZE(data.pots); i++) {
 		PreviousPotValues[i] = data.pots[i];
@@ -10,6 +11,7 @@ void PotManager::RecordPreviousPotValues(const _NT_uiData& data) {
 }
 
 
+_NT_DRAM_SECTION
 void PotManager::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
 	// if we have not yet recorded previous pot values, ignore this very first pot move
 	// this will "prime the pump" and stop large jumps in values on the very first move

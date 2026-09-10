@@ -7,23 +7,11 @@ void ViewBase::InjectDependencies(const Dependencies& dependencies) {
 	Timer = dependencies.Timer;
 }
 
-
-void ViewBase::DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const {
-	auto allowEdit = selected && editable;
-	auto backgroundColor = allowEdit ? EditBoxSelectedBackgroundColor : EditBoxUnselectedBackgroundColor;
-	NT_drawShapeI(kNT_rectangle, x - 1, y, x + width + 1, y + 8, backgroundColor);
-	auto textColor = allowEdit ? EditBoxSelectedTextColor : EditBoxUnselectedTextColor;
-	NT_drawText(x, y + 8, text, textColor);
-	if (allowEdit) {
-		NT_drawShapeI(kNT_box, x - 2, y - 1, x + width + 2, y + 9, EditBoxSelectedBorderColor);
-	}
-}
-
-
+_NT_DRAM_SECTION
 void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 
 	// lambda for encoder turn functionality
-	auto handleEncoderTurn = [&](int index, auto turnCallback) {
+	auto handleEncoderTurn = [&](int index, void (*turnCallback)(ViewBase*, int8_t)) _NT_DRAM_SECTION {
     if (data.encoders[index] && turnCallback) {
 			turnCallback(this, data.encoders[index]);
 		}
@@ -32,7 +20,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handleEncoderTurn(1, OnEncoder2Turn);
 
 	// lambda for pot turn functionality
-	auto handlePotTurn = [&](uint32_t mask, int index, auto turnCallback) {
+	auto handlePotTurn = [&](uint32_t mask, int index, void (*turnCallback)(ViewBase*, float)) _NT_DRAM_SECTION {
     if ((data.controls & mask) && turnCallback) {
 			// don't register turns during the brief period where we are lifting our finger after a press
 			if (PotDownTime[index] == 0 && BlockPotChangesUntil[index] <= Timer->TotalMs) {
@@ -45,7 +33,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handlePotTurn(kNT_potR, 2, OnPot3Turn);
 
 	// lambda for encoder push functionality
-	auto handleEncoderPush = [&](uint32_t mask, int index, auto pushCallback) {
+	auto handleEncoderPush = [&](uint32_t mask, int index, void (*pushCallback)(ViewBase*)) _NT_DRAM_SECTION {
     if ((data.controls & mask) && !(data.lastButtons & mask)) {
 			EncoderDownTime[index] = Timer->TotalMs;
 			if (pushCallback)
@@ -56,7 +44,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handleEncoderPush(kNT_encoderButtonR, 1, OnEncoder2Push);
 
 	// lambda for encoder release functionality
-	auto handleEncoderRelease = [&](uint32_t mask, int index, auto shortPressCallback, auto releaseCallback) {
+	auto handleEncoderRelease = [&](uint32_t mask, int index, void (*shortPressCallback)(ViewBase*), void (*releaseCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if (!(data.controls & mask) && (data.lastButtons & mask)) {
 			if (EncoderDownTime[index] > 0) {
 				// Calculate how long we held the encoder down (in ms)
@@ -80,7 +68,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handleEncoderRelease(kNT_encoderButtonR, 1, OnEncoder2ShortPress, OnEncoder2Release);
 
 	// lambda for pot push functionality
-	auto handlePotPush = [&](uint32_t mask, int index, auto pushCallback) {
+	auto handlePotPush = [&](uint32_t mask, int index, void (*pushCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if ((data.controls & mask) && !(data.lastButtons & mask)) {
 			PotDownTime[index] = Timer->TotalMs;
 			if (pushCallback)
@@ -92,7 +80,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handlePotPush(kNT_potButtonR, 2, OnPot3Push);
 
 	// lmabda for pot release functionality
-	auto handlePotRelease = [&](uint32_t mask, int index, auto shortPressCallback, auto releaseCallback) {
+	auto handlePotRelease = [&](uint32_t mask, int index, void (*shortPressCallback)(ViewBase*), void (*releaseCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if (!(data.controls & mask) && (data.lastButtons & mask)) {
 			if (PotDownTime[index] > 0) {
 				auto totalDownTime = Timer->TotalMs - PotDownTime[index];
@@ -117,7 +105,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handlePotRelease(kNT_potButtonR, 2, OnPot3ShortPress, OnPot3Release);
 
 	// lambda for button push functionality
-	auto handleButtonPush = [&](uint32_t mask, auto pushCallback) {
+	auto handleButtonPush = [&](uint32_t mask, void (*pushCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if ((data.controls & mask) && !(data.lastButtons & mask) && pushCallback) {
 			pushCallback(this);
 		}
@@ -128,7 +116,7 @@ void ViewBase::ProcessControlInput(const _NT_uiData& data) {
 	handleButtonPush(kNT_button4, OnButton4Push);
 
 	// lambda for button release functionality
-	auto handleButtonRelease = [&](uint32_t mask, auto releaseCallback) {
+	auto handleButtonRelease = [&](uint32_t mask, void (*releaseCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if (!(data.controls & mask) && (data.lastButtons & mask) && releaseCallback) {
 			releaseCallback(this);
 		}
@@ -146,7 +134,7 @@ _NT_DRAM_SECTION
 void ViewBase::ProcessLongPresses() {
 
 	// lambda for handling pots
-	auto handlePotLongPress = [&](int index, auto longPressCallback) {
+	auto handlePotLongPress = [&](int index, void (*longPressCallback)(ViewBase*)) _NT_DRAM_SECTION {
 		if (PotDownTime[index] > 0 && !PotLongPressFired[index]) {
 			// Calculate how long we held the pot down (in ms)
 			auto totalDownTime = Timer->TotalMs - PotDownTime[index];
@@ -165,7 +153,7 @@ void ViewBase::ProcessLongPresses() {
 	handlePotLongPress(2, OnPot3LongPress);
 
 	// lambda for handling encoders
-	auto handleEncoderLongPress = [&](int index, auto longPressCallback) {
+	auto handleEncoderLongPress = [&](int index, void (*longPressCallback)(ViewBase*)) _NT_DRAM_SECTION {
     if (EncoderDownTime[index] > 0 && !EncoderLongPressFired[index]) {
 			// Calculate how long we held the encoder down (in ms)
 			auto totalDownTime = Timer->TotalMs - EncoderDownTime[index];
@@ -199,6 +187,7 @@ void ViewBase::Draw() {
 }
 
 
+_NT_DRAM_SECTION
 void ViewBase::FixupPotValues(_NT_float3& pots) {
 	if (OnFixupPotValues)
 		OnFixupPotValues(this, pots);

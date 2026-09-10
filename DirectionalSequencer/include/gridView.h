@@ -60,16 +60,16 @@ private:
 
 	_NT_DRAM_SECTION HIDDEN static void OnActivateHandler(ViewBase* view);
 	_NT_DRAM_SECTION HIDDEN static void OnDrawHandler(ViewBase* view);
-	HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
-	HIDDEN static void OnEncoder2TurnHandler(ViewBase* view, int8_t x);
-	HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
+	_NT_DRAM_SECTION HIDDEN static void OnEncoder1TurnHandler(ViewBase* view, int8_t x);
+	_NT_DRAM_SECTION HIDDEN static void OnEncoder2TurnHandler(ViewBase* view, int8_t x);
+	_NT_DRAM_SECTION HIDDEN static void OnEncoder2ShortPressHandler(ViewBase* view);
 	_NT_DRAM_SECTION HIDDEN static void OnEncoder2LongPressHandler(ViewBase* view);
-	HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
-	HIDDEN static void OnPot2TurnHandler(ViewBase* view, float val);
-	HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
-	HIDDEN static void OnPot3ShortPressHandler(ViewBase* view);
+	_NT_DRAM_SECTION HIDDEN static void OnPot1TurnHandler(ViewBase* view, float val);
+	_NT_DRAM_SECTION HIDDEN static void OnPot2TurnHandler(ViewBase* view, float val);
+	_NT_DRAM_SECTION HIDDEN static void OnPot3TurnHandler(ViewBase* view, float val);
+	_NT_DRAM_SECTION HIDDEN static void OnPot3ShortPressHandler(ViewBase* view);
 	_NT_DRAM_SECTION HIDDEN static void OnPot3LongPressHandler(ViewBase* view);
-	HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);
+	_NT_DRAM_SECTION HIDDEN static void OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots);
 
 public:
 

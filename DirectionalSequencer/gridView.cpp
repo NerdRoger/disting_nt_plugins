@@ -34,6 +34,7 @@ void GridView::OnDrawHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
 	auto& grid = *static_cast<GridView*>(view);
 	grid.SelectedCell.x = wrap(grid.SelectedCell.x + x, 0, GridSizeX - 1);
@@ -41,6 +42,7 @@ void GridView::OnEncoder1TurnHandler(ViewBase* view, int8_t x) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnEncoder2TurnHandler(ViewBase* view, int8_t x) {
 	auto& grid = *static_cast<GridView*>(view);
 	grid.SelectedCell.y = wrap(grid.SelectedCell.y + x, 0, GridSizeY - 1);
@@ -48,6 +50,7 @@ void GridView::OnEncoder2TurnHandler(ViewBase* view, int8_t x) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnEncoder2ShortPressHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 	grid.Editable = !grid.Editable;
@@ -63,6 +66,7 @@ void GridView::OnEncoder2LongPressHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnPot1TurnHandler(ViewBase* view, float val) {
 	auto& grid = *static_cast<GridView*>(view);
 	auto old = grid.SelectedPlayheadIndex;
@@ -77,6 +81,7 @@ void GridView::OnPot1TurnHandler(ViewBase* view, float val) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnPot2TurnHandler(ViewBase* view, float val) {
 	auto& grid = *static_cast<GridView*>(view);
 	auto old = grid.SelectedParameterIndex;
@@ -91,6 +96,7 @@ void GridView::OnPot2TurnHandler(ViewBase* view, float val) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnPot3TurnHandler(ViewBase* view, float val) {
 	auto& grid = *static_cast<GridView*>(view);
 	if (grid.Editable) {
@@ -102,6 +108,7 @@ void GridView::OnPot3TurnHandler(ViewBase* view, float val) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnPot3ShortPressHandler(ViewBase* view) {
 	auto& grid = *static_cast<GridView*>(view);
 		// only change values if we are editable
@@ -132,6 +139,7 @@ void GridView::OnPot3LongPressHandler(ViewBase* view) {
 }
 
 
+_NT_DRAM_SECTION
 void GridView::OnFixupPotValuesHandler(ViewBase* view, _NT_float3& pots) {
 	auto& grid = *static_cast<GridView*>(view);
 	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"

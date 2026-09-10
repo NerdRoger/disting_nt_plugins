@@ -71,14 +71,14 @@ private:
 	static void ParameterChanged(_NT_algorithm* self, int p);
 	static void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
 	_NT_DRAM_SECTION static bool Draw(_NT_algorithm* self);
-	static uint32_t HasCustomUI(_NT_algorithm* self);
-	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
-	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
+	_NT_DRAM_SECTION static uint32_t HasCustomUI(_NT_algorithm* self);
+	_NT_DRAM_SECTION static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
+	_NT_DRAM_SECTION static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
 	_NT_DRAM_SECTION static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
 	_NT_DRAM_SECTION static bool DeserialiseCellCoords(_NT_algorithm* self, _NT_jsonParse& parse, CellCoords& coords);
 	_NT_DRAM_SECTION static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
 	_NT_DRAM_SECTION static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
-	static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
+	_NT_DRAM_SECTION static int ParameterUiPrefix(_NT_algorithm* self, int p, char* buff);
 
 public:
 	static constexpr uint32_t Guid = NT_MULTICHAR( 'A', 'T', 'd', 's' );
