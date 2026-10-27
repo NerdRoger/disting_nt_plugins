@@ -20,7 +20,20 @@ RUN apt-get update && apt-get install -y \
     git \
     python3 \
     pkg-config \
-    curl
+    curl \
+    ca-certificates
+
+# Rust toolchain for bare-metal Cortex-M7F plugins. The GNU Arm utilities above
+# remain available for linking and inspecting Rust-produced object files.
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:${PATH}
+
+RUN curl --proto '=https' --tlsv1.2 -sSf -o /tmp/rustup-init https://sh.rustup.rs \
+    && sh /tmp/rustup-init -y --profile minimal --default-toolchain stable \
+    && rm /tmp/rustup-init \
+    && rustup target add thumbv7em-none-eabihf \
+    && rustup component add rustfmt
 
 # WORKDIR /opt
 #
